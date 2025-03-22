@@ -1,0 +1,76 @@
+# ======================================
+# Dependências e Builds
+# ======================================
+**/node_modules/
+**/dist/
+**/.next/
+**/out/
+**/build/
+**/coverage/
+**/.pnp
+.pnp.*
+*.tsbuildinfo
+
+# ======================================
+# Variáveis de Ambiente e Configurações Sensíveis
+# ======================================
+.env
+.env.*
+!.env.example  # Mantenha um template de exemplo se quiser
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ======================================
+# Logs e Arquivos de Debug
+# ======================================
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+nest-debug.log
+
+# ======================================
+# Sistemas Operacionais e Editores
+# ======================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+~$*
+
+# ======================================
+# Cache e Arquivos Temporários
+# ======================================
+.cache/
+.turbo/
+.tmp/
+temp/
+
+# ======================================
+# Plataformas de Hospedagem/Deploy
+# ======================================
+.vercel/
+.netlify/
+.serverless/
+.aws-sam/
+
+# ======================================
+# Certificados e Chaves
+# ======================================
+*.pem
+*.cer
+*.key
+
+# ======================================
+# Misc
+# ======================================
+.next-env.d.ts  # Next.js
+.elasticbeanstalk/
+.terraform/
+.history/
