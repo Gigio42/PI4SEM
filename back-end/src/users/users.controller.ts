@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Post, Get, Query, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -11,8 +11,12 @@ export class UsersController {
     return this.usersService.createUser(email, password);
   }
 
-  @Get()
-  async getAllUsers() {
-    return this.usersService.getAllUsers();
+  @Get('login')
+  async loginUser(@Query('email') email: string, @Query('password') password: string) {
+    const user = await this.usersService.findUserByEmailAndPassword(email, password);
+    if (!user) {
+      throw new NotFoundException('Usuário ou senha inválidos');
+    }
+    return { message: 'Login bem-sucedido' };
   }
 }
