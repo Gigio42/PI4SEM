@@ -1,98 +1,140 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# API Documentation
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## **Rotas Disponíveis**
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+### **Usuários**
 
-## Description
+#### **1. Criar Usuário**
+- **Rota:** `POST /users`
+- **Descrição:** Cria um novo usuário.
+- **Parâmetros no Corpo da Requisição (JSON):**
+  ```json
+  {
+    "email": "string",
+    "password": "string"
+  }
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Resposta (JSON):
+```json
+  {
+    "id": "number",
+    "email": "string",
+    "password": "string"
+  }
 
-## Project setup
+2. Login do Usuário
+Rota: GET /users/login
+Descrição: Faz login de um usuário.
 
-```bash
-$ npm install
-```
+Parâmetros no Corpo da Requisição (JSON):
+{
+  "email": "string",
+  "password": "string"
+}
 
-## Compile and run the project
+Resposta (JSON):
+{
+  "message": "Login bem-sucedido"
+}
 
-```bash
-# development
-$ npm run start
+Erros Possíveis:
+404 Not Found: "Usuário ou senha inválidos."
 
-# watch mode
-$ npm run start:dev
+3. Adicionar Subscription a um Usuário
+Rota: POST /users/:userId/subscription
+Descrição: Adiciona uma assinatura a um usuário.
+Parâmetros na URL:
+userId (number): ID do usuário.
+Parâmetros no Corpo da Requisição (JSON):
+{
+  "type": "string",
+  "startDate": "ISO 8601 date string",
+  "endDate": "ISO 8601 date string",
+  "status": "boolean"
+}
 
-# production mode
-$ npm run start:prod
-```
+Resposta (JSON):
+{
+  "id": "number",
+  "type": "string",
+  "startDate": "ISO 8601 date string",
+  "endDate": "ISO 8601 date string",
+  "status": "boolean",
+  "userId": "number"
+}
 
-## Run tests
+Erros Possíveis:
+404 Not Found: "Usuário com ID X não encontrado."
+400 Bad Request: "Dados da assinatura incompletos." ou "A data de início deve ser anterior à data de término."
 
-```bash
-# unit tests
-$ npm run test
+4. Verificar Subscription de um Usuário
+Rota: GET /users/:userId/subscription
+Descrição: Verifica se um usuário já possui uma assinatura.
+Parâmetros na URL:
+userId (number): ID do usuário.
+Resposta (JSON):
+{
+  "id": "number",
+  "type": "string",
+  "startDate": "ISO 8601 date string",
+  "endDate": "ISO 8601 date string",
+  "status": "boolean",
+  "userId": "number",
+  "user": {
+    "id": "number",
+    "email": "string",
+    "password": "string",
+    "googleId": "string",
+    "name": "string",
+    "picture": "string"
+  }
+}
 
-# e2e tests
-$ npm run test:e2e
+Erros Possíveis:
+404 Not Found: "Usuário com ID X não encontrado." ou "O usuário com ID X não possui uma assinatura."
 
-# test coverage
-$ npm run test:cov
-```
+Autenticação com Google
 
-## Deployment
+5. Iniciar Login com Google
+Rota: GET /auth/google
+Descrição: Redireciona o usuário para o fluxo de autenticação do Google.
+Parâmetros: Nenhum.
+Resposta: Redireciona para o Google.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+6. Callback do Google
+Rota: GET /auth/google/redirect
+Descrição: Trata o redirecionamento do Google após a autenticação.
+Parâmetros: Nenhum.
+Resposta: Redireciona para o frontend.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Componentes
 
-```bash
-$ npm install -g mau
-$ mau deploy
-```
+7. Criar Componente
+Rota: POST /components
+Descrição: Cria um novo componente CSS.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Parâmetros no Corpo da Requisição (JSON):
+{
+  "name": "string",
+  "cssContent": "string"
+}
 
-## Resources
+Resposta (JSON):
+{
+  "id": "number",
+  "name": "string",
+  "cssContent": "string"
+}
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+8. Listar Componentes
+Rota: GET /components
+Descrição: Retorna todos os componentes CSS.
+Parâmetros: Nenhum.
+Resposta (JSON):
+[
+  {
+    "id": "number",
+    "name": "string",
+    "cssContent": "string"
+  }
+]
