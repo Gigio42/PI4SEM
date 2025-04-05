@@ -42,32 +42,4 @@ export class UsersController {
     }
     return { message: 'Login bem-sucedido' };
   }
-
-  // Rota para adicionar uma Subscription a um usuário
-  @Post(':userId/subscription')
-  async addSubscription(
-    @Param('userId') userId: string, // Recebe como string
-    @Body() subscriptionData: { type: string; startDate: Date; endDate: Date; status: boolean },
-  ) {
-    try {
-      // Converte o ID para número e chama o serviço
-      return await this.usersService.addSubscriptionToUser(Number(userId), subscriptionData); // Converte para número
-    } catch (error) {
-      // Lança uma exceção HTTP com a mensagem de erro
-      throw new NotFoundException(error.message);
-    }
-  }
-
-  // Rota para verificar se um usuário já possui uma Subscription
-  @Get(':userId/subscription')
-  async getUserSubscription(@Param('userId') userId: string) {
-    try {
-      // Converte o ID para número e chama o serviço
-      const subscription = await this.usersService.getUserSubscription(Number(userId));
-      return subscription;
-    } catch (error) {
-      // Lança uma exceção HTTP com a mensagem de erro
-      throw new NotFoundException(error.message);
-    }
-  }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Delete, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Delete, Param, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 import { ComponentsService } from './components.service';
 
@@ -33,6 +33,17 @@ export class ComponentsController {
   @Post()
   async createComponent(@Body() body: { name: string; cssContent: string }) {
     const { name, cssContent } = body;
+
+    // Validação manual
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      throw new BadRequestException('O campo "name" é obrigatório e deve ser uma string não vazia.');
+    }
+
+    if (!cssContent || typeof cssContent !== 'string' || cssContent.trim() === '') {
+      throw new BadRequestException('O campo "cssContent" é obrigatório e deve ser uma string não vazia.');
+    }
+
+    // Chama o serviço para criar o componente
     return this.componentsService.createComponent(name, cssContent);
   }
 
