@@ -178,8 +178,25 @@ export default function LoginForm() {
           ) : (
             isLogin ? "Entrar" : "Cadastrar"
           )}
-        </button>
-      </form>
+        </button>      </form>
+
+      <div className={styles.divider}>ou</div>
+      
+      <button 
+        type="button"
+        className={styles.googleButton}
+        onClick={() => window.location.href = "http://localhost:3000/auth/google"}
+        aria-label="Entrar com Google"
+      >
+        <img 
+          src="/google-logo.svg" 
+          alt="Google" 
+          width="18" 
+          height="18" 
+          className={styles.googleLogo}
+        />
+        Entrar com Google
+      </button>
 
       <div className={`${styles.switchMode} ${styles.formToggle}`}>
         {isLogin ? (

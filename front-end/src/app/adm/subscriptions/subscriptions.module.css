@@ -1,0 +1,135 @@
+/* Subscriptions page specific styles */
+
+/* Tabs */
+.tabsContainer {
+  margin-bottom: var(--spacing-lg);
+}
+
+.tabsHeader {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--spacing-lg);
+  overflow-x: auto;
+}
+
+.tabButton {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.tabButton:hover {
+  color: var(--text-primary);
+}
+
+.tabButton.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* User info */
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.userAvatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  background-color: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.userName {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+/* Plan badges */
+.planBasic, .planPro, .planEnterprise {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.planBasic {
+  background-color: var(--surface-secondary);
+  color: var(--text-secondary);
+}
+
+.planPro {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #1e40af;
+}
+
+.planEnterprise {
+  background-color: rgba(99, 102, 241, 0.1);
+  color: #3730a3;
+}
+
+/* Status badges */
+.statusActive, .statusPending {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.statusActive {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #166534;
+}
+
+.statusPending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+}
+
+/* Action buttons */
+.actionButtons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.editButton, .deleteButton {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+}
+
+.editButton {
+  background-color: var(--surface-secondary);
+  color: var(--text-secondary);
+}
+
+.editButton:hover {
+  background-color: var(--surface-hover);
+}
+
+.deleteButton {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+}
+
+.deleteButton:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}

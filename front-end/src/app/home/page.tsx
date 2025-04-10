@@ -20,12 +20,12 @@ export default function HomePage() {
   useEffect(() => {
     setLoaded(true);
   }, []);
-  
-  return (
+    return (
     <div className={styles.pageWrapper}>
       <Header />
       <div className={styles.layoutContainer}>
-        <Sidebar />
+        {/* Sidebar para navegação */}
+        <Sidebar isAdmin={false} />
         <main className={`${styles.mainContent} ${loaded ? styles.loaded : ""}`}>
           <div className={styles.contentHeader}>
             <h1 className={styles.pageTitle}>Estilos de CSS Disponíveis</h1>
