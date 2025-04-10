@@ -1,43 +1,196 @@
-.container {
-  padding: 2rem;
+.pageWrapper {
+  min-height: 100vh;
   background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, sans-serif;
 }
 
-.title {
-  text-align: center;
-  font-size: 2.5rem;
+.layoutContainer {
+  display: flex;
+  position: relative;
+  min-height: calc(100vh - 64px);
+}
+
+.mainContent {
+  flex: 1;
+  padding: 24px 32px;
+  margin-left: 240px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  transform: translateY(10px);
+  overflow-x: hidden;
+  min-height: calc(100vh - 64px);
+  background-color: var(--background);
+}
+
+.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Quando a sidebar está colapsada */
+.sidebarCollapsed .mainContent {
+  margin-left: 64px;
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 24px 20px;
+  }
+  
+  .sidebarCollapsed .mainContent {
+    margin-left: 0;
+  }
+}
+
+.contentHeader {
   margin-bottom: 2rem;
+}
+
+.pageTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.pageDescription {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  max-width: 600px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .card {
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1.5rem;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
 }
 
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(var(--primary-rgb), 0.2);
 }
 
-.card h2 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
+.card:hover::before {
+  transform: scaleX(1);
 }
 
-.card p {
-  font-size: 1rem;
-  color: #555;
+.cardContent {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.cardDescription {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.cardFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background-color: var(--surface-secondary);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cardButton {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1.2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardButton::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.8s ease;
+}
+
+.cardButton:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(var(--primary-rgb), 0.3);
+}
+
+.cardButton:hover::before {
+  left: 100%;
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 20px;
+  }
+  
+  .pageTitle {
+    font-size: 1.75rem;
+  }
+  
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
 }
