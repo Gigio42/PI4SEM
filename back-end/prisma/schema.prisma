@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db" // Banco de dados local SQLite
+  provider = "postgresql" // Usando PostgreSQL como banco de dados
+  url      = env("DATABASE_URL") // URL do banco de dados PostgreSQL
 }
 
 model User {

@@ -33,7 +33,7 @@ export class UsersController {
     return this.usersService.createUser(email, password);
   }
 
-  @Get('login')
+  @Post('login')
   async loginUser(@Body() body: { email: string; password: string }) {
     const { email, password } = body;
     const user = await this.usersService.findUserByEmailAndPassword(email, password);

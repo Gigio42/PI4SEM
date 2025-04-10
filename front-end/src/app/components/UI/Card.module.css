@@ -1,0 +1,69 @@
+.card {
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.cardTitle {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.cardSubtitle {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.cardContent {
+  color: var(--text-primary);
+}
+
+.cardActions {
+  margin-top: var(--spacing-md);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.cardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Variantes de cor para os ícones */
+.iconSend {
+  color: var(--action-send);
+}
+
+.iconTopup {
+  color: var(--action-topup);
+}
+
+.iconPayment {
+  color: var(--action-payment);
+}
+
+.iconWithdraw {
+  color: var(--action-withdraw);
+}
+
+.iconPackages {
+  color: var(--action-packages);
+}

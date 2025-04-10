@@ -111,7 +111,7 @@ describe('UsersController (e2e)', () => {
       .expect(400); // Deve retornar erro 400
   });
 
-  it('/users/login (GET) - Login de Usuário com credenciais válidas', async () => {
+  it('/users/login (POST) - Login de Usuário com credenciais válidas', async () => {
     const email = `test${Date.now()}@example.com`;
     const password = 'testpassword';
 
@@ -121,7 +121,7 @@ describe('UsersController (e2e)', () => {
       .send({ email, password });
 
     return request(app.getHttpServer())
-      .get('/users/login')
+      .post('/users/login')  // Changed from GET to POST
       .send({ email, password })
       .expect(200)
       .expect((res) => {
@@ -129,35 +129,35 @@ describe('UsersController (e2e)', () => {
       });
   });
 
-  it('/users/login (GET) - Login de Usuário com credenciais inválidas', async () => {
+  it('/users/login (POST) - Login de Usuário com credenciais inválidas', async () => {
     return request(app.getHttpServer())
-      .get('/users/login')
-      .send({ email: 'invalid@example.com', password: 'wrongpassword' }) // Credenciais inválidas
-      .expect(404) // Deve retornar erro 404
+      .post('/users/login')  // Changed from GET to POST
+      .send({ email: 'invalid@example.com', password: 'wrongpassword' })
+      .expect(404)
       .expect((res) => {
         expect(res.body.message).toBe('Usuário ou senha inválidos');
       });
   });
 
-  it('/users/login (GET) - Login de Usuário com entrada maliciosa (SQL Injection)', async () => {
+  it('/users/login (POST) - Login de Usuário com entrada maliciosa (SQL Injection)', async () => {
     return request(app.getHttpServer())
-      .get('/users/login')
-      .send({ email: "' OR 1=1; --", password: 'wrongpassword' }) // Entrada maliciosa
-      .expect(404); // Deve retornar erro 404
+      .post('/users/login')  // Changed from GET to POST
+      .send({ email: "' OR 1=1; --", password: 'wrongpassword' })
+      .expect(404);
   });
 
-  it('/users/login (GET) - Login com email não registrado', () => {
+  it('/users/login (POST) - Login com email não registrado', () => {
     return request(app.getHttpServer())
-      .get('/users/login')
+      .post('/users/login')  // Changed from GET to POST
       .send({ email: 'notregistered@example.com', password: 'testpassword' })
-      .expect(404); // Deve retornar erro 404
+      .expect(404);
   });
 
-  it('/users/login (GET) - Login com SQL Injection no campo password', () => {
+  it('/users/login (POST) - Login com SQL Injection no campo password', () => {
     return request(app.getHttpServer())
-      .get('/users/login')
-      .send({ email: 'test@example.com', password: "' OR 1=1; --" }) // Entrada maliciosa
-      .expect(404); // Deve retornar erro 404
+      .post('/users/login')  // Changed from GET to POST
+      .send({ email: 'test@example.com', password: "' OR 1=1; --" })
+      .expect(404);
   });
 
   afterAll(async () => {
