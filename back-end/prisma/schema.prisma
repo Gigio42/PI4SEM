@@ -3,14 +3,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // Usando PostgreSQL como banco de dados
-  url      = env("DATABASE_URL") // URL do banco de dados PostgreSQL
+  provider = "sqlite"  // Changed from postgresql to sqlite
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id            Int            @id @default(autoincrement())
-  email         String         @unique // Limita o tamanho do email
-  password      String?                             // Limita o tamanho da senha
+  email         String         @unique
+  password      String?
   googleId      String?        @unique
   name          String?
   picture       String?
@@ -29,6 +29,6 @@ model Subscription {
 
 model Component {
   id         Int    @id @default(autoincrement())
-  name       String // Limita o tamanho do nome a 100 caracteres
-  cssContent String                  // Permite conteúdo CSS grande
+  name       String
+  cssContent String
 }
