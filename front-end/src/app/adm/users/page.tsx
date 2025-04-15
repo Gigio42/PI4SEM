@@ -6,8 +6,19 @@ import Sidebar from "../../components/Sidebar/Sidebar";
 import adminStyles from "../admin.module.css";
 import styles from "./users.module.css";
 
+// Definição de interface para o tipo User
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'user' | 'admin';
+  status: 'active' | 'inactive';
+  signupDate: string;
+  initials: string;
+}
+
 // Mock user data - will be replaced with API call
-const mockUsers = [
+const mockUsers: User[] = [
   {
     id: '1',
     name: 'Maria Silva',
@@ -70,12 +81,12 @@ export default function ManageUsers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(5);
-  const [actionUser, setActionUser] = useState(null);
+  const [actionUser, setActionUser] = useState<User | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [modalAction, setModalAction] = useState(''); // 'activate' or 'deactivate'
+  const [modalAction, setModalAction] = useState<'activate' | 'deactivate'>('deactivate');
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -134,19 +145,21 @@ export default function ManageUsers() {
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   // Format date to Brazilian standard
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
   };
 
   // Handle user activation/deactivation
-  const handleStatusAction = (user, action) => {
+  const handleStatusAction = (user: User, action: 'activate' | 'deactivate'): void => {
     setActionUser(user);
     setModalAction(action);
     setShowConfirmModal(true);
   };
 
-  const handleConfirmAction = async () => {
+  const handleConfirmAction = async (): Promise<void> => {
+    if (!actionUser) return;
+    
     try {
       setIsProcessing(true);
       
@@ -368,23 +381,28 @@ export default function ManageUsers() {
                 </h2>
                 <p>
                   Deseja realmente {modalAction === 'activate' ? 'ativar' : 'desativar'} o usuário <strong>{actionUser?.name}</strong>?
-                  {modalAction === 'deactivate' && ' O usuário não poderá acessar a plataforma enquanto estiver desativado.'}
                 </p>
                 <div className={adminStyles.modalActions}>
                   <button 
                     className={adminStyles.cancelButton}
                     onClick={() => setShowConfirmModal(false)}
-                    aria-label="Cancelar"
+                    disabled={isProcessing}
                   >
                     Cancelar
                   </button>
                   <button 
-                    className={modalAction === 'activate' ? adminStyles.activateButton : adminStyles.confirmDeleteButton}
+                    className={modalAction === 'activate' ? adminStyles.saveButton : adminStyles.confirmDeleteButton}
                     onClick={handleConfirmAction}
                     disabled={isProcessing}
-                    aria-label={`Confirmar ${modalAction === 'activate' ? 'ativação' : 'desativação'}`}
                   >
-                    {isProcessing ? 'Processando...' : modalAction === 'activate' ? 'Ativar' : 'Desativar'}
+                    {isProcessing ? (
+                      <>
+                        <span className={adminStyles.smallSpinner}></span>
+                        Processando...
+                      </>
+                    ) : (
+                      modalAction === 'activate' ? 'Ativar' : 'Desativar'
+                    )}
                   </button>
                 </div>
               </div>

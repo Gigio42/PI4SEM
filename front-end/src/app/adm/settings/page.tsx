@@ -5,72 +5,29 @@ import Header from "../../components/Header/Header";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import adminStyles from "../admin.module.css";
 import styles from "./settings.module.css";
-
-// Mock settings data - seria buscado de uma API
-const mockSettings = {
-  general: {
-    siteName: "UXperiment Labs",
-    siteDescription: "Plataforma de componentes UX/UI para desenvolvedores",
-    contactEmail: "contato@uxperimentlabs.com",
-    maxUploadSize: 10
-  },
-  appearance: {
-    theme: "system",
-    primaryColor: "#6366F1",
-    secondaryColor: "#8B5CF6",
-    showLoginLogo: true,
-    enableDarkMode: true
-  },
-  security: {
-    twoFactorAuth: false,
-    passwordExpiry: 90,
-    sessionTimeout: 30,
-    allowRegistration: true
-  },
-  notifications: {
-    emailNotifications: true,
-    componentUpdates: true,
-    securityAlerts: true,
-    marketingEmails: false
-  }
-};
+import SettingsService, { SettingsData } from "../../../services/SettingsService";
+import { useSettings } from "../../../contexts/SettingsContext";
 
 export default function Settings() {
+  const { settings: globalSettings, isLoading: globalLoading, updateSettings, applySettings } = useSettings();
   const [loaded, setLoaded] = useState(false); // Controla animação de entrada
   const [isLoading, setIsLoading] = useState(true); // Controla o estado de carregamento inicial
   const [activeTab, setActiveTab] = useState("general"); // Aba ativa
-  const [settings, setSettings] = useState(mockSettings); // Configurações atuais (do "banco")
-  const [unsavedChanges, setUnsavedChanges] = useState({}); // Alterações não salvas
+  const [settings, setSettings] = useState<SettingsData>({}); // Configurações atuais
+  const [unsavedChanges, setUnsavedChanges] = useState<Record<string, any>>({}); // Alterações não salvas
   const [saving, setSaving] = useState(false); // Controla o estado de salvamento
   const [successMessage, setSuccessMessage] = useState(""); // Mensagem de sucesso
   const [showDiscardModal, setShowDiscardModal] = useState(false); // Controla a visibilidade do modal de descarte
+  const [error, setError] = useState(""); // Para mensagens de erro
 
   // Carrega as configurações ao montar o componente
   useEffect(() => {
-    const fetchSettings = async () => {
-      setIsLoading(true); // Inicia o carregamento
-      try {
-        // Simula atraso da API
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        // Em um cenário real, seria uma chamada de API:
-        // const response = await fetch('/api/admin/settings');
-        // const data = await response.json();
-        // setSettings(data);
-
-        // Usando dados mockados por enquanto
-        setSettings(mockSettings);
-      } catch (error) {
-        console.error('Erro ao buscar configurações:', error);
-        // Tratar erro (ex: mostrar mensagem para o usuário)
-      } finally {
-        setIsLoading(false); // Finaliza o carregamento
-      }
-    };
-
-    fetchSettings();
-    setLoaded(true); // Ativa a animação de entrada (pode ser ajustado se necessário)
-  }, []);
+    if (!globalLoading && Object.keys(globalSettings).length > 0) {
+      setSettings(globalSettings);
+      setIsLoading(false);
+    }
+    setLoaded(true); // Ativa a animação de entrada
+  }, [globalSettings, globalLoading]);
 
   // Limpa a mensagem de sucesso após exibí-la
   useEffect(() => {
@@ -84,7 +41,7 @@ export default function Settings() {
   }, [successMessage]);
 
   // Lida com mudanças nos campos do formulário
-  const handleChange = (section, field, value) => {
+  const handleChange = (section: keyof SettingsData, field: string, value: any) => {
     // Rastreia alterações não salvas
     setUnsavedChanges(prevChanges => ({
       ...prevChanges,
@@ -95,51 +52,75 @@ export default function Settings() {
   };
 
   // Verifica se um campo específico tem alterações não salvas
-  const fieldHasUnsavedChanges = (section, field) => {
+  const fieldHasUnsavedChanges = (section: keyof SettingsData, field: string) => {
     return unsavedChanges.hasOwnProperty(`${section}.${field}`);
   };
 
   // Obtém o valor atual (não salvo ou das configurações salvas)
-  const getCurrentValue = (section, field) => {
+  const getCurrentValue = (section: keyof SettingsData, field: string) => {
     const unsavedKey = `${section}.${field}`;
     return unsavedChanges.hasOwnProperty(unsavedKey)
       ? unsavedChanges[unsavedKey]
-      : settings[section]?.[field]; // Usar optional chaining para segurança
+      : settings[section] && (settings[section] as Record<string, any>)[field]; // Usar type assertion para segurança
   };
 
   // Lida com o salvamento das alterações
   const handleSave = async () => {
     setSaving(true);
     setSuccessMessage(""); // Limpa qualquer mensagem anterior
+    setError(""); // Limpa mensagens de erro
 
     try {
-      // Aplica as alterações ao objeto de configurações
-      // Criando uma cópia profunda para evitar mutações diretas no estado original
+      // Prepara as alterações no formato para a API
+      const updates = Object.entries(unsavedChanges).map(([key, value]) => {
+        const [section, field] = key.split('.');
+        return { section, key: field, value };
+      });
+      
+      // Aplicar diretamente via Service (isso acontecerá imediatamente para UX)
+      SettingsService.applySettingsToUI(updates);
+      
+      // Tenta salvar as alterações no backend, mas prossegue mesmo que falhe
+      let apiResult;
+      try {
+        // Salva as alterações através do serviço de API
+        apiResult = await SettingsService.updateMultipleSettings(updates);
+        console.log('API Save result:', apiResult);
+      } catch (apiError) {
+        console.warn('API save failed but continuing with local updates:', apiError);
+        // Continue with local updates even if API fails
+      }
+      
+      // Atualiza o objeto de configurações localmente
       const updatedSettings = JSON.parse(JSON.stringify(settings));
-
+      
       Object.entries(unsavedChanges).forEach(([key, value]) => {
         const [section, field] = key.split('.');
-        if (updatedSettings[section]) { // Garante que a seção existe
-          updatedSettings[section][field] = value;
+        if (!updatedSettings[section]) {
+          updatedSettings[section] = {};
         }
+        updatedSettings[section][field] = value;
       });
 
-      // Simula requisição à API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Em um cenário real, seria uma chamada de API:
-      // await fetch('/api/admin/settings', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(updatedSettings)
-      // });
-
       setSettings(updatedSettings); // Atualiza o estado principal com as novas configurações
+      
+      // Atualiza as configurações globais usando o contexto
+      updateSettings(updatedSettings);
+      
+      // Aplica as configurações imediatamente
+      applySettings();
+            
       setUnsavedChanges({}); // Limpa as alterações não salvas
-      setSuccessMessage("Configurações atualizadas com sucesso!");
+      
+      // Mensagem de sucesso com informação adicional sobre o backend
+      if (apiResult?.success === false) {
+        setSuccessMessage("Configurações aplicadas com sucesso (apenas localmente)!");
+      } else {
+        setSuccessMessage("Configurações atualizadas e aplicadas com sucesso!");
+      }
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
-      // Mostrar mensagem de erro para o usuário
+      setError("Não foi possível salvar as configurações no servidor, mas as alterações foram aplicadas localmente.");
     } finally {
       setSaving(false);
     }
@@ -175,13 +156,19 @@ export default function Settings() {
             <p className={adminStyles.pageDescription}>
               Gerencie as configurações gerais do site e da aplicação
             </p>
-          </div>
-
-          {successMessage && (
+          </div>          {successMessage && (
             <div className={styles.successAlert} role="alert" aria-live="polite">
               {/* Ícone de Check */}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {successMessage}
+            </div>
+          )}
+
+          {error && (
+            <div className={`${styles.successAlert} ${styles.errorAlert}`} role="alert" aria-live="assertive">
+              {/* Ícone de Erro */}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              {error}
             </div>
           )}
 

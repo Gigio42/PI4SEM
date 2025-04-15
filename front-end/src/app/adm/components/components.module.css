@@ -1,73 +1,151 @@
-/* Components management page specific styles */
+/* Estilos específicos para a página de gerenciamento de componentes */
 
-/* Component name with preview */
+/* Grid de componentes */
+.componentsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* Card de componente */
+.componentCard {
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.componentCard:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+/* Cabeçalho do card */
+.componentHeader {
+  padding: var(--spacing-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface);
+}
+
 .componentName {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.componentCategory {
+  font-size: var(--font-size-sm);
+  color: var(--primary);
+  background-color: rgba(var(--primary-rgb), 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+/* Preview do componente */
+.componentPreview {
+  height: 100px;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-weight: 500;
-  color: var(--text-primary);
+  justify-content: center;
+  overflow: hidden;
 }
 
-.componentPreview {
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
+/* Código CSS */
+.componentCode {
+  padding: var(--spacing-md);
+  background-color: var(--surface-secondary);
+  color: var(--text-secondary);
+  font-family: monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow: hidden;
+  flex-grow: 1;
+  max-height: 100px;
+  position: relative;
 }
 
-/* Status badges */
-.statusActive, .statusInactive {
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 500;
+.componentCode::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: linear-gradient(transparent, var(--surface-secondary));
 }
 
-.statusActive {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #166534;
-}
-
-.statusInactive {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #991b1b;
-}
-
-/* Action buttons */
-.actionButtons {
+/* Ações */
+.componentActions {
+  padding: var(--spacing-md);
   display: flex;
-  gap: var(--spacing-sm);
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
 }
 
-.editButton, .deleteButton {
-  padding: 0.25rem 0.75rem;
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
   border-radius: var(--radius-sm);
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  border: none;
   cursor: pointer;
   transition: var(--transition);
-  border: none;
 }
 
 .editButton {
-  background-color: var(--surface-secondary);
-  color: var(--text-secondary);
+  color: var(--primary);
+  background-color: rgba(var(--primary-rgb), 0.1);
 }
 
 .editButton:hover {
-  background-color: var(--surface-hover);
+  background-color: rgba(var(--primary-rgb), 0.2);
 }
 
 .deleteButton {
+  color: var(--google-red);
   background-color: rgba(239, 68, 68, 0.1);
-  color: #b91c1c;
 }
 
 .deleteButton:hover {
   background-color: rgba(239, 68, 68, 0.2);
 }
 
-/* Modal styles */
+.confirmDeleteButton {
+  background-color: var(--google-red);
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.confirmDeleteButton:hover {
+  background-color: var(--google-red-dark);
+}
+
+/* Modal para confirmação de exclusão */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -78,68 +156,198 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: 1000;
 }
 
 .modalContent {
   background-color: var(--surface);
   border-radius: var(--radius);
+  padding: var(--spacing-lg);
   width: 100%;
-  max-width: 28rem;
-  padding: 1.5rem;
+  max-width: 400px;
   box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
 }
 
 .modalTitle {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  margin-top: 0;
   margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
 }
 
 .modalActions {
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-md);
-  margin-top: var(--spacing-xl);
-}
-
-.cancelButton, .confirmDeleteButton {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  border: none;
+  margin-top: var(--spacing-lg);
 }
 
 .cancelButton {
   background-color: var(--surface-secondary);
   color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .cancelButton:hover {
   background-color: var(--surface-hover);
 }
 
-.confirmDeleteButton {
-  background-color: var(--google-red);
+/* Formulários */
+.componentForm {
+  padding: var(--spacing-lg);
+}
+
+.formTitle {
+  margin-top: 0;
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.formTitle::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  border-radius: 3px;
+}
+
+.formGroup {
+  margin-bottom: var(--spacing-lg);
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.formInput,
+.formSelect,
+.formTextarea {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  transition: border-color 0.2s;
+}
+
+.formInput:focus,
+.formSelect:focus,
+.formTextarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+}
+
+.formTextarea {
+  min-height: 150px;
+  resize: vertical;
+  font-family: monospace;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.submitButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background-color: var(--primary);
   color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.confirmDeleteButton:hover {
-  background-color: var(--google-red-dark);
+.submitButton:hover:not(:disabled) {
+  background-color: var(--primary-dark);
 }
 
-/* Empty state */
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.colorPickerContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.colorPreview {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+/* Estados de carregamento e erros */
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xl);
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(var(--primary-rgb), 0.2);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--google-red);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-sm);
+}
+
+/* Estado vazio */
 .emptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 0;
-  color: var(--text-secondary);
+  padding: var(--spacing-xl) 0;
   text-align: center;
 }
 
@@ -149,8 +357,44 @@
 }
 
 .emptyState h3 {
-  margin-bottom: var(--spacing-sm);
-  font-size: var(--font-size-base);
-  font-weight: 600;
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--text-primary);
+}
+
+.emptyState p {
   color: var(--text-secondary);
+  max-width: 400px;
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .componentsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modalContent {
+    max-width: 90%;
+  }
+}
+
+/* Pequena animação para componentes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.componentCard {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Spinner para dentro de botões */
+.smallSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
 }

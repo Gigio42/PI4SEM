@@ -5,21 +5,23 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { ComponentsModule } from './components/components.module';
 import { AuthModule } from './auth/auth.module';
-import { PrismaService } from './prisma/prisma.service';
+import { PrismaModule } from './prisma/prisma.module';
 import { SubscriptionModule } from './subscription/subscription.module';
+import { SettingsModule } from './settings/settings.module';
 
-@Module({
-  imports: [
+@Module({  imports: [
     ConfigModule.forRoot({
       isGlobal: true, // Torna o ConfigModule acessível globalmente
       envFilePath: '.env', // Especifica o caminho do arquivo .env
     }),
+    PrismaModule,
     UsersModule,
     ComponentsModule,
     AuthModule,
     SubscriptionModule,
+    SettingsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -27,6 +27,8 @@ CREATE TABLE "Component" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "cssContent" TEXT NOT NULL,
+    "category" TEXT NOT NULL DEFAULT 'Outros',
+    "color" TEXT NOT NULL DEFAULT '#6366F1',
 
     CONSTRAINT "Component_pkey" PRIMARY KEY ("id")
 );

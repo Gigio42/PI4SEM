@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "./context/ThemeContext";
+import { SettingsProvider } from "../contexts/SettingsContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "UXperiment Labs",
-  description: "Plataforma de laboratórios de UX",
+  description: "Plataforma de desenvolvimento e experimentação de componentes UI",
 };
 
 export default function RootLayout({
@@ -18,7 +19,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={inter.className}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <SettingsProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

@@ -28,7 +28,21 @@ model Subscription {
 }
 
 model Component {
-  id         Int    @id @default(autoincrement())
-  name       String // Limita o tamanho do nome a 100 caracteres
-  cssContent String                  // Permite conteúdo CSS grande
+  id          Int      @id @default(autoincrement())
+  name        String
+  cssContent  String
+  category    String   @default("Outros")
+  color       String   @default("#6366F1")
+  // Fields might be different in your actual schema
+}
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  section   String
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([section, key])
 }

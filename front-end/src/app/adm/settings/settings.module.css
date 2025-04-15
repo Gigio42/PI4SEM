@@ -276,6 +276,12 @@ input:disabled + .toggleLabel {
   margin-bottom: var(--spacing-lg);
 }
 
+.errorAlert {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+  border-left: 4px solid #ef4444;
+}
+
 .modalOverlay {
   position: fixed;
   top: 0;
