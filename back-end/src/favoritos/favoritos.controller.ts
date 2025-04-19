@@ -13,13 +13,16 @@ import { FavoritosService } from './favoritos.service';
  * - GET /components: Retorna todos os favoritos.
  * - DELETE /components/:id: Remove um favorito pelo ID.
  */
-@Controller('favoritos')
+Controller('favoritos')
 export class FavoritosController {
   constructor(private readonly favoritosService: FavoritosService) {}
 
   @Post()
   async create(@Body() data: { userId: string; componentId: string }) {
-    return this.favoritosService.create(data);
+    return this.favoritosService.create({
+      userId: Number(data.userId),
+      componentId: Number(data.componentId),
+    });
   }
 
   @Get()
@@ -32,13 +35,16 @@ export class FavoritosController {
     return this.favoritosService.findOne(id);
   }
 
-  /*@Put(':id')
+  @Put(':id')
   async update(
     @Param('id') id: string,
     @Body() data: { userId?: string; componentId?: string },
   ) {
-    return this.favoritosService.update(id, data);
-  }*/
+    return this.favoritosService.update(id, {
+      userId: data.userId ? Number(data.userId) : undefined,
+      componentId: data.componentId ? Number(data.componentId) : undefined,
+    });
+  }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
