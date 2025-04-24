@@ -18,13 +18,50 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
-  
   useEffect(() => {
-    setMounted(true);
+    setMounted(true);    // Verificar se o usuário está logado e é administrador
+    const checkAdminStatus = () => {
+      try {
+        // Recupera o usuário do localStorage (presumindo que sua aplicação salva essas informações)
+        const userData = localStorage.getItem('user');
+        console.log('Dados do usuário encontrados:', userData);
+        
+        if (userData) {
+          const user = JSON.parse(userData);
+          console.log('Usuário parseado:', user);
+          console.log('Role do usuário:', user.role);
+          console.log('Email do usuário:', user.email);
+          
+          // Verifica se o usuário tem role 'admin' ou, como fallback, se o email é de administrador
+          const isUserAdmin = 
+            user.role === 'admin' || 
+            user.email?.endsWith('@admin.com') || 
+            user.email === 'admin@uxperiment.com';
+          
+          console.log('Usuário é admin?', isUserAdmin);
+          setIsAdmin(isUserAdmin);
+        } else {
+          console.log('Nenhum dado de usuário encontrado no localStorage');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar status de administrador:', error);
+        setIsAdmin(false);
+      }
+    };
+    
+    checkAdminStatus();
+    
+    // Adiciona um event listener para quando o localStorage mudar
+    window.addEventListener('storage', checkAdminStatus);
+    
+    return () => {
+      window.removeEventListener('storage', checkAdminStatus);
+    };
   }, []);
 
   useEffect(() => {
@@ -205,8 +242,7 @@ export default function Header() {
                 <span>JD</span>
               </button>
               
-              {showUserMenu && (
-                <div 
+              {showUserMenu && (                <div 
                   id="user-menu" 
                   className={styles.userMenu} 
                   ref={userMenuRef}
@@ -218,6 +254,13 @@ export default function Header() {
                         Meu Perfil
                       </Link>
                     </li>
+                    {isAdmin && (
+                      <li role="menuitem">
+                        <Link href="/adm">
+                          Administração
+                        </Link>
+                      </li>
+                    )}
                     <li role="menuitem">
                       <Link href="/settings">
                         Configurações

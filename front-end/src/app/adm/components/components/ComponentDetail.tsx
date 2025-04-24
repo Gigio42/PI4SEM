@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Component } from '@/types/component';
@@ -7,6 +5,8 @@ import { FavoritosService } from '@/services/FavoritosService';
 import styles from '../components-detail.module.css';
 import aiStyles from '../components-ai.module.css';
 import compStyles from '../components.module.css';
+import FavoriteButton from '@/components/FavoriteButton/FavoriteButton';
+import { useNotification } from '@/contexts/NotificationContext';
 
 interface ComponentDetailProps {
   component: Component | null;
@@ -17,12 +17,11 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
   const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
-  const [showNotification, setShowNotification] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState('');
   const [mounted, setMounted] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
+  const { showToast } = useNotification();
   // ID do usuário atual (normalmente viria de um contexto de autenticação)
   // Este é apenas um exemplo, você deve obter o ID real do usuário logado
   const userId = 1; // Substitua pelo ID real do usuário logado
@@ -37,7 +36,6 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
       checkIsFavorite();
     }
   }, [component]);
-
   const checkIsFavorite = async () => {
     if (!component) return;
     try {
@@ -51,7 +49,6 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
       setIsLoadingFavorite(false);
     }
   };
-
   const toggleFavorite = async () => {
     if (!component) return;
     
@@ -63,26 +60,17 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
         await FavoritosService.removeFavorito(favoriteId);
         setIsFavorite(false);
         setFavoriteId(null);
-        setNotificationMessage('Componente removido dos favoritos');
+        showToast('Componente removido dos favoritos', 'success');
       } else {
         // Adicionar aos favoritos
         const response = await FavoritosService.addFavorito(userId, component.id);
         setIsFavorite(true);
         setFavoriteId(response.id);
-        setNotificationMessage('Componente adicionado aos favoritos');
+        showToast('Componente adicionado aos favoritos', 'success');
       }
-      
-      setShowNotification(true);
-      setTimeout(() => {
-        setShowNotification(false);
-      }, 3000);
     } catch (error) {
       console.error('Erro ao atualizar favorito:', error);
-      setNotificationMessage('Erro ao atualizar favoritos');
-      setShowNotification(true);
-      setTimeout(() => {
-        setShowNotification(false);
-      }, 3000);
+      showToast('Erro ao atualizar favoritos', 'error');
     } finally {
       setIsLoadingFavorite(false);
     }
@@ -91,21 +79,13 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
   if (!component) {
     return null;
   }
-
   const handleCopy = (content: string, type: string) => {
     navigator.clipboard.writeText(content);
-    setNotificationMessage(`${type} copiado com sucesso!`);
-    setShowNotification(true);
-    
-    // Esconder a notificação após 3 segundos
-    setTimeout(() => {
-      setShowNotification(false);
-    }, 3000);
+    showToast(`${type} copiado com sucesso!`, 'success');
   };
 
   const detailContent = (
-    <div className={styles.detailSidebar}>
-      <div className={styles.detailHeader}>
+    <div className={styles.detailSidebar}>      <div className={styles.detailHeader}>
         <button 
           type="button" 
           className={styles.closeButton}
@@ -117,6 +97,21 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
           </svg>
         </button>
         <h2 className={styles.detailTitle}>{component.name}</h2>
+        <FavoriteButton 
+          componentId={component.id}
+          userId={userId}
+          initialState={isFavorite}
+          size="medium"
+          onToggle={(isFavorited) => {
+            if (isFavorited) {
+              setIsFavorite(true);
+              showToast('Componente adicionado aos favoritos', 'success');
+            } else {
+              setIsFavorite(false);
+              showToast('Componente removido dos favoritos', 'success');
+            }
+          }}
+        />
       </div>
 
       <div className={styles.detailTabs}>
@@ -264,45 +259,15 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
               </div>
               <pre className={styles.codeContent}>{component.cssContent}</pre>
             </div>
-          </div>
-        )}
-      </div>      <div className={styles.detailActions}>
-        <button 
-          className={styles.favoriteButton}
-          onClick={toggleFavorite}
-          disabled={isLoadingFavorite}
-        >
-          {isLoadingFavorite ? (
-            <span>Carregando...</span>
-          ) : isFavorite ? (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 8.25c0 2.485-2.02 4.5-4.5 4.5s-4.5-2.015-4.5-4.5S14.02 3.75 16.5 3.75s4.5 2.015 4.5 4.5zM13.5 8.25c0 2.485-2.02 4.5-4.5 4.5S4.5 10.735 4.5 8.25 6.52 3.75 9 3.75s4.5 2.015 4.5 4.5zM16.5 15.75c-3.141 0-6.103 1.504-7.953 4.01a.75.75 0 01-1.238-.835c2.099-3.106 5.631-4.925 9.191-4.925 3.56 0 7.092 1.819 9.191 4.925a.75.75 0 01-1.238.835c-1.85-2.506-4.812-4.01-7.953-4.01zM9 15.75c-3.141 0-6.103 1.504-7.953 4.01a.75.75 0 01-1.238-.835C1.908 15.819 5.44 14 9 14s7.092 1.819 9.191 4.925a.75.75 0 01-1.238.835C15.103 17.254 12.141 15.75 9 15.75z" />
-              </svg>
-              Remover dos Favoritos
-            </>
-          ) : (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Adicionar aos Favoritos
-            </>
-          )}
-        </button>
-        <button className={styles.downloadButton}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M7 10L12 15M12 15L17 10M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Download
-        </button>
+          </div>        )}      </div>      <div className={styles.detailActions}>
+        <div className={styles.actionsGroup}>
+          <button className={styles.downloadButton}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M7 10L12 15M12 15L17 10M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Download
+          </button>        </div>
       </div>
-
-      {showNotification && (
-        <div className={compStyles.notification}>
-          {notificationMessage}
-        </div>
-      )}
     </div>
   );
 

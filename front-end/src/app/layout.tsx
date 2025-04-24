@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SettingsProvider } from "../contexts/SettingsContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
+import { NotificationProvider } from "../contexts/NotificationContext";
+import SetAdminUser from "./components/SetAdminUser";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +23,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <SettingsProvider>
           <ThemeProvider>
-            {children}
+            <NotificationProvider>
+              <SetAdminUser />
+              {children}
+            </NotificationProvider>
           </ThemeProvider>
         </SettingsProvider>
       </body>

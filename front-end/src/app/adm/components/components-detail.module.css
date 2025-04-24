@@ -227,3 +227,9 @@
     width: 100%;
   }
 }
+
+.actionsGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

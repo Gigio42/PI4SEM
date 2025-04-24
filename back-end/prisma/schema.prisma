@@ -14,6 +14,7 @@ model User {
   googleId      String?        @unique
   name          String?
   picture       String?
+  role          String         @default("user")  // Novo campo: "user" ou "admin"
   subscriptions Subscription[]
   favoritos     Favorito[]     // Relação inversa
 }

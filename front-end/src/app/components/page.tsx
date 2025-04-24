@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from "react";
 import styles from "./components.module.css";
+import favStyles from "./favorite-styles.module.css";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { Component } from "@/types/component";
 import { ComponentsService } from "@/services/ComponentsService";
 import ComponentDetail from "../adm/components/components/ComponentDetail";
+import FavoriteButton from "@/components/FavoriteButton/FavoriteButton";
+import { useNotification } from "@/contexts/NotificationContext";
 
-export default function ComponentsPage() {  const [loaded, setLoaded] = useState(false);
+export default function ComponentsPage() {  
+  const [loaded, setLoaded] = useState(false);
   const [components, setComponents] = useState<Component[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +22,9 @@ export default function ComponentsPage() {  const [loaded, setLoaded] = useState
   const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const componentsPerPage = 8;
+  // ID do usuário atual (normalmente viria de um contexto de autenticação)
+  const userId = 1; // Substitua pelo ID real do usuário logado
+  const { showToast } = useNotification();
 
   useEffect(() => {
     setLoaded(true);
@@ -131,8 +138,7 @@ export default function ComponentsPage() {  const [loaded, setLoaded] = useState
           ) : (
             <>              <div className={styles.componentsGrid}>
                 {currentComponents.map((component) => (
-                  <div 
-                    key={component.id} 
+                  <div                    key={component.id} 
                     className={styles.componentCard}
                     onClick={() => handleComponentClick(component)}
                   >
@@ -140,7 +146,22 @@ export default function ComponentsPage() {  const [loaded, setLoaded] = useState
                       <h3 className={styles.componentName}>{component.name}</h3>
                       {component.category && (
                         <span className={styles.componentCategory}>{component.category}</span>
-                      )}
+                      )}                        <FavoriteButton 
+                          componentId={component.id}
+                          userId={userId}
+                          size="small"
+                          onToggle={(isFavorite) => {
+                            showToast(
+                              isFavorite 
+                                ? 'Componente adicionado aos favoritos' 
+                                : 'Componente removido dos favoritos',
+                              isFavorite ? 'success' : 'info'
+                            );
+                            // Evita o evento onClick do card
+                            setTimeout(() => {}, 0);
+                          }}
+                          className={styles.favoriteIcon}
+                        />
                     </div>
                     
                     <div 

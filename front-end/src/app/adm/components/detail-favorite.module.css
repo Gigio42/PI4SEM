@@ -1,0 +1,15 @@
+.detailFavoriteButton {
+  position: absolute;
+  top: 12px;
+  right: 60px;
+  z-index: 15;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.actionButtonsGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

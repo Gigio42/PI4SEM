@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { SettingsModule } from './settings/settings.module';
+import { FavoritosModule } from './favoritos/favoritos.module';
 
 @Module({  imports: [
     ConfigModule.forRoot({
@@ -20,6 +21,7 @@ import { SettingsModule } from './settings/settings.module';
     AuthModule,
     SubscriptionModule,
     SettingsModule,
+    FavoritosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

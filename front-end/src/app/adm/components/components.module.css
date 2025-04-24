@@ -6,6 +6,7 @@
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
+  padding: 1rem;
 }
 
 /* Card de componente */
@@ -94,6 +95,8 @@
   border-radius: var(--radius);
   font-size: 14px;
   font-weight: 500;
+  content: "clique para visualizar detalhes";
+  text-align: center;
 }
 
 .componentCard {
