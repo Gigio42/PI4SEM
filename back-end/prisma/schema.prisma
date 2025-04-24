@@ -3,18 +3,19 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // Usando PostgreSQL como banco de dados
-  url      = env("DATABASE_URL") // URL do banco de dados PostgreSQL
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id            Int            @id @default(autoincrement())
-  email         String         @unique // Limita o tamanho do email
-  password      String?                             // Limita o tamanho da senha
+  email         String         @unique
+  password      String?
   googleId      String?        @unique
   name          String?
   picture       String?
   subscriptions Subscription[]
+  favoritos     Favorito[]     // Relação inversa
 }
 
 model Subscription {
@@ -45,4 +46,15 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@unique([section, key])
+}
+
+model Favorito {
+  id          String   @id @default(uuid())
+  userId      Int
+  componentId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user       User      @relation(fields: [userId], references: [id])
+  component  Component @relation(fields: [componentId], references: [id])
 }
