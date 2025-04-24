@@ -13,25 +13,26 @@ export class ComponentsService {
   constructor() {
     this.prisma = new PrismaClient();
   }
-
   /**
    * Cria um novo componente CSS no banco de dados.
    * @param name - O nome do componente.
    * @param cssContent - O conteúdo CSS do componente.
    * @param category - A categoria do componente (opcional).
    * @param color - A cor representativa do componente (opcional).
+   * @param htmlContent - O conteúdo HTML do componente (opcional).
    * @returns O componente recém-criado com seus detalhes.
    */
-  async createComponent(name: string, cssContent: string, category?: string, color?: string) {
+  async createComponent(name: string, cssContent: string, category?: string, color?: string, htmlContent?: string) {
     return this.prisma.component.create({
       data: {
         name,
         cssContent,
+        htmlContent,
         category: category || 'Outros',
         color: color || '#6366F1', // Cor padrão se não for fornecida
       },
     });
-  }  /**
+  }/**
    * Busca um componente específico pelo ID.
    * @param id - O ID único do componente (esperado como string e convertido para número).
    * @returns O componente correspondente ou lança um erro caso não seja encontrado.

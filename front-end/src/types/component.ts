@@ -5,6 +5,7 @@ export interface Component {
   id: number;
   name: string;
   cssContent: string;
+  htmlContent?: string;
   category?: string;
   color?: string;
   downloads?: number;
@@ -19,6 +20,7 @@ export interface Component {
 export interface CreateComponentDto {
   name: string;
   cssContent: string;
+  htmlContent?: string;
   category?: string;
   color?: string;
 }
@@ -29,6 +31,7 @@ export interface CreateComponentDto {
 export interface UpdateComponentDto {
   name?: string;
   cssContent?: string;
+  htmlContent?: string;
   category?: string;
   color?: string;
 }

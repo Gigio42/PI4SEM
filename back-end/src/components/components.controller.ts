@@ -20,7 +20,6 @@ import { UpdateComponentDto } from './dto/update-component.dto';
 @Controller('components')
 export class ComponentsController {
   constructor(private readonly componentsService: ComponentsService) {}
-
   @ApiOperation({ summary: 'Cria um novo componente'})
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Componente criado com sucesso' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos fornecidos' })
@@ -31,7 +30,8 @@ export class ComponentsController {
       createComponentDto.name,
       createComponentDto.cssContent,
       createComponentDto.category,
-      createComponentDto.color
+      createComponentDto.color,
+      createComponentDto.htmlContent
     );
   }
 

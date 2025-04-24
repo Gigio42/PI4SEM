@@ -12,7 +12,6 @@ export class CreateSettingDto {
   @IsString()
   key: string;
 
-  @ApiProperty({ description: 'Setting value', type: 'any' })
-  @IsNotEmpty()
-  value: any; // Alterado de IsString para aceitar qualquer tipo
+  @ApiProperty({ description: 'Setting value' }) // Removed invalid type parameter
+  value: string;
 }

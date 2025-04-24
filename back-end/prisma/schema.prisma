@@ -32,9 +32,10 @@ model Component {
   id          Int      @id @default(autoincrement())
   name        String
   cssContent  String
+  htmlContent String?
   category    String   @default("Outros")
   color       String   @default("#6366F1")
-favoritos  Favorito[] // Relação inversa
+  favoritos   Favorito[] // Relação inversa
 }
 
 model Setting {

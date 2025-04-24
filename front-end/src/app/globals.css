@@ -114,6 +114,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   font-family: var(--font-family);
+  display: block !important
 }
 
 body {

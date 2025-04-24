@@ -12,7 +12,6 @@ export class CreateComponentDto {
   @IsNotEmpty({ message: 'O nome do componente é obrigatório' })
   @IsString({ message: 'O nome do componente deve ser uma string' })
   name: string;
-
   @ApiProperty({
     description: 'Conteúdo CSS do componente',
     example: '.btn { background-color: #6366F1; color: white; padding: 10px 16px; border-radius: 6px; }',
@@ -20,6 +19,14 @@ export class CreateComponentDto {
   @IsNotEmpty({ message: 'O conteúdo CSS é obrigatório' })
   @IsString({ message: 'O conteúdo CSS deve ser uma string' })
   cssContent: string;
+  
+  @ApiProperty({
+    description: 'Conteúdo HTML do componente',
+    example: '<button class="btn">Click me</button>',
+    required: false,
+  })
+  @IsString({ message: 'O conteúdo HTML deve ser uma string' })
+  htmlContent?: string;
 
   @ApiProperty({
     description: 'Categoria do componente',

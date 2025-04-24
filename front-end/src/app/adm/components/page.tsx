@@ -231,19 +231,29 @@ export default function ManageComponents() {
                             {component.category || "Outros"}
                           </span>
                         </div>
-                        
-                        <div 
+                          <div 
                           className={styles.componentPreview}
-                          style={{ backgroundColor: component.color || "#6366F1" }}
+                          style={{ 
+                            backgroundColor: component.htmlContent ? 'white' : component.color || "#6366F1",
+                            overflow: 'hidden'
+                          }}
                         >
-                          {/* Aqui poderia ser renderizado um preview do componente */}
-                          <div style={{ 
-                            color: "white", 
-                            fontWeight: "bold",
-                            textShadow: "0 1px 3px rgba(0,0,0,0.3)" 
-                          }}>
-                            {component.name}
-                          </div>
+                          {component.htmlContent ? (
+                            <div 
+                              className={styles.componentPreviewFrame}
+                              dangerouslySetInnerHTML={{ 
+                                __html: `<style>${component.cssContent}</style>${component.htmlContent}` 
+                              }}
+                            />
+                          ) : (
+                            <div style={{ 
+                              color: "white", 
+                              fontWeight: "bold",
+                              textShadow: "0 1px 3px rgba(0,0,0,0.3)" 
+                            }}>
+                              {component.name}
+                            </div>
+                          )}
                         </div>
                         
                         <div className={styles.componentCode}>
