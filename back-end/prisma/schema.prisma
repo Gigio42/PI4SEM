@@ -34,7 +34,7 @@ model Component {
   cssContent  String
   category    String   @default("Outros")
   color       String   @default("#6366F1")
-  // Fields might be different in your actual schema
+favoritos  Favorito[] // Relação inversa
 }
 
 model Setting {
@@ -47,7 +47,6 @@ model Setting {
 
   @@unique([section, key])
 }
-
 model Favorito {
   id          String   @id @default(uuid())
   userId      Int
