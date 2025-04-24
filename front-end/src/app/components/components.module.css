@@ -406,16 +406,71 @@
   cursor: not-allowed;
 }
 
-/* Responsividade */
-@media (max-width: 1024px) {
+/* Estilos para o overlay e sidebar */
+.previewOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.componentCard:hover .previewOverlay {
+  opacity: 1;
+}
+
+.previewOverlay span {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.componentCard {
+  cursor: pointer;
+}
+
+.backdropOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 90;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
   .componentsGrid {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   }
 }
 
-@media (max-width: 768px) {
-  .mainContent {
-    margin-left: 0;
+@media (max-width: 576px) {
+  .componentsGrid {
+    grid-template-columns: 1fr;
   }
   
   .filterContainer {
@@ -425,10 +480,5 @@
   
   .searchBox, .filterSelect {
     max-width: none;
-    width: 100%;
-  }
-  
-  .componentsGrid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
 }

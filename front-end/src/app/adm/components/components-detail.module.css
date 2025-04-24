@@ -1,0 +1,229 @@
+.detailSidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 40%;
+  max-width: 600px;
+  background-color: var(--surface);
+  border-left: 1px solid var(--border);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-in-out;
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border);
+}
+
+.closeButton {
+  padding: 8px;
+  margin-right: var(--spacing-md);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.detailTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  flex-grow: 1;
+}
+
+.detailTabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.detailTab {
+  padding: var(--spacing-md) var(--spacing-lg);
+  flex: 1;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.detailTab.active {
+  color: var(--text-primary);
+}
+
+.detailTab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--primary);
+}
+
+.detailTab:hover {
+  background-color: var(--surface-hover);
+}
+
+.detailContent {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+}
+
+.componentInfo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--surface-secondary);
+  border-radius: var(--radius);
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.infoLabel {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.infoValue {
+  color: var(--text-primary);
+}
+
+.colorPreview {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+}
+
+.previewSection, .codeSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.codeContent {
+  background-color: var(--surface-secondary);
+  border-radius: var(--radius);
+  padding: var(--spacing-md);
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  max-height: 400px;
+  white-space: pre-wrap;
+  color: var(--text-primary);
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: transparent;
+  border: none;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copyButton:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.noHtmlPreview {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  border-radius: var(--radius);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.detailActions {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.downloadButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.downloadButton:hover {
+  background-color: var(--primary-dark);
+}
+
+@media (max-width: 1024px) {
+  .detailSidebar {
+    width: 60%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .detailSidebar {
+    width: 80%;
+  }
+}
+
+@media (max-width: 576px) {
+  .detailSidebar {
+    width: 100%;
+  }
+}

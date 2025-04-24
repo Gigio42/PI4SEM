@@ -6,22 +6,23 @@ import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { Component } from "@/types/component";
 import { ComponentsService } from "@/services/ComponentsService";
+import ComponentDetail from "../adm/components/components/ComponentDetail";
 
-export default function ComponentsPage() {
-  const [loaded, setLoaded] = useState(false);
+export default function ComponentsPage() {  const [loaded, setLoaded] = useState(false);
   const [components, setComponents] = useState<Component[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const componentsPerPage = 8;
 
   useEffect(() => {
     setLoaded(true);
     fetchComponents();
   }, []);
-
   const fetchComponents = async () => {
     try {
       setLoading(true);
@@ -34,6 +35,16 @@ export default function ComponentsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleComponentClick = (component: Component) => {
+    setSelectedComponent(component);
+    setSidebarOpen(true);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+    setSelectedComponent(null);
   };
 
   // Filtragem e paginação
@@ -118,10 +129,13 @@ export default function ComponentsPage() {
               <p>Não encontramos componentes com os filtros atuais. Tente ajustar sua busca.</p>
             </div>
           ) : (
-            <>
-              <div className={styles.componentsGrid}>
+            <>              <div className={styles.componentsGrid}>
                 {currentComponents.map((component) => (
-                  <div key={component.id} className={styles.componentCard}>
+                  <div 
+                    key={component.id} 
+                    className={styles.componentCard}
+                    onClick={() => handleComponentClick(component)}
+                  >
                     <div className={styles.componentHeader}>
                       <h3 className={styles.componentName}>{component.name}</h3>
                       {component.category && (
@@ -129,28 +143,54 @@ export default function ComponentsPage() {
                       )}
                     </div>
                     
-                    <div className={styles.componentPreview} 
-                      style={{ borderTop: `4px solid ${component.color || '#6366F1'}` }}>
-                      <div className={styles.previewContent}>
-                        {/* Aqui poderia ser renderizado um preview do componente */}
-                        <span className={styles.previewLabel}>Preview</span>
+                    <div 
+                      className={styles.componentPreview}
+                      style={{ 
+                        backgroundColor: component.htmlContent ? 'white' : component.color || "#6366F1",
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {component.htmlContent ? (
+                        <div 
+                          className={styles.componentPreviewFrame}
+                          dangerouslySetInnerHTML={{ 
+                            __html: `<style>${component.cssContent}</style>${component.htmlContent}` 
+                          }}
+                        />
+                      ) : (
+                        <div style={{ 
+                          color: "white", 
+                          fontWeight: "bold",
+                          textShadow: "0 1px 3px rgba(0,0,0,0.3)" 
+                        }}>
+                          {component.name}
+                        </div>
+                      )}
+                      <div className={styles.previewOverlay}>
+                        <span>Clique para visualizar detalhes</span>
                       </div>
                     </div>
                     
                     <div className={styles.componentCode}>
-                      <pre>{component.cssContent.substring(0, 100)}...</pre>
+                      {component.cssContent.length > 150 
+                        ? `${component.cssContent.substring(0, 150)}...` 
+                        : component.cssContent}
                     </div>
                     
                     <div className={styles.componentActions}>
                       <button 
                         className={styles.viewButton}
-                        onClick={() => {/* Implementar visualização completa */}}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleComponentClick(component);
+                        }}
                       >
                         Ver detalhes
                       </button>
                       <button 
                         className={styles.copyButton}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           navigator.clipboard.writeText(component.cssContent);
                           // Poderia mostrar uma notificação de sucesso
                         }}
@@ -190,9 +230,19 @@ export default function ComponentsPage() {
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   >
                     Próximo
-                  </button>
-                </div>
+                  </button>                </div>
               )}
+            </>
+          )}
+
+          {/* Component detail sidebar */}
+          {sidebarOpen && (
+            <>
+              <div className={styles.backdropOverlay} onClick={closeSidebar}></div>
+              <ComponentDetail 
+                component={selectedComponent} 
+                onClose={closeSidebar} 
+              />
             </>
           )}
         </main>

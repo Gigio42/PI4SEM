@@ -64,6 +64,40 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  position: relative;
+}
+
+/* Overlay para o preview */
+.previewOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.componentCard:hover .previewOverlay {
+  opacity: 1;
+}
+
+.previewOverlay span {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.componentCard {
+  cursor: pointer;
 }
 
 /* Código CSS */
@@ -397,4 +431,61 @@
   border-top-color: white;
   animation: spin 1s linear infinite;
   margin-right: 8px;
+}
+
+/* Notificação de cópia */
+.notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: var(--primary);
+  color: white;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out forwards, fadeOut 0.3s ease-in forwards 2s;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Backdrop overlay */
+.backdropOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 90;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

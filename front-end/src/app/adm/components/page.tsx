@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Component } from "@/types/component";
 import { ComponentsService } from "@/services/ComponentsService";
 import Header from "@/app/components/Header/Header";
 import Sidebar from "@/app/components/Sidebar/Sidebar";
 import ComponentForm from "./components/ComponentForm";
 import ComponentEditForm from "./components/ComponentEditForm";
+import ComponentDetail from "./components/ComponentDetail";
 import adminStyles from "../admin.module.css";
 import styles from "./components.module.css";
 
@@ -23,6 +24,8 @@ export default function ManageComponents() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const componentsPerPage = 10;
 
   useEffect(() => {
@@ -48,6 +51,7 @@ export default function ManageComponents() {
     setShowAddForm(true);
     setEditMode(false);
     setComponentToEdit(null);
+    closeSidebar();
   };
 
   const handleCancelAdd = () => {
@@ -59,10 +63,12 @@ export default function ManageComponents() {
     setShowAddForm(false);
   };
 
-  const handleEditClick = (component: Component) => {
+  const handleEditClick = (component: Component, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent opening the detail sidebar
     setComponentToEdit(component);
     setEditMode(true);
     setShowAddForm(false);
+    closeSidebar();
   };
 
   const handleCancelEdit = () => {
@@ -78,7 +84,8 @@ export default function ManageComponents() {
     setComponentToEdit(null);
   };
 
-  const handleDeleteClick = (component: Component) => {
+  const handleDeleteClick = (component: Component, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent opening the detail sidebar
     setComponentToDelete(component);
     setDeleteModalOpen(true);
   };
@@ -89,6 +96,12 @@ export default function ManageComponents() {
     try {
       await ComponentsService.deleteComponent(componentToDelete.id);
       setComponents(prev => prev.filter(c => c.id !== componentToDelete.id));
+      
+      // If the deleted component was the selected one, close the sidebar
+      if (selectedComponent && selectedComponent.id === componentToDelete.id) {
+        closeSidebar();
+      }
+      
       setDeleteModalOpen(false);
       setComponentToDelete(null);
     } catch (err) {
@@ -100,6 +113,16 @@ export default function ManageComponents() {
   const handleCancelDelete = () => {
     setDeleteModalOpen(false);
     setComponentToDelete(null);
+  };
+
+  const handleComponentClick = (component: Component) => {
+    setSelectedComponent(component);
+    setSidebarOpen(true);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+    setSelectedComponent(null);
   };
 
   // Filtragem e paginação
@@ -224,14 +247,18 @@ export default function ManageComponents() {
                 <>
                   <div className={styles.componentsGrid}>
                     {currentComponents.map(component => (
-                      <div key={component.id} className={styles.componentCard}>
+                      <div 
+                        key={component.id} 
+                        className={styles.componentCard}
+                        onClick={() => handleComponentClick(component)}
+                      >
                         <div className={styles.componentHeader}>
                           <h3 className={styles.componentName}>{component.name}</h3>
                           <span className={styles.componentCategory}>
                             {component.category || "Outros"}
                           </span>
                         </div>
-                          <div 
+                        <div 
                           className={styles.componentPreview}
                           style={{ 
                             backgroundColor: component.htmlContent ? 'white' : component.color || "#6366F1",
@@ -254,6 +281,9 @@ export default function ManageComponents() {
                               {component.name}
                             </div>
                           )}
+                          <div className={styles.previewOverlay}>
+                            <span>Clique para visualizar detalhes</span>
+                          </div>
                         </div>
                         
                         <div className={styles.componentCode}>
@@ -265,7 +295,7 @@ export default function ManageComponents() {
                         <div className={styles.componentActions}>
                           <button 
                             className={`${styles.actionButton} ${styles.editButton}`}
-                            onClick={() => handleEditClick(component)}
+                            onClick={(e) => handleEditClick(component, e)}
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -276,7 +306,7 @@ export default function ManageComponents() {
                           
                           <button 
                             className={`${styles.actionButton} ${styles.deleteButton}`}
-                            onClick={() => handleDeleteClick(component)}
+                            onClick={(e) => handleDeleteClick(component, e)}
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -336,6 +366,7 @@ export default function ManageComponents() {
             </div>
           )}
 
+          {/* Delete confirmation modal */}
           {deleteModalOpen && componentToDelete && (
             <div className={styles.modalOverlay}>
               <div className={styles.modalContent}>
@@ -358,6 +389,17 @@ export default function ManageComponents() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Component detail sidebar */}
+          {sidebarOpen && (
+            <>
+              <div className={styles.backdropOverlay} onClick={closeSidebar}></div>
+              <ComponentDetail 
+                component={selectedComponent} 
+                onClose={closeSidebar} 
+              />
+            </>
           )}
         </main>
       </div>

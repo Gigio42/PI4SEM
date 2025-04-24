@@ -221,6 +221,20 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
             </div>
             
             <div className={styles.formGroup}>
+              <label htmlFor="aiCategory">Categoria</label>
+              <select
+                id="aiCategory"
+                value={formData.category}
+                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                className={styles.formSelect}
+              >
+                {CATEGORY_OPTIONS.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className={styles.formGroup}>
               <label htmlFor="aiTheme">Estilo</label>
               <select
                 id="aiTheme"
@@ -335,12 +349,11 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
                 />
               </div>
               
-              <div className={aiStyles.codeViewHeader}>
-                <div className={aiStyles.codeTabsContainer}>
+              <div className={aiStyles.codeViewHeader}>                <div className={aiStyles.codeTabsContainer}>
                   <button
                     type="button"
                     className={aiStyles.codeTab}
-                    onClick={() => setFormData({ ...formData, name: `${aiComponentType.charAt(0).toUpperCase() + aiComponentType.slice(1)} ${aiTheme}` })}
+                    onClick={() => setFormData({ ...formData, name: `${aiComponentType.charAt(0).toUpperCase() + aiComponentType.slice(1)} ${aiTheme} - ${formData.category}` })}
                   >
                     Definir nome padrão
                   </button>
@@ -353,23 +366,7 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
                   className={aiStyles.componentNameInput}
                 />
               </div>
-              
-              <div className={aiStyles.aiOptionsRow}>
-                <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                  <label htmlFor="category">Categoria</label>
-                  <select
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className={styles.formSelect}
-                  >
-                    {CATEGORY_OPTIONS.map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
-                </div>
-                
+                <div className={aiStyles.aiOptionsRow}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label htmlFor="color">Cor Representativa</label>
                   <div className={styles.colorPickerContainer}>
