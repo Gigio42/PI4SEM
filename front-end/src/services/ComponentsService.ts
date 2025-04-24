@@ -1,8 +1,37 @@
-import { Component, CreateComponentDto, UpdateComponentDto } from '../types/component';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { Component, CreateComponentDto, UpdateComponentDto } from '@/types/component';
+import { API_BASE_URL } from './config';
 
 export class ComponentsService {
+
+  /**
+   * Cria um novo componente
+   * @param data Dados do componente a ser criado
+   * @returns O componente criado
+   */
+  static async createComponent(data: CreateComponentDto): Promise<Component> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/components`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || `Erro ao criar componente: ${response.status}`
+        );
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Erro ao criar componente:', error);
+      throw error;
+    }
+  }
+  
   /**
    * Busca todos os componentes disponíveis
    * @returns Lista de componentes
@@ -38,35 +67,6 @@ export class ComponentsService {
       return await response.json();
     } catch (error) {
       console.error(`Erro ao buscar componente ${id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Cria um novo componente
-   * @param data Dados do componente a ser criado
-   * @returns O componente criado
-   */
-  static async createComponent(data: CreateComponentDto): Promise<Component> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/components`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.message || `Erro ao criar componente: ${response.status}`
-        );
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Erro ao criar componente:', error);
       throw error;
     }
   }

@@ -23,10 +23,8 @@ const ThemeToggle = () => {
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden="true"
-        >
-          <path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" fill="currentColor" />
-          <path d="M12 1V3M12 21V23M23 12H21M3 12H1M20.485 3.515L19.071 4.929M4.929 19.071L3.515 20.485M20.485 20.485L19.071 19.071M4.929 4.929L3.515 3.515" 
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        >          <path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" fill="currentColor" />
+          <path d="M12 1V3M12 21V23M23 12H21M3 12H1M20.485 3.515L19.071 4.929M4.929 19.071L3.515 20.485M20.485 20.485L19.071 19.071M4.929 4.929L3.515 3.515" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
         
         {/* Moon icon for dark mode - more detailed with craters */}

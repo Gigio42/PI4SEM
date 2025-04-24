@@ -14,19 +14,54 @@ model User {
   googleId      String?        @unique
   name          String?
   picture       String?
-  role          String         @default("user")  // Novo campo: "user" ou "admin"
+  role          String         @default("user")  // "user" ou "admin"
   subscriptions Subscription[]
   favoritos     Favorito[]     // Relação inversa
 }
 
+model Plan {
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String
+  price        Decimal        @db.Decimal(10, 2)
+  duration     Int            // Duração em dias
+  features     String[]
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  subscriptions Subscription[]
+}
+
 model Subscription {
-  id        Int      @id @default(autoincrement())
-  type      String
-  startDate DateTime
-  endDate   DateTime
-  status    Boolean
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  id               Int       @id @default(autoincrement())
+  type             String
+  startDate        DateTime
+  endDate          DateTime
+  status           Boolean
+  userId           Int
+  planId           Int?
+  paymentMethod    String?
+  paymentStatus    String?
+  nextPaymentDate  DateTime?
+  canceledAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id])
+  plan             Plan?     @relation(fields: [planId], references: [id])
+  payments         Payment[]
+}
+
+model Payment {
+  id             Int          @id @default(autoincrement())
+  subscriptionId Int
+  amount         Decimal      @db.Decimal(10, 2)
+  status         String
+  paymentMethod  String
+  transactionId  String?
+  paymentDate    DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 }
 
 model Component {

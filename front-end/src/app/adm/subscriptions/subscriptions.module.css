@@ -1,135 +1,320 @@
-/* Subscriptions page specific styles */
-
-/* Tabs */
-.tabsContainer {
-  margin-bottom: var(--spacing-lg);
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.tabsHeader {
+.tabs {
   display: flex;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: var(--spacing-lg);
-  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .tabButton {
   padding: 0.75rem 1.5rem;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  font-size: var(--font-size-sm);
+  font-size: 1rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: #6b7280;
   cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-}
-
-.tabButton:hover {
-  color: var(--text-primary);
+  transition: all 0.2s;
+  position: relative;
 }
 
 .tabButton.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
+  color: #4a6cf7;
 }
 
-/* User info */
-.userInfo {
+.tabButton.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #4a6cf7;
+}
+
+.tabButton:hover {
+  color: #4a6cf7;
+}
+
+.tabContent {
+  margin-top: 1.5rem;
+}
+
+.actionBar {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
-.userAvatar {
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--radius-full);
-  background-color: var(--primary);
+.searchContainer {
+  display: flex;
+  flex: 1;
+  max-width: 500px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem 0 0 0.375rem;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: #4a6cf7;
+  box-shadow: 0 0 0 1px rgba(74, 108, 247, 0.2);
+}
+
+.searchButton {
+  padding: 0.625rem 1rem;
+  background-color: #4a6cf7;
   color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: none;
+  border-radius: 0 0.375rem 0.375rem 0;
   font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.searchButton:hover {
+  background-color: #3a5bd9;
+}
+
+.filterContainer {
+  margin: 0 1rem;
+}
+
+.filterSelect {
+  padding: 0.625rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  outline: none;
+  background-color: white;
+}
+
+.addButton {
+  padding: 0.625rem 1.25rem;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.addButton:hover {
+  background-color: #059669;
+}
+
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background-color: #f9fafb;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+.table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(74, 108, 247, 0.05);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.loadingCell, .emptyCell {
+  text-align: center;
+  padding: 2rem !important;
+  color: #9ca3af !important;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
   font-size: 0.75rem;
-}
-
-.userName {
   font-weight: 500;
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
+  text-transform: uppercase;
 }
 
-/* Plan badges */
-.planBasic, .planPro, .planEnterprise {
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.planBasic {
-  background-color: var(--surface-secondary);
-  color: var(--text-secondary);
-}
-
-.planPro {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #1e40af;
-}
-
-.planEnterprise {
-  background-color: rgba(99, 102, 241, 0.1);
-  color: #3730a3;
-}
-
-/* Status badges */
-.statusActive, .statusPending {
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.statusActive {
+.active {
   background-color: rgba(16, 185, 129, 0.1);
-  color: #166534;
+  color: #10b981;
 }
 
-.statusPending {
+.inactive {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.pending {
   background-color: rgba(245, 158, 11, 0.1);
-  color: #92400e;
+  color: #f59e0b;
 }
 
-/* Action buttons */
 .actionButtons {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: 0.5rem;
 }
 
-.editButton, .deleteButton {
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: var(--transition);
+.editButton, .toggleButton, .cancelButton, .dangerButton {
+  padding: 0.375rem 0.75rem;
   border: none;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .editButton {
-  background-color: var(--surface-secondary);
-  color: var(--text-secondary);
+  background-color: #4a6cf7;
+  color: white;
 }
 
 .editButton:hover {
-  background-color: var(--surface-hover);
+  background-color: #3a5bd9;
 }
 
-.deleteButton {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #b91c1c;
+.toggleButton {
+  background-color: #f59e0b;
+  color: white;
 }
 
-.deleteButton:hover {
-  background-color: rgba(239, 68, 68, 0.2);
+.toggleButton:hover {
+  background-color: #d97706;
+}
+
+.cancelButton {
+  background-color: #6b7280;
+  color: white;
+}
+
+.cancelButton:hover {
+  background-color: #4b5563;
+}
+
+.dangerButton {
+  background-color: #ef4444;
+  color: white;
+}
+
+.dangerButton:hover {
+  background-color: #dc2626;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.modal h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #111827;
+}
+
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.formGroup input, .formGroup select {
+  width: 100%;
+  padding: 0.625rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.formGroup input:focus, .formGroup select:focus {
+  border-color: #4a6cf7;
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(74, 108, 247, 0.2);
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.submitButton {
+  padding: 0.625rem 1.25rem;
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.submitButton:hover {
+  background-color: #3a5bd9;
+}
+
+.selectPrompt {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px dashed #e5e7eb;
 }
