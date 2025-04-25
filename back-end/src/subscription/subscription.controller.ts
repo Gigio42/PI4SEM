@@ -140,6 +140,18 @@ export class SubscriptionController {
     }
   }
 
+  @Patch(':id')
+  async updateSubscription(@Param('id') id: string, @Body() updateData: Partial<CreateSubscriptionDto>) {
+    try {
+      return await this.subscriptionService.updateSubscription(Number(id), updateData);
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Falha ao atualizar assinatura: ' + error.message);
+    }
+  }
+
   // ===== ENDPOINTS PARA PAGAMENTOS =====
   
   @Post(':id/payment')

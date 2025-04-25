@@ -20,6 +20,7 @@ export interface NavItem {
 interface SidebarProps {
   items?: NavItem[];
   isAdmin?: boolean;
+  onToggle?: (collapsed: boolean) => void;
 }
 
 // Itens de navegação padrão para usuários comuns

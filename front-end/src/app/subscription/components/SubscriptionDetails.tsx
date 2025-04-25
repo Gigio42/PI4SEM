@@ -1,177 +1,113 @@
-import React from 'react';
-import { SubscriptionType } from '@/services/SubscriptionsService';
+import React, { useState } from 'react';
 import styles from '../subscription.module.css';
+import { Subscription } from '@/types/subscription';
 
 interface SubscriptionDetailsProps {
-  subscription: SubscriptionType;
-  onCancel: () => void;
+  subscription: Subscription;
+  onCancelSubscription: () => void;
 }
 
-const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ subscription, onCancel }) => {
-  // Formatar datas
+export default function SubscriptionDetails({ subscription, onCancelSubscription }: SubscriptionDetailsProps) {
+  const [showHistory, setShowHistory] = useState(false);
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    return date.toLocaleDateString('pt-BR');
   };
 
-  // Verificar status da assinatura
-  const isActive = subscription.status && new Date(subscription.endDate) > new Date();
-  
-  // Calcular dias restantes
-  const calculateRemainingDays = () => {
+  const getRemainingDays = (endDate: string) => {
+    const end = new Date(endDate);
     const today = new Date();
-    const endDate = new Date(subscription.endDate);
-    const differenceInTime = endDate.getTime() - today.getTime();
-    const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
-    return differenceInDays > 0 ? differenceInDays : 0;
-  };
-  
-  const remainingDays = calculateRemainingDays();
-  
-  // Status de pagamento formato amigável 
-  const getPaymentStatusText = (status?: string) => {
-    switch (status) {
-      case 'pending': return 'Pendente';
-      case 'completed': return 'Confirmado';
-      case 'failed': return 'Falhou';
-      default: return 'Desconhecido';
-    }
+    const diffTime = end.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // Badge de status baseado no estado da assinatura
-  const getStatusBadge = () => {
-    if (!subscription.status) {
-      return (
-        <span className={`${styles.statusBadge} ${styles.statusCanceled}`}>
-          Cancelada
-        </span>
-      );
-    }
-    
-    if (remainingDays <= 0) {
-      return (
-        <span className={`${styles.statusBadge} ${styles.statusExpired}`}>
-          Expirada
-        </span>
-      );
-    }
-    
-    if (remainingDays <= 5) {
-      return (
-        <span className={`${styles.statusBadge} ${styles.statusWarning}`}>
-          Expira em breve
-        </span>
-      );
-    }
-    
-    return (
-      <span className={`${styles.statusBadge} ${styles.statusActive}`}>
-        Ativa
-      </span>
-    );
+  const remainingDays = getRemainingDays(subscription.endDate);
+
+  const handleCancelClick = () => {
+    setIsConfirmingCancel(true);
+  };
+
+  const handleConfirmCancel = () => {
+    onCancelSubscription();
+    setIsConfirmingCancel(false);
+  };
+
+  const handleCancelConfirmation = () => {
+    setIsConfirmingCancel(false);
   };
 
   return (
-    <div className={styles.subscriptionDetails}>
-      <div className={styles.subscriptionHeader}>
-        <div>
-          <h2 className={styles.subscriptionTitle}>Sua Assinatura</h2>
-          {getStatusBadge()}
-        </div>
-        {isActive && (
-          <button 
-            onClick={onCancel} 
-            className={styles.cancelSubscriptionButton}
-          >
-            Cancelar Assinatura
-          </button>
-        )}
+    <div className={styles.currentSubscriptionSection}>
+      <div className={styles.currentSubscriptionHeader}>
+        <h2 className={styles.sectionTitle}>Seu plano atual</h2>
+        {/* Can add history button here if needed */}
       </div>
       
-      <div className={styles.subscriptionCard}>
-        <div className={styles.subscriptionInfo}>
-          <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>Plano:</span>
-            <span className={styles.infoValue}>
-              {subscription.plan?.name || subscription.type || 'Premium'}
-            </span>
-          </div>
-          
-          <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>Data de início:</span>
-            <span className={styles.infoValue}>{formatDate(subscription.startDate)}</span>
-          </div>
-          
-          <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>Data de término:</span>
-            <span className={styles.infoValue}>{formatDate(subscription.endDate)}</span>
-          </div>
-          
-          {isActive && (
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Dias restantes:</span>
-              <span className={styles.infoValue}>{remainingDays} dias</span>
+      <div className={styles.currentSubscriptionCard}>
+        <div className={styles.currentSubscriptionDetails}>
+          <h3 className={styles.currentPlanName}>
+            {subscription.plan?.name || subscription.type}
+          </h3>
+          <div className={styles.subscriptionMeta}>
+            <div className={styles.subscriptionMetaItem}>
+              <span className={styles.metaLabel}>Valor:</span>
+              <span className={styles.metaValue}>
+                {subscription.plan ? subscription.plan.price.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
+                }) : 'N/A'}
+              </span>
             </div>
-          )}
-          
-          <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>Método de pagamento:</span>
-            <span className={styles.infoValue}>
-              {subscription.paymentMethod === 'credit_card' 
-                ? 'Cartão de Crédito' 
-                : subscription.paymentMethod === 'pix' 
-                  ? 'PIX' 
-                  : subscription.paymentMethod || 'Não especificado'}
-            </span>
-          </div>
-          
-          <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>Status de pagamento:</span>
-            <span className={styles.infoValue}>
-              {getPaymentStatusText(subscription.paymentStatus)}
-            </span>
-          </div>
-          
-          {subscription.nextPaymentDate && (
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Próxima cobrança:</span>
-              <span className={styles.infoValue}>{formatDate(subscription.nextPaymentDate)}</span>
+            <div className={styles.subscriptionMetaItem}>
+              <span className={styles.metaLabel}>Válido até:</span>
+              <span className={styles.metaValue}>{formatDate(subscription.endDate)}</span>
             </div>
-          )}
+            <div className={styles.subscriptionMetaItem}>
+              <span className={styles.metaLabel}>Dias restantes:</span>
+              <span className={styles.metaValue}>{remainingDays} dias</span>
+            </div>
+            <div className={styles.subscriptionMetaItem}>
+              <span className={styles.metaLabel}>Status:</span>
+              <span className={`${styles.metaValue} ${styles.activeStatus}`}>
+                {subscription.status ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
+          </div>
+          
+          <div className={styles.subscriptionActions}>
+            {!isConfirmingCancel ? (
+              <button 
+                className={styles.cancelSubscriptionButton}
+                onClick={handleCancelClick}
+              >
+                Cancelar assinatura
+              </button>
+            ) : (
+              <div className={styles.confirmCancelContainer}>
+                <p className={styles.confirmCancelText}>
+                  Tem certeza que deseja cancelar sua assinatura? Você terá acesso até {formatDate(subscription.endDate)}.
+                </p>
+                <div className={styles.confirmCancelActions}>
+                  <button 
+                    className={styles.cancelConfirmButton}
+                    onClick={handleCancelConfirmation}
+                  >
+                    Não, manter assinatura
+                  </button>
+                  <button 
+                    className={styles.confirmCancelButton}
+                    onClick={handleConfirmCancel}
+                  >
+                    Sim, cancelar assinatura
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        
-        {isActive && subscription.plan && (
-          <div className={styles.planBenefits}>
-            <h3>Benefícios do seu plano</h3>
-            <ul className={styles.benefitsList}>
-              {subscription.plan.features.map((feature, index) => (
-                <li key={index} className={styles.benefitItem}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        
-        {!isActive && (
-          <div className={styles.renewSection}>
-            <h3>Sua assinatura expirou</h3>
-            <p>Renove sua assinatura para continuar aproveitando todos os benefícios.</p>
-            <button className={styles.renewButton}>
-              Renovar Assinatura
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
-};
-
-export default SubscriptionDetails;
+}

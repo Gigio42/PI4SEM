@@ -1,3 +1,4 @@
+/* Enhanced Checkout Page Styling */
 .container {
   min-height: 100vh;
   display: flex;
@@ -17,6 +18,12 @@
   display: grid;
   grid-template-columns: 1fr 1.5fr;
   gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .checkoutContainer {
+    grid-template-columns: 1fr;
+  }
 }
 
 .orderSummary, .paymentForm {
@@ -211,37 +218,37 @@
 }
 
 .pixInstructions {
-  background-color: #f9fafb;
+  background-color: #f3f4f6;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 1.25rem;
   margin-bottom: 2rem;
 }
 
 .pixInstructions p {
   margin: 0 0 1rem 0;
   color: #4b5563;
+  font-size: 0.95rem;
 }
 
 .pixInfo {
   display: flex;
-  align-items: flex-start;
-  background-color: rgba(74, 108, 247, 0.1);
-  border-radius: 6px;
+  align-items: center;
   padding: 0.75rem;
+  background-color: #fff;
+  border-radius: 6px;
+  border: 1px dashed #d1d5db;
 }
 
 .infoIcon {
   width: 20px;
   height: 20px;
   margin-right: 0.75rem;
-  flex-shrink: 0;
-  stroke: #4a6cf7;
+  stroke: #6b7280;
 }
 
 .pixInfo span {
   color: #4b5563;
   font-size: 0.9rem;
-  line-height: 1.4;
 }
 
 .formActions {
@@ -253,26 +260,30 @@
 
 .backLink {
   color: #6b7280;
-  text-decoration: none;
   font-size: 0.95rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
   transition: color 0.2s;
 }
 
 .backLink:hover {
   color: #4b5563;
-  text-decoration: underline;
 }
 
 .payButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
   background-color: #4a6cf7;
   color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.875rem 1.5rem;
-  font-size: 1rem;
   font-weight: 600;
+  border-radius: 8px;
+  border: none;
   cursor: pointer;
   transition: background-color 0.2s;
+  min-width: 180px;
 }
 
 .payButton:hover {
@@ -289,203 +300,103 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 0;
+  padding: 3rem 0;
 }
 
 .loadingSpinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(74, 108, 247, 0.2);
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(74, 108, 247, 0.3);
   border-radius: 50%;
   border-top-color: #4a6cf7;
   animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+  margin-right: 0.75rem;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Plan Selection */
-.planSelection {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.planCard {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-}
-
-.planCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.planCard.selected {
-  border-color: #4a6cf7;
-  background-color: rgba(74, 108, 247, 0.05);
-}
-
-.planName {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.planPrice {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #4a6cf7;
-  margin-bottom: 1rem;
-}
-
-.planPeriod {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.popularBadge {
-  position: absolute;
-  top: -10px;
-  right: 20px;
-  background-color: #4a6cf7;
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Payment Status */
 .paymentStatus {
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.paymentSuccess, .paymentError, .paymentPending {
   display: flex;
+  flex-direction: column;
   align-items: center;
 }
 
-.paymentSuccess {
-  background-color: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.paymentError {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.paymentPending {
-  background-color: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
 .statusIcon {
-  width: 24px;
-  height: 24px;
-  margin-right: 1rem;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
 }
 
 .paymentSuccess .statusIcon {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.paymentSuccess .statusIcon svg {
+  width: 32px;
+  height: 32px;
   stroke: #10b981;
 }
 
 .paymentError .statusIcon {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.paymentError .statusIcon svg {
+  width: 32px;
+  height: 32px;
   stroke: #ef4444;
 }
 
 .paymentPending .statusIcon {
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.paymentPending .statusIcon svg {
+  width: 32px;
+  height: 32px;
   stroke: #f59e0b;
 }
 
 .statusMessage {
-  color: #1f2937;
-  font-weight: 500;
-}
-
-/* Subscription Management */
-.subscriptionInfo {
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  padding: 2rem;
+  color: #6b7280;
   margin-bottom: 2rem;
 }
 
-.subscriptionStatus {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
+.primaryButton, .secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
   font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.statusActive {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-}
-
-.statusCanceled {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.statusPending {
-  background-color: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-}
-
-.subscriptionDetails {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.detailItem {
-  margin-bottom: 0.5rem;
-}
-
-.detailLabel {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
-}
-
-.detailValue {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #1f2937;
-}
-
-.subscriptionActions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.actionButton {
-  padding: 0.75rem 1.25rem;
   border-radius: 8px;
-  font-weight: 500;
+  border: none;
   cursor: pointer;
   transition: all 0.2s;
+  text-decoration: none;
 }
 
 .primaryButton {
   background-color: #4a6cf7;
   color: white;
-  border: none;
 }
 
 .primaryButton:hover {
@@ -493,79 +404,73 @@
 }
 
 .secondaryButton {
-  background-color: white;
+  background-color: #f3f4f6;
   color: #4b5563;
-  border: 1px solid #e5e7eb;
 }
 
 .secondaryButton:hover {
+  background-color: #e5e7eb;
+}
+
+/* PIX Code Display */
+.pixCode {
   background-color: #f9fafb;
-}
-
-.dangerButton {
-  background-color: white;
-  color: #ef4444;
-  border: 1px solid #ef4444;
-}
-
-.dangerButton:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-}
-
-/* Payment History */
-.paymentHistory {
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  padding: 2rem;
-}
-
-.historyTable {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.historyTable th {
-  text-align: left;
-  font-weight: 600;
-  color: #4b5563;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 0.875rem;
-}
-
-.historyTable td {
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
   padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  color: #1f2937;
+  margin-bottom: 1.5rem;
+  word-break: break-all;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #4b5563;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.copyButton {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  color: #4a6cf7;
+  border: 1px solid #4a6cf7;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyButton:hover {
+  background-color: #4a6cf7;
+  color: white;
+}
+
+.pixExpiry {
+  margin: 1rem 0;
+  color: #ef4444;
   font-size: 0.875rem;
 }
 
-.invoiceLink {
-  color: #4a6cf7;
-  text-decoration: none;
+.pixActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
 }
 
-.invoiceLink:hover {
-  text-decoration: underline;
+.pixInstructions h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
 }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .planSelection {
-    grid-template-columns: 1fr;
-  }
-  
-  .subscriptionDetails {
-    grid-template-columns: 1fr;
-  }
-  
-  .subscriptionActions {
-    flex-direction: column;
-  }
-  
-  .historyTable {
-    display: block;
-    overflow-x: auto;
-  }
+.pixInstructions ol {
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.pixInstructions ol li {
+  margin-bottom: 0.5rem;
+  color: #4b5563;
+  font-size: 0.9rem;
 }

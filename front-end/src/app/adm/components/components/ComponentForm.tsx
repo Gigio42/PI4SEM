@@ -143,6 +143,7 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
     setAiDescription('');
     onCancel();
   };
+
   return (
     <div className={styles.componentForm}>
       <h2 className={styles.formTitle}>Adicionar Novo Componente</h2>
@@ -277,211 +278,217 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
         </div>
         
         {showPreview && formData.htmlContent && (
-          <>            <div className={aiStyles.previewSection}>
-              <div className={aiStyles.previewHeader}>
-                <h3 className={aiStyles.sectionTitle}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 6V18M18 12H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  Preview do Componente
-                </h3>
-                <div className={aiStyles.previewControls}>
-                  <div className={aiStyles.previewModeToggle}>
-                    <button
-                      type="button"
-                      className={`${aiStyles.previewModeButton} ${previewMode === 'light' ? aiStyles.previewModeActive : ''}`}
-                      onClick={() => setPreviewMode('light')}
-                    >
-                      Claro
-                    </button>
-                    <button
-                      type="button"
-                      className={`${aiStyles.previewModeButton} ${previewMode === 'dark' ? aiStyles.previewModeActive : ''}`}
-                      onClick={() => setPreviewMode('dark')}
-                    >
-                      Escuro
-                    </button>
-                  </div>
-                </div>
-              </div>              <div className={aiStyles.previewResponsiveControls}>
-                <button 
-                  className={`${aiStyles.previewResponsiveButton} ${previewDevice === 'desktop' ? aiStyles.previewResponsiveActive : ''}`} 
-                  title="Desktop"
-                  onClick={() => setPreviewDevice('desktop')}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 21H16M12 17V21M6.8 17H17.2C18.8802 17 19.7202 17 20.362 16.673C20.9265 16.3854 21.3854 15.9265 21.673 15.362C22 14.7202 22 13.8802 22 12.2V7.8C22 6.11984 22 5.27976 21.673 4.63803C21.3854 4.07354 20.9265 3.6146 20.362 3.32698C19.7202 3 18.8802 3 17.2 3H6.8C5.11984 3 4.27976 3 3.63803 3.32698C3.07354 3.6146 2.6146 4.07354 2.32698 4.63803C2 5.27976 2 6.11984 2 7.8V12.2C2 13.8802 2 14.7202 2.32698 15.362C2.6146 15.9265 3.07354 16.3854 3.63803 16.673C4.27976 17 5.11984 17 6.8 17Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-                <button 
-                  className={`${aiStyles.previewResponsiveButton} ${previewDevice === 'tablet' ? aiStyles.previewResponsiveActive : ''}`} 
-                  title="Tablet"
-                  onClick={() => setPreviewDevice('tablet')}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 17.5V19.5M9.6 21.5H14.4C16.0509 21.5 16.8763 21.5 17.5 21.1481C18.0353 20.8381 18.4722 20.3539 18.74 19.76C19.05 19.0727 19.05 18.1618 19.05 16.34V7.66C19.05 5.83821 19.05 4.92731 18.74 4.24C18.4722 3.6461 18.0353 3.16188 17.5 2.85192C16.8763 2.5 16.0509 2.5 14.4 2.5H9.6C7.94912 2.5 7.12368 2.5 6.5 2.85192C5.96469 3.16188 5.52777 3.6461 5.26 4.24C4.95 4.92731 4.95 5.83821 4.95 7.66V16.34C4.95 18.1618 4.95 19.0727 5.26 19.76C5.52777 20.3539 5.96469 20.8381 6.5 21.1481C7.12368 21.5 7.94912 21.5 9.6 21.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-                <button 
-                  className={`${aiStyles.previewResponsiveButton} ${previewDevice === 'mobile' ? aiStyles.previewResponsiveActive : ''}`} 
-                  title="Mobile"
-                  onClick={() => setPreviewDevice('mobile')}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 18V18.01M8.2 22H15.8C16.9201 22 17.4802 22 17.908 21.782C18.2843 21.5903 18.5903 21.2843 18.782 20.908C19 20.4802 19 19.9201 19 18.8V5.2C19 4.07989 19 3.51984 18.782 3.09202C18.5903 2.71569 18.2843 2.40973 17.908 2.21799C17.4802 2 16.9201 2 15.8 2H8.2C7.07989 2 6.51984 2 6.09202 2.21799C5.71569 2.40973 5.40973 2.71569 5.21799 3.09202C5 3.51984 5 4.07989 5 5.2V18.8C5 19.9201 5 20.4802 5.21799 20.908C5.40973 21.2843 5.71569 21.5903 6.09202 21.782C6.51984 22 7.07989 22 8.2 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </div>              <div className={`${aiStyles.componentPreviewContainer} ${previewMode === 'light' ? aiStyles.previewLight : aiStyles.previewDark} ${aiStyles['preview' + previewDevice.charAt(0).toUpperCase() + previewDevice.slice(1)]}`}>
-                <div 
-                  className={`${aiStyles.componentPreviewFrame}`}
-                  dangerouslySetInnerHTML={{ 
-                    __html: `                    <style>
-                      /* Reset básico para o preview */
-                      .preview-wrapper * { box-sizing: border-box; }
-                      .preview-wrapper { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
-                      
-                      /* Estilos do componente */
-                      ${formData.cssContent}
-                    </style>
-                    <div class="preview-wrapper">${formData.htmlContent}</div>
-                    ` 
-                  }}
-                />
-              </div>
-              
-              <div className={aiStyles.codeViewHeader}>                <div className={aiStyles.codeTabsContainer}>
+          <div className={aiStyles.previewSection}>
+            <div className={aiStyles.previewHeader}>
+              <h3 className={aiStyles.sectionTitle}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 6V18M18 12H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Preview do Componente
+              </h3>
+              <div className={aiStyles.previewControls}>
+                <div className={aiStyles.previewModeToggle}>
                   <button
                     type="button"
-                    className={aiStyles.codeTab}
-                    onClick={() => setFormData({ ...formData, name: `${aiComponentType.charAt(0).toUpperCase() + aiComponentType.slice(1)} ${aiTheme} - ${formData.category}` })}
+                    className={`${aiStyles.previewModeButton} ${previewMode === 'light' ? aiStyles.previewModeActive : ''}`}
+                    onClick={() => setPreviewMode('light')}
                   >
-                    Definir nome padrão
+                    Claro
+                  </button>
+                  <button
+                    type="button"
+                    className={`${aiStyles.previewModeButton} ${previewMode === 'dark' ? aiStyles.previewModeActive : ''}`}
+                    onClick={() => setPreviewMode('dark')}
+                  >
+                    Escuro
                   </button>
                 </div>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Nome do componente"
-                  className={aiStyles.componentNameInput}
-                />
-              </div>
-                <div className={aiStyles.aiOptionsRow}>
-                <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                  <label htmlFor="color">Cor Representativa</label>
-                  <div className={styles.colorPickerContainer}>
-                    <select
-                      id="color"
-                      name="color"
-                      value={formData.color}
-                      onChange={handleChange}
-                      className={styles.formSelect}
-                    >
-                      {COLOR_OPTIONS.map(color => (
-                        <option key={color.value} value={color.value}>{color.name}</option>
-                      ))}
-                    </select>
-                    <div 
-                      className={styles.colorPreview} 
-                      style={{ backgroundColor: formData.color }}
-                      aria-hidden="true"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className={aiStyles.refinementSection}>
-                <h3 className={aiStyles.sectionTitle}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M14 5L21 12M21 12L14 19M21 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Refinar Componente
-                </h3>
-                <textarea
-                  value={aiDescription}
-                  onChange={(e) => setAiDescription(e.target.value)}
-                  placeholder="Descreva ajustes para refinar este componente. Ex: Adicione uma borda mais arredondada, mude a cor para tons de azul..."
-                  className={styles.formTextarea}
-                  rows={2}
-                />
-                <button 
-                  type="button" 
-                  className={aiStyles.refineButton}
-                  onClick={handleAIGenerate}
-                  disabled={aiLoading}
-                >
-                  {aiLoading ? (
-                    <>
-                      <span className={styles.smallSpinner}></span>
-                      Refinando componente...
-                    </>
-                  ) : 'Refinar com IA'}
-                </button>
-              </div>
-
-              <div className={aiStyles.codeViewSection}>
-                <div className={aiStyles.codeViewHeader}>
-                  <div className={aiStyles.codeTabsContainer}>
-                    <button
-                      type="button"
-                      className={`${aiStyles.codeTab} ${aiStyles.codeTabActive}`}
-                    >
-                      Código HTML e CSS
-                    </button>
-                  </div>
-                </div>
-                <div className={aiStyles.codeViewContainer}>
-                  <div className={aiStyles.codeBlock}>
-                    <div className={aiStyles.codeHeader}>
-                      <span>HTML</span>
-                    </div>
-                    <textarea
-                      value={formData.htmlContent}
-                      onChange={(e) => setFormData({ ...formData, htmlContent: e.target.value })}
-                      className={aiStyles.codeEditor}
-                      rows={6}
-                    />
-                  </div>
-                  
-                  <div className={aiStyles.codeBlock}>
-                    <div className={aiStyles.codeHeader}>
-                      <span>CSS</span>
-                    </div>
-                    <textarea
-                      value={formData.cssContent}
-                      onChange={(e) => setFormData({ ...formData, cssContent: e.target.value })}
-                      className={aiStyles.codeEditor}
-                      rows={8}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className={styles.formActions}>
-                <button 
-                  type="button" 
-                  className={styles.cancelButton}
-                  onClick={cancelForm}
-                  disabled={loading}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="button" 
-                  className={styles.submitButton}
-                  onClick={handleSubmit}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className={styles.smallSpinner}></span>
-                      Criando...
-                    </>
-                  ) : 'Criar Componente'}
-                </button>
               </div>
             </div>
-          </>
+            
+            <div className={aiStyles.previewResponsiveControls}>
+              <button 
+                className={`${aiStyles.previewResponsiveButton} ${previewDevice === 'desktop' ? aiStyles.previewResponsiveActive : ''}`} 
+                title="Desktop"
+                onClick={() => setPreviewDevice('desktop')}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 21H16M12 17V21M6.8 17H17.2C18.8802 17 19.7202 17 20.362 16.673C20.9265 16.3854 21.3854 15.9265 21.673 15.362C22 14.7202 22 13.8802 22 12.2V7.8C22 6.11984 22 5.27976 21.673 4.63803C21.3854 4.07354 20.9265 3.6146 20.362 3.32698C19.7202 3 18.8802 3 17.2 3H6.8C5.11984 3 4.27976 3 3.63803 3.32698C3.07354 3.6146 2.6146 4.07354 2.32698 4.63803C2 5.27976 2 6.11984 2 7.8V12.2C2 13.8802 2 14.7202 2.32698 15.362C2.6146 15.9265 3.07354 16.3854 3.63803 16.673C4.27976 17 5.11984 17 6.8 17Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <button 
+                className={`${aiStyles.previewResponsiveButton} ${previewDevice === 'tablet' ? aiStyles.previewResponsiveActive : ''}`} 
+                title="Tablet"
+                onClick={() => setPreviewDevice('tablet')}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 17.5V19.5M9.6 21.5H14.4C16.0509 21.5 16.8763 21.5 17.5 21.1481C18.0353 20.8381 18.4722 20.3539 18.74 19.76C19.05 19.0727 19.05 18.1618 19.05 16.34V7.66C19.05 5.83821 19.05 4.92731 18.74 4.24C18.4722 3.6461 18.0353 3.16188 17.5 2.85192C16.8763 2.5 16.0509 2.5 14.4 2.5H9.6C7.94912 2.5 7.12368 2.5 6.5 2.85192C5.96469 3.16188 5.52777 3.6461 5.26 4.24C4.95 4.92731 4.95 5.83821 4.95 7.66V16.34C4.95 18.1618 4.95 19.0727 5.26 19.76C5.52777 20.3539 5.96469 20.8381 6.5 21.1481C7.12368 21.5 7.94912 21.5 9.6 21.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <button 
+                className={`${aiStyles.previewResponsiveButton} ${previewDevice === 'mobile' ? aiStyles.previewResponsiveActive : ''}`} 
+                title="Mobile"
+                onClick={() => setPreviewDevice('mobile')}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 18V18.01M8.2 22H15.8C16.9201 22 17.4802 22 17.908 21.782C18.2843 21.5903 18.5903 21.2843 18.782 20.908C19 20.4802 19 19.9201 19 18.8V5.2C19 4.07989 19 3.51984 18.782 3.09202C18.5903 2.71569 18.2843 2.40973 17.908 2.21799C17.4802 2 16.9201 2 15.8 2H8.2C7.07989 2 6.51984 2 6.09202 2.21799C5.71569 2.40973 5.40973 2.71569 5.21799 3.09202C5 3.51984 5 4.07989 5 5.2V18.8C5 19.9201 5 20.4802 5.21799 20.908C5.40973 21.2843 5.71569 21.5903 6.09202 21.782C6.51984 22 7.07989 22 8.2 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div className={`${aiStyles.componentPreviewContainer} ${previewMode === 'light' ? aiStyles.previewLight : aiStyles.previewDark} ${aiStyles['preview' + previewDevice.charAt(0).toUpperCase() + previewDevice.slice(1)]}`}>
+              <div 
+                className={`${aiStyles.componentPreviewFrame}`}
+                dangerouslySetInnerHTML={{ 
+                  __html: `
+                  <style>
+                    /* Reset básico para o preview */
+                    .preview-wrapper * { box-sizing: border-box; }
+                    .preview-wrapper { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+                    
+                    /* Estilos do componente */
+                    ${formData.cssContent}
+                  </style>
+                  <div class="preview-wrapper">${formData.htmlContent}</div>
+                  ` 
+                }}
+              />
+            </div>
+            
+            <div className={aiStyles.codeViewHeader}>
+              <div className={aiStyles.codeTabsContainer}>
+                <button
+                  type="button"
+                  className={aiStyles.codeTab}
+                  onClick={() => setFormData({ ...formData, name: `${aiComponentType.charAt(0).toUpperCase() + aiComponentType.slice(1)} ${aiTheme} - ${formData.category}` })}
+                >
+                  Definir nome padrão
+                </button>
+              </div>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Nome do componente"
+                className={aiStyles.componentNameInput}
+              />
+            </div>
+            
+            <div className={aiStyles.aiOptionsRow}>
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label htmlFor="color">Cor Representativa</label>
+                <div className={styles.colorPickerContainer}>
+                  <select
+                    id="color"
+                    name="color"
+                    value={formData.color}
+                    onChange={handleChange}
+                    className={styles.formSelect}
+                  >
+                    {COLOR_OPTIONS.map(color => (
+                      <option key={color.value} value={color.value}>{color.name}</option>
+                    ))}
+                  </select>
+                  <div 
+                    className={styles.colorPreview} 
+                    style={{ backgroundColor: formData.color }}
+                    aria-hidden="true"
+                  ></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className={aiStyles.refinementSection}>
+              <h3 className={aiStyles.sectionTitle}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 5L21 12M21 12L14 19M21 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Refinar Componente
+              </h3>
+              <textarea
+                value={aiDescription}
+                onChange={(e) => setAiDescription(e.target.value)}
+                placeholder="Descreva ajustes para refinar este componente. Ex: Adicione uma borda mais arredondada, mude a cor para tons de azul..."
+                className={styles.formTextarea}
+                rows={2}
+              />
+              <button 
+                type="button" 
+                className={aiStyles.refineButton}
+                onClick={handleAIGenerate}
+                disabled={aiLoading}
+              >
+                {aiLoading ? (
+                  <>
+                    <span className={styles.smallSpinner}></span>
+                    Refinando componente...
+                  </>
+                ) : 'Refinar com IA'}
+              </button>
+            </div>
+
+            <div className={aiStyles.codeViewSection}>
+              <div className={aiStyles.codeViewHeader}>
+                <div className={aiStyles.codeTabsContainer}>
+                  <button
+                    type="button"
+                    className={`${aiStyles.codeTab} ${aiStyles.codeTabActive}`}
+                  >
+                    Código HTML e CSS
+                  </button>
+                </div>
+              </div>
+              <div className={aiStyles.codeViewContainer}>
+                <div className={aiStyles.codeBlock}>
+                  <div className={aiStyles.codeHeader}>
+                    <span>HTML</span>
+                  </div>
+                  <textarea
+                    value={formData.htmlContent}
+                    onChange={(e) => setFormData({ ...formData, htmlContent: e.target.value })}
+                    className={aiStyles.codeEditor}
+                    rows={6}
+                  />
+                </div>
+                
+                <div className={aiStyles.codeBlock}>
+                  <div className={aiStyles.codeHeader}>
+                    <span>CSS</span>
+                  </div>
+                  <textarea
+                    value={formData.cssContent}
+                    onChange={(e) => setFormData({ ...formData, cssContent: e.target.value })}
+                    className={aiStyles.codeEditor}
+                    rows={8}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.formActions}>
+              <button 
+                type="button" 
+                className={styles.cancelButton}
+                onClick={cancelForm}
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                className={styles.submitButton}
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className={styles.smallSpinner}></span>
+                    Criando...
+                  </>
+                ) : 'Criar Componente'}
+              </button>
+            </div>
+          </div>
         )}
       </div>
       

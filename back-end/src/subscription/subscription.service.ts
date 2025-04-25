@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class SubscriptionService {
@@ -11,10 +12,16 @@ export class SubscriptionService {
   
   async createPlan(createPlanDto: CreatePlanDto) {
     try {
-      // Esta função estará disponível após aplicar a migração
       return await this.prisma.$transaction(async (tx) => {
         return tx.plan.create({
-          data: createPlanDto,
+          data: {
+            name: createPlanDto.name,
+            description: createPlanDto.description,
+            price: new Decimal(createPlanDto.price.toString()),
+            duration: createPlanDto.duration,
+            features: createPlanDto.features,
+            active: createPlanDto.active ?? true
+          },
         });
       });
     } catch (error) {
@@ -108,6 +115,21 @@ export class SubscriptionService {
         throw new BadRequestException('O usuário já possui uma assinatura ativa');
       }
 
+      // Verificar se o plano existe, se um planId foi fornecido
+      if (createSubscriptionDto.planId) {
+        const plan = await this.prisma.plan.findUnique({
+          where: { id: createSubscriptionDto.planId }
+        });
+        
+        if (!plan) {
+          throw new NotFoundException(`Plano com ID ${createSubscriptionDto.planId} não encontrado`);
+        }
+
+        if (!plan.active) {
+          throw new BadRequestException(`O plano selecionado não está mais ativo`);
+        }
+      }
+
       // Cria a assinatura
       return this.prisma.subscription.create({
         data: {
@@ -129,7 +151,8 @@ export class SubscriptionService {
               name: true,
               picture: true
             }
-          }
+          },
+          plan: true
         }
       });
     } catch (error) {
@@ -164,7 +187,8 @@ export class SubscriptionService {
             name: true,
             picture: true
           }
-        }
+        },
+        plan: true
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -189,7 +213,8 @@ export class SubscriptionService {
             name: true,
             picture: true
           }
-        }
+        },
+        plan: true
       },
       orderBy: { startDate: 'desc' }
     });
@@ -206,7 +231,8 @@ export class SubscriptionService {
             name: true,
             picture: true
           }
-        }
+        },
+        plan: true
       }
     });
     
@@ -217,14 +243,64 @@ export class SubscriptionService {
     return subscription;
   }
 
+  async updateSubscription(id: number, updateData: Partial<CreateSubscriptionDto>) {
+    const subscription = await this.getSubscriptionById(id);
+    
+    // Verificar se há tentativa de alterar o plano
+    if (updateData.planId && updateData.planId !== subscription.planId) {
+      const plan = await this.prisma.plan.findUnique({
+        where: { id: updateData.planId }
+      });
+      
+      if (!plan) {
+        throw new NotFoundException(`Plano com ID ${updateData.planId} não encontrado`);
+      }
+      
+      if (!plan.active) {
+        throw new BadRequestException(`O plano selecionado não está mais ativo`);
+      }
+    }
+    
+    return this.prisma.subscription.update({
+      where: { id },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            picture: true
+          }
+        },
+        plan: true
+      }
+    });
+  }
+
   async cancelSubscription(id: number) {
     const subscription = await this.getSubscriptionById(id);
+    
+    if (!subscription.status) {
+      throw new BadRequestException('Esta assinatura já está cancelada');
+    }
     
     return this.prisma.subscription.update({
       where: { id },
       data: { 
         status: false,
         canceledAt: new Date()
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            picture: true
+          }
+        },
+        plan: true
       }
     });
   }
@@ -251,18 +327,29 @@ export class SubscriptionService {
   async registerPayment(subscriptionId: number, amount: number, paymentMethod: string) {
     const subscription = await this.getSubscriptionById(subscriptionId);
     
-    // Esta função estará disponível após aplicar a migração
+    if (!subscription.status) {
+      throw new BadRequestException('Não é possível registrar pagamento para uma assinatura cancelada');
+    }
+    
     return this.prisma.$transaction(async (tx) => {
-      return tx.payment.create({
+      const payment = await tx.payment.create({
         data: {
           subscriptionId,
-          amount,
+          amount: new Decimal(amount.toString()),
           status: 'completed',
           paymentMethod,
           paymentDate: new Date(),
           transactionId: `tx_${Date.now()}_${Math.floor(Math.random() * 10000)}`
         }
       });
+      
+      // Atualiza o status de pagamento da assinatura
+      await tx.subscription.update({
+        where: { id: subscriptionId },
+        data: { paymentStatus: 'paid' }
+      });
+      
+      return payment;
     });
   }
 

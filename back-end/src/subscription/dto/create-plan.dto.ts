@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsNumber, IsBoolean, IsArray, IsOptional, Min, IsPositive } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsBoolean, IsOptional, IsArray } from 'class-validator';
 
 export class CreatePlanDto {
   @IsNotEmpty()
@@ -10,13 +10,12 @@ export class CreatePlanDto {
   description: string;
 
   @IsNotEmpty()
-  @IsPositive()
+  @IsNumber()
   price: number;
 
   @IsNotEmpty()
   @IsNumber()
-  @Min(1)
-  duration: number; // Duração em dias
+  duration: number; // duration in days
 
   @IsArray()
   @IsString({ each: true })
@@ -24,5 +23,5 @@ export class CreatePlanDto {
 
   @IsOptional()
   @IsBoolean()
-  active?: boolean = true;
+  active?: boolean;
 }

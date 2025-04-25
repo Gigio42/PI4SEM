@@ -1,218 +1,453 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from 'next/navigation';
-import Header from "../components/Header/Header";
-import Sidebar from "../components/Sidebar/Sidebar";
-import PlanCard from "./components/PlanCard";
+import Header from "@/app/components/Header/Header";
+import Sidebar from "@/app/components/Sidebar/Sidebar";
+import styles from "./subscription.module.css";
+import homeStyles from "../home/home.module.css";
+import SubscriptionPlans from "./components/SubscriptionPlans";
+import PaymentForm from "./components/PaymentForm";
 import SubscriptionDetails from "./components/SubscriptionDetails";
-import styles from './subscription.module.css';
-import { subscriptionsService, PlanType, SubscriptionType } from "@/services/SubscriptionsService";
-import { useToast } from "@/hooks/useToast";
+import ErrorState from "./components/ErrorState";
+import { SubscriptionService } from "@/services/SubscriptionService";
+import { useAuth } from "@/contexts/AuthContext";
+import { Plan, Subscription } from "@/types/subscription";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 
 export default function SubscriptionPage() {
-  const [loaded, setLoaded] = useState(false);
-  const [plans, setPlans] = useState<PlanType[]>([]);
-  const [userSubscription, setUserSubscription] = useState<SubscriptionType | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const { showToast } = useToast();
+  const { user } = useAuth();
   const router = useRouter();
-  
-  // Mock do usuário atual - Em produção, isso viria do contexto de autenticação
-  const currentUserId = 1;
+  const [currentPlan, setCurrentPlan] = useState<Subscription | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [availablePlans, setAvailablePlans] = useState<Plan[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [sessionValid, setSessionValid] = useState(false);
+  const [localUser, setLocalUser] = useState<any>(null);
+  const [authDebug, setAuthDebug] = useState<Record<string, unknown>>({});
 
-  useEffect(() => {
-    setLoaded(true);
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  // Enhanced loadPlansOnly function with better error handling but without timeout parameter
+  const loadPlansOnly = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Buscar planos disponíveis
-      const availablePlans = await subscriptionsService.getPlans(true);
-      setPlans(availablePlans);
+      // Get plans without passing timeout parameter
+      const plansResult = await SubscriptionService.getPlans();
       
-      // Verificar se o usuário já tem uma assinatura
-      try {
-        const subscription = await subscriptionsService.getUserSubscription(currentUserId);
-        setUserSubscription(subscription);
-      } catch (error) {
-        // Se não encontrar assinatura, apenas continua sem erro
-        console.log("Usuário não possui assinatura ativa");
+      if (plansResult?.length > 0) {
+        const sortedPlans = [...plansResult].sort((a, b) => a.price - b.price);
+        const highlightIndex = sortedPlans.length === 2 ? 1 : Math.floor(sortedPlans.length / 2);
+        
+        const enhancedPlans = sortedPlans.map((plan, index) => ({
+          ...plan,
+          highlighted: index === highlightIndex
+        }));
+        
+        setAvailablePlans(enhancedPlans);
+      } else {
+        setAvailablePlans([]);
       }
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      showToast("Erro ao carregar planos de assinatura. Por favor, tente novamente.");
+    } catch (err) {
+      console.error('Error fetching plans data:', err);
+      
+      // More specific error message based on error type
+      if (axios.isAxiosError(err) && err.code === 'ECONNABORTED') {
+        setError('O servidor está demorando para responder. Por favor, verifique sua conexão e tente novamente.');
+      } else if (axios.isAxiosError(err) && err.response?.status === 500) {
+        setError('Ocorreu um erro no servidor. Por favor, tente novamente mais tarde ou entre em contato com o suporte.');
+      } else {
+        setError('Ocorreu um erro ao carregar os planos disponíveis. Por favor, tente novamente mais tarde.');
+      }
+      
+      setAuthDebug(prev => ({ ...prev, fetchPlansError: err }));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSelectPlan = (plan: PlanType) => {
-    setSelectedPlan(plan);
-    setShowCheckout(true);
-  };
+  // First useEffect to check for user authentication from multiple sources
+  useEffect(() => {
+    setLoaded(true);
+    
+    const checkAuthentication = async () => {
+      console.log("🔍 Checking authentication state");
+      
+      try {
+        // First check: Auth context
+        if (user) {
+          console.log("👤 User found in auth context:", user);
+          setLocalUser(user);
+          setSessionValid(true);
+          setAuthChecked(true);
+          return;
+        }
+        
+        // Second check: localStorage
+        try {
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            console.log("👤 User found in localStorage:", parsedUser);
+            setLocalUser(parsedUser);
+            setSessionValid(true);
+            setAuthChecked(true);
+            return;
+          }
+        } catch (e) {
+          console.error("Error parsing user from localStorage:", e);
+        }
+        
+        // Third check: Try session endpoint
+        try {
+          const response = await axios.get('/api/auth/session-check', { 
+            withCredentials: true,
+            timeout: 5000 // 5 second timeout
+          });
+          
+          if (response.data?.authenticated && response.data?.user) {
+            console.log("👤 User found from session check:", response.data.user);
+            setLocalUser(response.data.user);
+            setSessionValid(true);
+            // Store for future use
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+          } else {
+            console.log("⚠️ No authenticated session found, proceeding as guest");
+            setSessionValid(true); // Allow access even without authentication
+          }
+        } catch (err) {
+          console.log("⚠️ Session check failed, proceeding as guest:", err);
+          setSessionValid(true); // Allow access even if session check fails
+        }
+      } catch (err) {
+        console.error("❌ Error during authentication check:", err);
+      } finally {
+        // Always mark auth as checked to proceed
+        setAuthChecked(true);
+        
+        // Always load plans regardless of auth state
+        loadPlansOnly();
+      }
+    };
+    
+    checkAuthentication();
+  }, [user]);
 
-  const handleCancelCheckout = () => {
-    setShowCheckout(false);
-    setSelectedPlan(null);
-  };
+  // Second useEffect to fetch subscription data when auth is checked
+  useEffect(() => {
+    if (authChecked) {
+      const effectiveUser = user || localUser;
+      console.log("👤 Auth checked, user state:", { user: effectiveUser, sessionValid });
+      
+      if (effectiveUser?.id) {
+        fetchSubscriptionData(effectiveUser.id);
+      }
+    }
+  }, [user, localUser, authChecked, sessionValid]);
 
-  const handleSubscribe = async (paymentMethod: string) => {
-    if (!selectedPlan) return;
+  const fetchSubscriptionData = async (userId: number) => {
+    console.log("📊 Fetching subscription data for user:", userId);
     
     try {
       setLoading(true);
       
-      // Criar nova assinatura
-      const newSubscription = await subscriptionsService.createSubscription({
-        userId: currentUserId,
+      // Only fetch user-specific subscription if we have a user ID
+      try {
+        const subscriptionResult = await SubscriptionService.getCurrentSubscription(userId);
+        console.log("🔑 User subscription:", subscriptionResult);
+        
+        if (subscriptionResult) {
+          setCurrentPlan(subscriptionResult);
+        } else {
+          setCurrentPlan(null);
+        }
+      } catch (subErr) {
+        console.error("❌ Error fetching subscription:", subErr);
+        setAuthDebug(prev => ({ ...prev, subscriptionError: subErr }));
+        // Don't set an error - this is an expected case for new users
+      }
+    } catch (err) {
+      console.error('❌ Error in fetchSubscriptionData:', err);
+      setAuthDebug(prev => ({ ...prev, fetchSubscriptionError: err }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchData = async () => {
+    console.log("📊 Fetching all subscription data...");
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Always fetch plans
+      try {
+        const plansResult = await SubscriptionService.getPlans();
+        console.log("📋 Available plans:", plansResult);
+        
+        if (plansResult?.length > 0) {
+          const sortedPlans = [...plansResult].sort((a, b) => a.price - b.price);
+          const highlightIndex = sortedPlans.length === 2 ? 1 : Math.floor(sortedPlans.length / 2);
+          
+          const enhancedPlans = sortedPlans.map((plan, index) => ({
+            ...plan,
+            highlighted: index === highlightIndex
+          }));
+          
+          setAvailablePlans(enhancedPlans);
+        } else {
+          setAvailablePlans([]);
+        }
+      } catch (planErr) {
+        console.error("❌ Error fetching plans:", planErr);
+        setError('Ocorreu um erro ao carregar os planos disponíveis. Por favor, verifique se o servidor backend está em execução.');
+      }
+      
+      // Fetch user subscription if we have a user
+      const effectiveUser = user || localUser;
+      if (effectiveUser?.id) {
+        await fetchSubscriptionData(effectiveUser.id);
+      }
+    } catch (err) {
+      console.error('❌ Error fetching subscription data:', err);
+      setError('Ocorreu um erro ao carregar os dados da assinatura. Por favor, verifique se o servidor backend está em execução.');
+      setAuthDebug(prev => ({ ...prev, fetchDataError: err }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectPlan = (plan: Plan) => {
+    setSelectedPlan(plan);
+    setShowPaymentForm(true);
+  };
+
+  const handlePaymentComplete = async (paymentMethod: string) => {
+    const effectiveUser = user || localUser;
+    if (!effectiveUser?.id || !selectedPlan) return;
+    
+    try {
+      setLoading(true);
+      
+      const newSubscription = await SubscriptionService.createSubscription({
+        userId: effectiveUser.id,
         planId: selectedPlan.id,
         paymentMethod
       });
       
-      // Atualizar estado
-      setUserSubscription(newSubscription);
-      setShowCheckout(false);
-      setSelectedPlan(null);
-      
-      showToast("Assinatura realizada com sucesso!");
+      setCurrentPlan(newSubscription);
+      setShowPaymentForm(false);
     } catch (error) {
-      console.error("Erro ao processar assinatura:", error);
-      showToast("Erro ao processar sua assinatura. Por favor, tente novamente.");
+      console.error('Error completing payment:', error);
+      setError('Ocorreu um erro ao processar o pagamento. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancelSubscription = async () => {
-    if (!userSubscription) return;
+    if (!currentPlan) return;
     
     try {
       setLoading(true);
+      await SubscriptionService.cancelSubscription(currentPlan.id);
       
-      await subscriptionsService.cancelSubscription(userSubscription.id);
-      
-      // Atualizar informação da assinatura
-      const updatedSubscription = await subscriptionsService.getUserSubscription(currentUserId);
-      setUserSubscription(updatedSubscription);
-      
-      showToast("Sua assinatura foi cancelada");
+      // Refresh data
+      await fetchData();
     } catch (error) {
-      console.error("Erro ao cancelar assinatura:", error);
-      showToast("Erro ao cancelar assinatura. Por favor, tente novamente.");
+      console.error('Error cancelling subscription:', error);
+      setError('Ocorreu um erro ao cancelar a assinatura. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCancelPayment = () => {
+    setShowPaymentForm(false);
+  };
+
+  const handleRetry = () => {
+    fetchData();
+  };
+
+  const handleLogin = () => {
+    // Redirect to login page with return URL
+    router.push(`/login?returnUrl=${encodeURIComponent('/subscription')}`);
+  };
+
+  // Show auth debugging panel in development
+  const showDebugInfo = process.env.NODE_ENV === 'development';
+
+  // If no authenticated user is detected
+  if (!user && !sessionValid && authChecked && false) { // Added 'false' to always skip this block
+    return (
+      <div className={homeStyles.pageWrapper}>
+        <Header />
+        <div className={homeStyles.layoutContainer}>
+          <Sidebar isAdmin={false} />
+          <main className={`${homeStyles.mainContent} ${loaded ? homeStyles.loaded : ""}`}>
+            <div className={homeStyles.contentHeader}>
+              <h1 className={homeStyles.pageTitle}>Planos de Assinatura</h1>
+              <p className={homeStyles.pageDescription}>
+                Faça login para visualizar e gerenciar suas assinaturas
+              </p>
+            </div>
+            
+            <div className={styles.errorContainer}>
+              <div className={styles.errorIcon}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 3H9C7.34315 3 6 4.34315 6 6V18C6 19.6569 7.34315 21 9 21H15C16.6569 21 18 19.6569 18 18V6C18 4.34315 16.6569 3 15 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 18H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h2 className={styles.errorTitle}>Acesso Restrito</h2>
+              <p className={styles.errorDescription}>
+                Você precisa estar logado para acessar esta página.
+              </p>
+              <div className={styles.authActions}>
+                <button 
+                  onClick={handleLogin}
+                  className={styles.retryButton}
+                >
+                  Fazer Login
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    setAuthChecked(false);
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 500);
+                  }}
+                  className={styles.retryButton}
+                  style={{marginLeft: '10px'}}
+                >
+                  Verificar Login Novamente
+                </button>
+              </div>
+              
+              {/* Debug information in development */}
+              {showDebugInfo && (
+                <div className={styles.debugInfo}>
+                  <h3>Auth Debug Info:</h3>
+                  <pre>{JSON.stringify(authDebug, null, 2)}</pre>
+                </div>
+              )}
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state before auth is checked
+  if (!authChecked || loading) {
+    return (
+      <div className={homeStyles.pageWrapper}>
+        <Header />
+        <div className={homeStyles.layoutContainer}>
+          <Sidebar isAdmin={false} />
+          <main className={`${homeStyles.mainContent} ${loaded ? homeStyles.loaded : ""}`}>
+            <div className={homeStyles.contentHeader}>
+              <h1 className={homeStyles.pageTitle}>Planos de Assinatura</h1>
+              <p className={homeStyles.pageDescription}>
+                Carregando...
+              </p>
+            </div>
+            
+            <div className={styles.loadingContainer}>
+              <div className={styles.loadingSpinner}></div>
+              <p>{!authChecked ? "Verificando sua sessão..." : "Carregando planos de assinatura..."}</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Main content for authenticated users
   return (
-    <div className={styles.pageWrapper}>
+    <div className={homeStyles.pageWrapper}>
       <Header />
-      <div className={styles.layoutContainer}>
-        <Sidebar />
-        <main className={`${styles.mainContent} ${loaded ? styles.loaded : ""}`}>
-          <div className={styles.contentHeader}>
-            <h1 className={styles.pageTitle}>Planos e Assinaturas</h1>
-            <p className={styles.pageDescription}>
-              Escolha o plano ideal para você e tenha acesso a recursos premium
+      <div className={homeStyles.layoutContainer}>
+        <Sidebar isAdmin={false} />
+        <main className={`${homeStyles.mainContent} ${loaded ? homeStyles.loaded : ""}`}>
+          <div className={homeStyles.contentHeader}>
+            <h1 className={homeStyles.pageTitle}>Planos de Assinatura</h1>
+            <p className={homeStyles.pageDescription}>
+              Escolha o plano ideal para suas necessidades de desenvolvimento
             </p>
           </div>
 
-          {loading ? (
-            <div className={styles.loadingContainer}>
-              <div className={styles.spinner}></div>
-              <p>Carregando planos...</p>
-            </div>
-          ) : (
-            <>
-              {/* Exibir detalhes da assinatura atual se existir */}
-              {userSubscription && (
-                <SubscriptionDetails 
-                  subscription={userSubscription} 
-                  onCancel={handleCancelSubscription}
-                />
-              )}
+          <div className={styles.container}>
+            {error ? (
+              <ErrorState 
+                message={error} 
+                onRetry={handleRetry} 
+              />
+            ) : (
+              <>
+                {!showPaymentForm ? (
+                  <>
+                    {currentPlan && (
+                      <SubscriptionDetails 
+                        subscription={currentPlan} 
+                        onCancelSubscription={handleCancelSubscription}
+                      />
+                    )}
 
-              {/* Exibir planos disponíveis se não houver assinatura ativa */}
-              {(!userSubscription || !userSubscription.status) && (
-                <div className={styles.plansContainer}>
-                  {plans.map(plan => (
-                    <PlanCard 
-                      key={plan.id} 
-                      plan={plan} 
-                      onSelect={() => handleSelectPlan(plan)}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Modal de checkout */}
-              {showCheckout && selectedPlan && (
-                <div className={styles.checkoutOverlay}>
-                  <div className={styles.checkoutModal}>
-                    <h2>Finalizar Assinatura</h2>
-                    <div className={styles.planSummary}>
-                      <h3>{selectedPlan.name}</h3>
-                      <p className={styles.price}>
-                        R$ {selectedPlan.price} <span>/{selectedPlan.duration} dias</span>
-                      </p>
-                      <div className={styles.features}>
-                        {selectedPlan.features.map((feature, index) => (
-                          <div key={index} className={styles.featureItem}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            <span>{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className={styles.paymentOptions}>
-                      <h3>Método de Pagamento</h3>
-                      <div className={styles.paymentButtonsContainer}>
-                        <button 
-                          className={styles.paymentButton}
-                          onClick={() => handleSubscribe('credit_card')}
-                        >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
-                            <path d="M2 10H22" stroke="currentColor" strokeWidth="2"/>
-                            <path d="M6 15H10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    {availablePlans.length > 0 ? (
+                      <SubscriptionPlans 
+                        plans={availablePlans}
+                        currentPlanId={currentPlan?.planId}
+                        onSelectPlan={handleSelectPlan}
+                      />
+                    ) : (
+                      <div className={styles.noPlansContainer}>
+                        <div className={styles.noPlansIcon}>
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
-                          Cartão de Crédito
-                        </button>
+                        </div>
+                        <h2 className={styles.noPlansTitle}>Nenhum plano disponível</h2>
+                        <p className={styles.noPlansDescription}>
+                          No momento não há planos de assinatura disponíveis. Por favor, tente novamente mais tarde ou entre em contato com o suporte.
+                        </p>
                         <button 
-                          className={styles.paymentButton}
-                          onClick={() => handleSubscribe('pix')}
+                          className={styles.retryButton}
+                          onClick={handleRetry}
                         >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M6 9H5C3.89543 9 3 9.89543 3 11V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V11C21 9.89543 20.1046 9 19 9H18M6 9H18M6 9C6 7.34315 7.34315 6 9 6H15C16.6569 6 18 7.34315 18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                            <path d="M9 15H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                          </svg>
-                          PIX
+                          Tentar novamente
                         </button>
                       </div>
-                    </div>
-
-                    <div className={styles.checkoutActions}>
-                      <button 
-                        className={styles.cancelButton}
-                        onClick={handleCancelCheckout}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+                    )}
+                  </>
+                ) : (
+                  <PaymentForm 
+                    plan={selectedPlan!} 
+                    onComplete={handlePaymentComplete}
+                    onCancel={handleCancelPayment}
+                  />
+                )}
+              </>
+            )}
+            
+            {/* Debug information in development */}
+            {showDebugInfo && (
+              <div className={styles.debugInfo}>
+                <h3>Auth Debug Info:</h3>
+                <pre>{JSON.stringify(authDebug, null, 2)}</pre>
+                <h3>User Info:</h3>
+                <pre>{JSON.stringify(user, null, 2)}</pre>
+              </div>
+            )}
+          </div>
         </main>
       </div>
     </div>

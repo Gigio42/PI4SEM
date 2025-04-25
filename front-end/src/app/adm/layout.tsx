@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import styles from './admin.module.css';
+import Header from '../../app/components/Header/Header';
+import Sidebar from '../../app/components/Sidebar/Sidebar';
 
 export default function AdminLayout({
   children,
@@ -13,6 +14,7 @@ export default function AdminLayout({
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   useEffect(() => {
     // In a real application, you would check if the user is an admin here
@@ -47,35 +49,20 @@ export default function AdminLayout({
     return null; // Router will redirect, no need to render anything
   }
 
+  // Handle sidebar toggle
+  const handleSidebarToggle = (collapsed: boolean) => {
+    setIsSidebarCollapsed(collapsed);
+  };
+
   return (
-    <div className={styles.adminContainer}>
-      <aside className={styles.sidebar}>
-        <div className={styles.sidebarHeader}>
-          <h2>Admin Panel</h2>
-        </div>
-        <nav className={styles.sidebarNav}>
-          <ul>
-            <li>
-              <Link href="/adm" className={styles.navLink}>
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link href="/adm/subscriptions" className={styles.navLink}>
-                Assinaturas
-              </Link>
-            </li>
-            <li>
-              <Link href="/adm/users" className={styles.navLink}>
-                Usuários
-              </Link>
-            </li>
-          </ul>
-        </nav>
-      </aside>
-      <main className={styles.content}>
-        {children}
-      </main>
+    <div className={`${styles.adminLayout} ${isSidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
+      <Header />
+      <div className={styles.adminContainer}>
+        <Sidebar isAdmin={true} onToggle={handleSidebarToggle} />
+        <main className={styles.content}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

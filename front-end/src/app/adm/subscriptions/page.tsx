@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { subscriptionsService, SubscriptionType, PlanType, PaymentType } from '@/services/SubscriptionsService';
 import styles from './subscriptions.module.css';
+import { useToast } from '@/hooks/useToast';
 
 // Types for filter and pagination
 interface FilterOptions {
@@ -23,14 +24,18 @@ export default function AdminSubscriptionsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   
   // Filter and pagination states
   const [filters, setFilters] = useState<FilterOptions>({});
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [filters]);
 
   // Function to fetch all required data
   const fetchData = async () => {
@@ -47,7 +52,7 @@ export default function AdminSubscriptionsPage() {
       setPlans(fetchedPlans);
     } catch (error) {
       console.error('Error fetching data:', error);
-      // In a real app, show error toast here
+      showToast("Erro ao carregar dados. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -60,7 +65,7 @@ export default function AdminSubscriptionsPage() {
       setPaymentHistory(history);
     } catch (error) {
       console.error('Error fetching payment history:', error);
-      // In a real app, show error toast here
+      showToast("Erro ao carregar histórico de pagamentos.");
     }
   };
 
@@ -78,16 +83,17 @@ export default function AdminSubscriptionsPage() {
     try {
       setLoading(true);
       
-      await subscriptionsService.createSubscription(data);
+      const newSubscription = await subscriptionsService.createSubscription(data);
       
       // Refresh the subscriptions list
       await fetchData();
       
       // Close the modal
       setIsAddModalOpen(false);
+      showToast("Assinatura criada com sucesso!");
     } catch (error) {
       console.error('Error adding subscription:', error);
-      // In a real app, show error toast here
+      showToast("Erro ao criar assinatura. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -101,7 +107,6 @@ export default function AdminSubscriptionsPage() {
       setLoading(true);
       
       // This would depend on what fields are editable in your API
-      // For now, I'll assume we can renew the subscription
       await subscriptionsService.renewSubscription(
         selectedSubscription.id,
         data.duration
@@ -112,9 +117,10 @@ export default function AdminSubscriptionsPage() {
       
       // Close the modal
       setIsEditModalOpen(false);
+      showToast("Assinatura atualizada com sucesso!");
     } catch (error) {
       console.error('Error editing subscription:', error);
-      // In a real app, show error toast here
+      showToast("Erro ao atualizar assinatura. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -134,9 +140,71 @@ export default function AdminSubscriptionsPage() {
       
       // Close the modal
       setIsCancelModalOpen(false);
+      showToast("Assinatura cancelada com sucesso!");
     } catch (error) {
       console.error('Error canceling subscription:', error);
-      // In a real app, show error toast here
+      showToast("Erro ao cancelar assinatura. Por favor, tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to handle plan operations
+  const handleAddPlan = async (data: Omit<PlanType, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      setLoading(true);
+      
+      await subscriptionsService.createPlan(data);
+      
+      // Refresh plans list
+      await fetchData();
+      
+      // Close the modal
+      setIsPlanModalOpen(false);
+      showToast("Plano criado com sucesso!");
+    } catch (error) {
+      console.error('Error adding plan:', error);
+      showToast("Erro ao criar plano. Por favor, tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditPlan = async (data: Partial<PlanType>) => {
+    if (!selectedPlan) return;
+    
+    try {
+      setLoading(true);
+      
+      await subscriptionsService.updatePlan(selectedPlan.id, data);
+      
+      // Refresh plans list
+      await fetchData();
+      
+      // Close the modal
+      setIsPlanModalOpen(false);
+      setSelectedPlan(null);
+      showToast("Plano atualizado com sucesso!");
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      showToast("Erro ao atualizar plano. Por favor, tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTogglePlanStatus = async (planId: number) => {
+    try {
+      setLoading(true);
+      
+      await subscriptionsService.togglePlanStatus(planId);
+      
+      // Refresh plans list
+      await fetchData();
+      showToast("Status do plano alterado com sucesso!");
+    } catch (error) {
+      console.error('Error toggling plan status:', error);
+      showToast("Erro ao alterar status do plano. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -161,8 +229,6 @@ export default function AdminSubscriptionsPage() {
     }
     
     setFilters(newFilters);
-    // In a real implementation, this would trigger fetchData() with the new filters
-    // For now, we'll just filter the client-side data
   };
 
   // Function to filter subscriptions based on search term (client-side filtering)
@@ -179,9 +245,23 @@ export default function AdminSubscriptionsPage() {
     );
   });
 
+  // Function to format dates consistently
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   return (
-    <div className={styles.container}>
-      <h1>Gerenciamento de Assinaturas</h1>
+    <div className={styles.contentContainer}>
+      <div className={styles.contentHeader}>
+        <h1 className={styles.pageTitle}>Gerenciamento de Assinaturas</h1>
+        <p className={styles.pageDescription}>
+          Gerencie assinaturas e planos disponíveis na plataforma.
+        </p>
+      </div>
       
       {/* Tabs */}
       <div className={styles.tabs}>
@@ -199,9 +279,14 @@ export default function AdminSubscriptionsPage() {
         </button>
         <button 
           className={`${styles.tabButton} ${activeTab === 'history' ? styles.active : ''}`}
-          onClick={() => setActiveTab('history')}
+          onClick={() => {
+            setActiveTab('history');
+            if (selectedSubscription) {
+              fetchPaymentHistory(selectedSubscription.id);
+            }
+          }}
         >
-          Histórico
+          Histórico de Pagamentos
         </button>
       </div>
       
@@ -247,16 +332,16 @@ export default function AdminSubscriptionsPage() {
           
           {/* Subscriptions Table */}
           <div className={styles.tableContainer}>
-            <table className={styles.table}>
+            <table className={styles.subscriptionsTable}>
               <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Usuário</th>
-                  <th>Plano</th>
-                  <th>Início</th>
-                  <th>Término</th>
-                  <th>Status</th>
-                  <th>Ações</th>
+                <tr className={`${styles.subscriptionRow} ${styles.tableHeader}`}>
+                  <th className={styles.tableCell}>ID</th>
+                  <th className={styles.tableCell}>Usuário</th>
+                  <th className={styles.tableCell}>Plano</th>
+                  <th className={styles.tableCell}>Início</th>
+                  <th className={styles.tableCell}>Término</th>
+                  <th className={styles.tableCell}>Status</th>
+                  <th className={styles.tableCell}>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -270,18 +355,20 @@ export default function AdminSubscriptionsPage() {
                   </tr>
                 ) : (
                   filteredSubscriptions.map(subscription => (
-                    <tr key={subscription.id} onClick={() => handleSelectSubscription(subscription)}>
-                      <td>{subscription.id}</td>
-                      <td>{subscription.user?.name || `Usuário #${subscription.userId}`}</td>
-                      <td>{subscription.plan?.name || `Plano #${subscription.planId}`}</td>
-                      <td>{new Date(subscription.startDate).toLocaleDateString()}</td>
-                      <td>{new Date(subscription.endDate).toLocaleDateString()}</td>
-                      <td>
-                        <span className={`${styles.statusBadge} ${subscription.status ? styles.active : styles.inactive}`}>
+                    <tr key={subscription.id} 
+                        className={styles.subscriptionRow}
+                        onClick={() => handleSelectSubscription(subscription)}>
+                      <td className={styles.tableCell}>{subscription.id}</td>
+                      <td className={styles.tableCell}>{subscription.user?.name || `Usuário #${subscription.userId}`}</td>
+                      <td className={styles.tableCell}>{subscription.plan?.name || `Plano #${subscription.planId}`}</td>
+                      <td className={styles.tableCell}>{formatDate(subscription.startDate)}</td>
+                      <td className={styles.tableCell}>{formatDate(subscription.endDate)}</td>
+                      <td className={styles.tableCell}>
+                        <span className={`${styles.statusBadge} ${subscription.status ? styles.statusActive : styles.statusInactive}`}>
                           {subscription.status ? 'Ativa' : 'Cancelada'}
                         </span>
                       </td>
-                      <td>
+                      <td className={styles.tableCell}>
                         <div className={styles.actionButtons}>
                           <button
                             onClick={(e) => {
@@ -289,22 +376,23 @@ export default function AdminSubscriptionsPage() {
                               setSelectedSubscription(subscription);
                               setIsEditModalOpen(true);
                             }}
-                            className={styles.editButton}
+                            className={`${styles.actionButton} ${styles.editButton}`}
                             disabled={!subscription.status}
                           >
                             Editar
                           </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSubscription(subscription);
-                              setIsCancelModalOpen(true);
-                            }}
-                            className={styles.cancelButton}
-                            disabled={!subscription.status}
-                          >
-                            Cancelar
-                          </button>
+                          {subscription.status && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSubscription(subscription);
+                                setIsCancelModalOpen(true);
+                              }}
+                              className={`${styles.actionButton} ${styles.cancelButton}`}
+                            >
+                              Cancelar
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -333,23 +421,29 @@ export default function AdminSubscriptionsPage() {
               </button>
             </div>
             
-            <button className={styles.addButton}>
+            <button 
+              onClick={() => {
+                setSelectedPlan(null);
+                setIsPlanModalOpen(true);
+              }} 
+              className={styles.addButton}
+            >
               Adicionar Plano
             </button>
           </div>
           
           {/* Plans Table */}
           <div className={styles.tableContainer}>
-            <table className={styles.table}>
+            <table className={styles.subscriptionsTable}>
               <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nome</th>
-                  <th>Descrição</th>
-                  <th>Preço</th>
-                  <th>Duração (dias)</th>
-                  <th>Status</th>
-                  <th>Ações</th>
+                <tr className={`${styles.subscriptionRow} ${styles.tableHeader}`}>
+                  <th className={styles.tableCell}>ID</th>
+                  <th className={styles.tableCell}>Nome</th>
+                  <th className={styles.tableCell}>Descrição</th>
+                  <th className={styles.tableCell}>Preço</th>
+                  <th className={styles.tableCell}>Duração (dias)</th>
+                  <th className={styles.tableCell}>Status</th>
+                  <th className={styles.tableCell}>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -365,23 +459,32 @@ export default function AdminSubscriptionsPage() {
                   plans
                     .filter(plan => !searchTerm || plan.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map(plan => (
-                      <tr key={plan.id}>
-                        <td>{plan.id}</td>
-                        <td>{plan.name}</td>
-                        <td>{plan.description}</td>
-                        <td>R$ {plan.price.toFixed(2)}</td>
-                        <td>{plan.duration}</td>
-                        <td>
-                          <span className={`${styles.statusBadge} ${plan.active ? styles.active : styles.inactive}`}>
+                      <tr key={plan.id} className={styles.subscriptionRow}>
+                        <td className={styles.tableCell}>{plan.id}</td>
+                        <td className={styles.tableCell}>{plan.name}</td>
+                        <td className={styles.tableCell}>{plan.description.length > 50 ? `${plan.description.substring(0, 50)}...` : plan.description}</td>
+                        <td className={styles.tableCell}>R$ {Number(plan.price).toFixed(2)}</td>
+                        <td className={styles.tableCell}>{plan.duration}</td>
+                        <td className={styles.tableCell}>
+                          <span className={`${styles.statusBadge} ${plan.active ? styles.statusActive : styles.statusInactive}`}>
                             {plan.active ? 'Ativo' : 'Inativo'}
                           </span>
                         </td>
-                        <td>
+                        <td className={styles.tableCell}>
                           <div className={styles.actionButtons}>
-                            <button className={styles.editButton}>
+                            <button 
+                              className={`${styles.actionButton} ${styles.editButton}`}
+                              onClick={() => {
+                                setSelectedPlan(plan);
+                                setIsPlanModalOpen(true);
+                              }}
+                            >
                               Editar
                             </button>
-                            <button className={styles.toggleButton}>
+                            <button 
+                              className={`${styles.actionButton} ${plan.active ? styles.cancelButton : styles.editButton}`}
+                              onClick={() => handleTogglePlanStatus(plan.id)}
+                            >
                               {plan.active ? 'Desativar' : 'Ativar'}
                             </button>
                           </div>
@@ -399,49 +502,59 @@ export default function AdminSubscriptionsPage() {
       {activeTab === 'history' && (
         <div className={styles.tabContent}>
           {!selectedSubscription ? (
-            <div className={styles.selectPrompt}>
-              Selecione uma assinatura para ver seu histórico de pagamentos
+            <div className={styles.emptyState}>
+              <p>Selecione uma assinatura na aba "Assinaturas" para visualizar seu histórico de pagamentos</p>
             </div>
           ) : (
             <>
-              <h2>
-                Histórico de Pagamentos - 
-                {selectedSubscription.user?.name || `Usuário #${selectedSubscription.userId}`} 
-                ({selectedSubscription.plan?.name || `Plano #${selectedSubscription.planId}`})
-              </h2>
+              <div className={styles.contentHeader}>
+                <h2 className={styles.sectionTitle}>
+                  Histórico de Pagamentos - 
+                  {selectedSubscription.user?.name || `Usuário #${selectedSubscription.userId}`} 
+                  ({selectedSubscription.plan?.name || `Plano #${selectedSubscription.planId}`})
+                </h2>
+              </div>
               
               <div className={styles.tableContainer}>
-                <table className={styles.table}>
+                <table className={styles.subscriptionsTable}>
                   <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Data</th>
-                      <th>Valor</th>
-                      <th>Método</th>
-                      <th>Status</th>
+                    <tr className={`${styles.subscriptionRow} ${styles.tableHeader}`}>
+                      <th className={styles.tableCell}>ID</th>
+                      <th className={styles.tableCell}>Data</th>
+                      <th className={styles.tableCell}>Valor</th>
+                      <th className={styles.tableCell}>Método</th>
+                      <th className={styles.tableCell}>Status</th>
+                      <th className={styles.tableCell}>Transação</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={5} className={styles.loadingCell}>Carregando...</td>
+                        <td colSpan={6} className={styles.loadingCell}>Carregando...</td>
                       </tr>
                     ) : paymentHistory.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className={styles.emptyCell}>Nenhum pagamento encontrado</td>
+                        <td colSpan={6} className={styles.emptyCell}>Nenhum pagamento encontrado</td>
                       </tr>
                     ) : (
                       paymentHistory.map(payment => (
-                        <tr key={payment.id}>
-                          <td>{payment.id}</td>
-                          <td>{new Date(payment.paymentDate).toLocaleDateString()}</td>
-                          <td>R$ {payment.amount.toFixed(2)}</td>
-                          <td>{payment.paymentMethod}</td>
-                          <td>
-                            <span className={`${styles.statusBadge} ${payment.status === 'completed' ? styles.active : styles.pending}`}>
+                        <tr key={payment.id} className={styles.subscriptionRow}>
+                          <td className={styles.tableCell}>{payment.id}</td>
+                          <td className={styles.tableCell}>{formatDate(payment.paymentDate)}</td>
+                          <td className={styles.tableCell}>R$ {Number(payment.amount).toFixed(2)}</td>
+                          <td className={styles.tableCell}>{
+                            payment.paymentMethod === 'credit_card' 
+                              ? 'Cartão de Crédito' 
+                              : payment.paymentMethod === 'pix' 
+                                ? 'PIX' 
+                                : payment.paymentMethod
+                          }</td>
+                          <td className={styles.tableCell}>
+                            <span className={`${styles.statusBadge} ${payment.status === 'completed' ? styles.statusActive : styles.statusPending}`}>
                               {payment.status === 'completed' ? 'Concluído' : payment.status}
                             </span>
                           </td>
+                          <td className={styles.tableCell}>{payment.transactionId || '-'}</td>
                         </tr>
                       ))
                     )}
@@ -453,24 +566,36 @@ export default function AdminSubscriptionsPage() {
         </div>
       )}
       
-      {/* Add Subscription Modal - Simplified for illustration */}
+      {/* Add Subscription Modal */}
       {isAddModalOpen && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h2>Adicionar Nova Assinatura</h2>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>Adicionar Nova Assinatura</h2>
             <form onSubmit={(e) => {
               e.preventDefault();
-              // In a real app, get form values and pass to handleAddSubscription
               const formData = new FormData(e.currentTarget);
+              const planId = Number(formData.get('planId'));
+              
+              // Get the selected plan
+              const selectedPlan = plans.find(p => p.id === planId);
+              if (!selectedPlan) return;
+              
+              // Calculate end date based on plan duration
+              const startDate = new Date();
+              const endDate = new Date();
+              endDate.setDate(endDate.getDate() + selectedPlan.duration);
+              
               handleAddSubscription({
                 userId: Number(formData.get('userId')),
-                planId: Number(formData.get('planId')),
-                startDate: new Date(),
-                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+                planId: planId,
+                startDate,
+                endDate,
                 status: true,
-                paymentMethod: formData.get('paymentMethod')
+                paymentMethod: formData.get('paymentMethod'),
+                paymentStatus: 'completed',
               });
             }}>
+
               <div className={styles.formGroup}>
                 <label>ID do Usuário</label>
                 <input type="number" name="userId" required />
@@ -480,9 +605,9 @@ export default function AdminSubscriptionsPage() {
                 <select name="planId" required>
                   {plans.filter(p => p.active).map(plan => (
                     <option key={plan.id} value={plan.id}>
-                      {plan.name} - R$ {plan.price.toFixed(2)}
+                      {plan.name} - R$ {Number(plan.price).toFixed(2)}
                     </option>
-                  ))}
+                  ))} 
                 </select>
               </div>
               <div className={styles.formGroup}>
@@ -494,11 +619,11 @@ export default function AdminSubscriptionsPage() {
                   <option value="pix">PIX</option>
                 </select>
               </div>
-              <div className={styles.modalButtons}>
+              <div className={styles.modalActions}>
                 <button type="button" onClick={() => setIsAddModalOpen(false)} className={styles.cancelButton}>
                   Cancelar
                 </button>
-                <button type="submit" className={styles.submitButton}>
+                <button type="submit" className={styles.saveButton}>
                   Adicionar
                 </button>
               </div>
@@ -507,11 +632,11 @@ export default function AdminSubscriptionsPage() {
         </div>
       )}
       
-      {/* Edit Subscription Modal - Simplified for illustration */}
+      {/* Edit Subscription Modal */}
       {isEditModalOpen && selectedSubscription && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h2>Editar Assinatura #{selectedSubscription.id}</h2>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>Renovar Assinatura</h2>
             <form onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
@@ -519,16 +644,27 @@ export default function AdminSubscriptionsPage() {
                 duration: Number(formData.get('duration'))
               });
             }}>
-              <div className={styles.formGroup}>
-                <label>Renovar por (dias)</label>
-                <input type="number" name="duration" min="1" defaultValue="30" required />
+              <div className={styles.subscriptionSummary}>
+                <p><strong>Usuário:</strong> {selectedSubscription.user?.name || `ID: ${selectedSubscription.userId}`}</p>
+                <p><strong>Plano:</strong> {selectedSubscription.plan?.name || `ID: ${selectedSubscription.planId}`}</p>
+                <p><strong>Expira em:</strong> {formatDate(selectedSubscription.endDate)}</p>
               </div>
-              <div className={styles.modalButtons}>
+              <div className={styles.formGroup}>
+                <label>Duração da Renovação (dias)</label>
+                <input 
+                  type="number" 
+                  name="duration" 
+                  required 
+                  min="1"
+                  defaultValue={selectedSubscription.plan?.duration || 30}
+                />
+              </div>
+              <div className={styles.modalActions}>
                 <button type="button" onClick={() => setIsEditModalOpen(false)} className={styles.cancelButton}>
                   Cancelar
                 </button>
-                <button type="submit" className={styles.submitButton}>
-                  Atualizar
+                <button type="submit" className={styles.saveButton}>
+                  Renovar
                 </button>
               </div>
             </form>
@@ -539,21 +675,121 @@ export default function AdminSubscriptionsPage() {
       {/* Cancel Subscription Modal */}
       {isCancelModalOpen && selectedSubscription && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h2>Cancelar Assinatura</h2>
-            <p>
-              Tem certeza que deseja cancelar a assinatura do usuário{' '}
-              <strong>{selectedSubscription.user?.name || `#${selectedSubscription.userId}`}</strong>?
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>Cancelar Assinatura</h2>
+            <div className={styles.subscriptionSummary}>
+              <p><strong>Usuário:</strong> {selectedSubscription.user?.name || `ID: ${selectedSubscription.userId}`}</p>
+              <p><strong>Plano:</strong> {selectedSubscription.plan?.name || `ID: ${selectedSubscription.planId}`}</p>
+              <p><strong>Expira em:</strong> {formatDate(selectedSubscription.endDate)}</p>
+            </div>
+            <p className={styles.warningText}>
+              Tem certeza que deseja cancelar esta assinatura? Esta ação não pode ser desfeita.
             </p>
-            <p>Esta ação não pode ser desfeita.</p>
-            <div className={styles.modalButtons}>
+            <div className={styles.modalActions}>
               <button onClick={() => setIsCancelModalOpen(false)} className={styles.cancelButton}>
-                Não, manter assinatura
+                Voltar
               </button>
-              <button onClick={handleCancelSubscription} className={styles.dangerButton}>
-                Sim, cancelar assinatura
+              <button onClick={handleCancelSubscription} className={styles.confirmDeleteButton}>
+                Confirmar Cancelamento
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Plan Modal (Add/Edit) */}
+      {isPlanModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>{selectedPlan ? 'Editar Plano' : 'Adicionar Novo Plano'}</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              
+              // Split features string into array
+              const featuresString = formData.get('features') as string;
+              const features = featuresString.split('\n')
+                .map(feature => feature.trim())
+                .filter(feature => feature.length > 0);
+              
+              const planData = {
+                name: formData.get('name') as string,
+                description: formData.get('description') as string,
+                price: Number(formData.get('price')),
+                duration: Number(formData.get('duration')),
+                features,
+                active: true
+              };
+              
+              if (selectedPlan) {
+                handleEditPlan(planData);
+              } else {
+                handleAddPlan(planData);
+              }
+            }}>
+              <div className={styles.formGroup}>
+                <label>Nome do Plano</label>
+                <input 
+                  type="text" 
+                  name="name" 
+                  required 
+                  defaultValue={selectedPlan?.name || ''}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Descrição</label>
+                <textarea 
+                  name="description" 
+                  required 
+                  defaultValue={selectedPlan?.description || ''}
+                  rows={3}
+                />
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Preço (R$)</label>
+                  <input 
+                    type="number" 
+                    name="price" 
+                    required 
+                    min="0" 
+                    step="0.01"
+                    defaultValue={selectedPlan?.price || ''}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Duração (dias)</label>
+                  <input 
+                    type="number" 
+                    name="duration" 
+                    required 
+                    min="1"
+                    defaultValue={selectedPlan?.duration || 30}
+                  />
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label>Recursos (um por linha)</label>
+                <textarea 
+                  name="features" 
+                  required 
+                  defaultValue={selectedPlan?.features.join('\n') || ''}
+                  rows={5}
+                  placeholder="Acesso a todos os componentes&#10;Download ilimitado&#10;Suporte prioritário"
+                />
+              </div>
+              <div className={styles.modalActions}>
+                <button type="button" onClick={() => {
+                  setIsPlanModalOpen(false);
+                  setSelectedPlan(null);
+                }} className={styles.cancelButton}>
+                  Cancelar
+                </button>
+                <button type="submit" className={styles.saveButton}>
+                  {selectedPlan ? 'Salvar Alterações' : 'Adicionar Plano'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

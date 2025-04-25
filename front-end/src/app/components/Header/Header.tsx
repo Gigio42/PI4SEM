@@ -6,6 +6,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import styles from "./Header.module.css";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import axios from "axios";
 
 // Define the SiteTitle component
 const SiteTitle = ({ className }: { className?: string }) => {
@@ -14,55 +16,108 @@ const SiteTitle = ({ className }: { className?: string }) => {
 
 export default function Header() {
   const { isDarkMode, toggleTheme } = useTheme();
+  const { user: authContextUser } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userInitials, setUserInitials] = useState("JD"); // Default initials
+  const [userName, setUserName] = useState(""); // User's actual name
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
+  
   useEffect(() => {
-    setMounted(true);    // Verificar se o usuário está logado e é administrador
-    const checkAdminStatus = () => {
+    setMounted(true);
+    
+    // Robust authentication check using multiple sources
+    const checkAuthStatus = async () => {
       try {
-        // Recupera o usuário do localStorage (presumindo que sua aplicação salva essas informações)
-        const userData = localStorage.getItem('user');
-        console.log('Dados do usuário encontrados:', userData);
-        
-        if (userData) {
-          const user = JSON.parse(userData);
-          console.log('Usuário parseado:', user);
-          console.log('Role do usuário:', user.role);
-          console.log('Email do usuário:', user.email);
-          
-          // Verifica se o usuário tem role 'admin' ou, como fallback, se o email é de administrador
-          const isUserAdmin = 
-            user.role === 'admin' || 
-            user.email?.endsWith('@admin.com') || 
-            user.email === 'admin@uxperiment.com';
-          
-          console.log('Usuário é admin?', isUserAdmin);
-          setIsAdmin(isUserAdmin);
-        } else {
-          console.log('Nenhum dado de usuário encontrado no localStorage');
+        // First priority: Use Auth Context if available
+        if (authContextUser) {
+          console.log('User found in auth context:', authContextUser);
+          processUserData(authContextUser);
+          return;
         }
+        
+        // Skip session check because the API endpoint doesn't exist
+        // Direct usage of localStorage since backend session check is not available
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          try {
+            const parsedUser = JSON.parse(userData);
+            console.log('User found in localStorage:', parsedUser);
+            processUserData(parsedUser);
+            return;
+          } catch (e) {
+            console.error('Failed to parse user data from localStorage:', e);
+          }
+        }
+        
+        // No authenticated user found
+        setDefaultUser();
       } catch (error) {
-        console.error('Erro ao verificar status de administrador:', error);
-        setIsAdmin(false);
+        console.error('Error during authentication check:', error);
+        setDefaultUser();
       }
     };
     
-    checkAdminStatus();
+    // Set default user state
+    const setDefaultUser = () => {
+      console.log('Using default user state (not authenticated)');
+      setIsAdmin(false);
+      setUserInitials("JD");
+      setUserName("");
+    };
     
-    // Adiciona um event listener para quando o localStorage mudar
-    window.addEventListener('storage', checkAdminStatus);
+    // Process user data and set states
+    const processUserData = (user: any) => {
+      // Don't process null/undefined users
+      if (!user) {
+        setDefaultUser();
+        return;
+      }
+      
+      // Check admin status - ONLY check role property
+      const isUserAdmin = user.role === 'admin';
+      
+      setIsAdmin(isUserAdmin);
+      setUserName(user.name || '');
+      
+      // Set user initials for avatar
+      if (user.name) {
+        const nameParts = user.name.split(' ');
+        if (nameParts.length > 1) {
+          setUserInitials(
+            `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`
+          );
+        } else {
+          setUserInitials(user.name.substring(0, 2).toUpperCase());
+        }
+      } else if (user.email) {
+        setUserInitials(user.email.substring(0, 2).toUpperCase());
+      } else {
+        setUserInitials("JD"); // default
+      }
+    };
+    
+    checkAuthStatus();
+    
+    // Listen for storage events (for multi-tab support)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'user') {
+        checkAuthStatus();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
     
     return () => {
-      window.removeEventListener('storage', checkAdminStatus);
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [authContextUser]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -149,8 +204,8 @@ export default function Header() {
                 alt="UXperiment Labs Logo"
                 width={150}
                 height={36}
-                priority // Add priority for LCP optimization
-                style={{ height: 'auto' }} // Ensure proper scaling
+                priority
+                style={{ height: 'auto', width: 'auto' }}
               />
               <SiteTitle className={styles.siteTitle} />
             </div>
@@ -239,15 +294,21 @@ export default function Header() {
                 aria-expanded={showUserMenu}
                 aria-controls="user-menu"
               >
-                <span>JD</span>
+                <span>{userInitials}</span>
               </button>
               
-              {showUserMenu && (                <div 
+              {showUserMenu && (
+                <div 
                   id="user-menu" 
                   className={styles.userMenu} 
                   ref={userMenuRef}
                   role="menu"
                 >
+                  {userName && (
+                    <div className={styles.userMenuHeader}>
+                      <span className={styles.userGreeting}>Olá, {userName.split(' ')[0]}</span>
+                    </div>
+                  )}
                   <ul className={styles.userMenuList}>
                     <li role="menuitem">
                       <Link href="/profile">

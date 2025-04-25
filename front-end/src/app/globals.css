@@ -145,3 +145,36 @@ html {
 *, :before, :after {
   transition: background-color .3s, border-color .3s, box-shadow .3s;
 }
+
+/* Global Modal Overlay Styles */
+.modalOverlay,
+[class*="modalOverlay"] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: var(--spacing-md);
+  will-change: backdrop-filter;
+  transform: translateZ(0);
+}
+
+.modalContent,
+[class*="modalContent"] {
+  background-color: var(--surface);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+  position: relative;
+}

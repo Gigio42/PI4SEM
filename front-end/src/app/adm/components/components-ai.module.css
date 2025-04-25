@@ -2,9 +2,9 @@
 .aiGeneratorSection {
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
-  background-color: rgba(var(--primary-rgb), 0.05);
+  background-color: var(--surface-secondary);
   border-radius: var(--radius);
-  border: 1px solid rgba(var(--primary-rgb), 0.1);
+  border: 1px solid var(--border);
 }
 
 .sectionTitle {
@@ -20,6 +20,7 @@
 .aiDescription {
   color: var(--text-secondary);
   margin-bottom: var(--spacing-md);
+  line-height: 1.5;
 }
 
 .aiFormRow {
@@ -40,22 +41,21 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  padding: 10px 20px;
+  padding: 12px 20px;
   border-radius: var(--radius-sm);
   font-size: var(--font-size-base);
   font-weight: 500;
   color: white;
-  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  background-color: var(--primary);
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   margin-top: var(--spacing-sm);
   width: 100%;
 }
 
 .aiGenerateButton:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);
+  background-color: var(--primary-dark);
 }
 
 .aiGenerateButton:disabled {
@@ -76,7 +76,7 @@
   background: var(--primary);
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   margin-top: var(--spacing-sm);
 }
 
@@ -96,7 +96,7 @@
   background-color: var(--surface);
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .previewHeader {
@@ -130,7 +130,7 @@
   border-radius: var(--radius-full);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 
 .previewModeActive {
@@ -144,9 +144,8 @@
   min-height: 240px;
   overflow: hidden;
   border-radius: var(--radius);
-  transition: all 0.3s ease;
+  transition: var(--transition);
   margin-bottom: var(--spacing-md);
-  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,43 +154,15 @@
 .previewLight {
   background-color: white;
   color: #333;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  position: relative;
-}
-
-.previewLight::after {
-  content: 'Tema Claro';
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 10px;
-  padding: 3px 6px;
-  background-color: rgba(0, 0, 0, 0.06);
-  border-radius: 4px;
-  color: #666;
-  pointer-events: none;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .previewDark {
   background-color: #1a1a1a;
   color: #f0f0f0;
   border: 1px solid #333;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-  position: relative;
-}
-
-.previewDark::after {
-  content: 'Tema Escuro';
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 10px;
-  padding: 3px 6px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  color: #aaa;
-  pointer-events: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .componentPreviewFrame {
@@ -202,29 +173,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.componentPreviewFrame::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 12px;
-  background: linear-gradient(to bottom, var(--surface-secondary), transparent);
-  z-index: 1;
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.previewDeviceFrame {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius);
-  overflow: hidden;
-  transition: all 0.3s ease;
+  transition: var(--transition);
 }
 
 .previewDesktop {
@@ -238,7 +187,6 @@
   margin: 0 auto;
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
-  transition: width 0.3s ease, height 0.3s ease;
 }
 
 .previewMobile {
@@ -247,7 +195,6 @@
   margin: 0 auto;
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
-  transition: width 0.3s ease, height 0.3s ease;
 }
 
 .previewResponsiveControls {
@@ -258,7 +205,7 @@
   background-color: var(--surface-secondary);
   padding: 8px;
   border-radius: var(--radius-full);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .previewResponsiveButton {
@@ -268,7 +215,7 @@
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -276,14 +223,12 @@
 
 .previewResponsiveButton:hover {
   color: var(--primary);
-  background-color: rgba(var(--primary-rgb), 0.1);
-  transform: translateY(-1px);
+  background-color: var(--surface-hover);
 }
 
 .previewResponsiveActive {
   color: var(--primary);
-  background-color: rgba(var(--primary-rgb), 0.1);
-  box-shadow: 0 2px 5px rgba(var(--primary-rgb), 0.2);
+  background-color: var(--surface-hover);
 }
 
 /* Código e refinamento */
@@ -291,9 +236,9 @@
   margin-top: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
   padding: var(--spacing-md);
-  background-color: rgba(var(--primary-rgb), 0.05);
+  background-color: var(--surface-secondary);
   border-radius: var(--radius);
-  border: 1px solid rgba(var(--primary-rgb), 0.1);
+  border: 1px solid var(--border);
 }
 
 .codeViewSection {
@@ -325,16 +270,16 @@
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
 }
 
 .codeTab:hover {
-  background-color: rgba(var(--primary-rgb), 0.1);
-  color: var(--primary);
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
 }
 
 .codeTabActive {
-  background-color: rgba(var(--primary-rgb), 0.1);
+  background-color: var(--surface-hover);
   color: var(--primary);
   font-weight: 500;
 }
@@ -375,11 +320,20 @@
 }
 
 .componentNameInput {
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   font-size: var(--font-size-sm);
   min-width: 200px;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.componentNameInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
 }
 
 /* Abas para criação manual/IA */
@@ -397,7 +351,7 @@
   border: none;
   border-bottom: 3px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 
 .tab:hover {
@@ -429,9 +383,28 @@
     flex-direction: column;
   }
   
+  .previewControls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .previewModeToggle {
+    width: 100%;
+    justify-content: center;
+  }
+  
   .codeViewHeader {
     flex-direction: column;
     gap: var(--spacing-sm);
     align-items: flex-start;
+  }
+  
+  .componentNameInput {
+    width: 100%;
+  }
+  
+  .previewResponsiveControls {
+    flex-wrap: wrap;
   }
 }
