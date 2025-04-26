@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "seed": "node prisma/seed.js",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -27,7 +28,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.1.0",
-    "@prisma/client": "^6.5.0",
+    "@prisma/client": "^6.6.0",
     "back-end": "file:",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
