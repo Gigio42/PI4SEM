@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../..//src/contexts/AuthContext"; // Fix import path
 import styles from "./login.module.css";
 
 export default function LoginForm() {
@@ -12,6 +13,7 @@ export default function LoginForm() {
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
   const [formActive, setFormActive] = useState(false);
   const router = useRouter();
+  const { setUser } = useAuth();
 
   // Efeito para animação inicial
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function LoginForm() {
 
     try {
       if (isLogin) {
+        // Send login request to real backend
         const response = await fetch("http://localhost:3000/users/login", {
           method: "POST",
           headers: {
@@ -63,16 +66,64 @@ export default function LoginForm() {
         });
 
         if (response.ok) {
-          // Adicionando efeito de transição suave antes de navegar
-          setFormActive(false);
-          setTimeout(() => {
-            router.push("/home");
-          }, 300);
+          // After successful login, get session info to get real user data
+          try {
+            const sessionResponse = await fetch("http://localhost:3000/auth/session-check", {
+              credentials: "include",
+            });
+            
+            const sessionData = await sessionResponse.json();
+            
+            if (sessionData.authenticated && sessionData.user) {
+              // Use real user data from backend
+              const userData = {
+                id: sessionData.user.id,
+                name: sessionData.user.name || email.split('@')[0],
+                email: sessionData.user.email,
+                role: sessionData.user.role || "user"
+              };
+              
+              // Update Auth Context and localStorage
+              setUser(userData);
+              localStorage.setItem('user', JSON.stringify(userData));
+              console.log('User logged in with real backend data:', userData);
+              
+              // Smooth transition before navigating
+              setFormActive(false);
+              setTimeout(() => {
+                router.push("/home");
+              }, 300);
+            } else {
+              // Fallback if session check doesn't return user data
+              console.log('Session check response:', sessionData);
+              
+              // Create minimal user data based on the login email
+              const fallbackUserData = {
+                id: Date.now(),
+                name: email.split('@')[0],
+                email: email,
+                role: "user"
+              };
+              
+              setUser(fallbackUserData);
+              localStorage.setItem('user', JSON.stringify(fallbackUserData));
+              console.log('Using fallback user data:', fallbackUserData);
+              
+              setFormActive(false);
+              setTimeout(() => {
+                router.push("/home");
+              }, 300);
+            }
+          } catch (sessionError) {
+            console.error("Error checking session:", sessionError);
+            setErrors({ email: "Login realizado, mas erro ao obter dados de usuário." });
+          }
         } else {
           const errorData = await response.json();
-          setErrors({ email: errorData.message });
+          setErrors({ email: errorData.message || "Erro durante o login." });
         }
       } else {
+        // For registration, use the real backend endpoint
         const response = await fetch("http://localhost:3000/users", {
           method: "POST",
           headers: {
@@ -82,14 +133,51 @@ export default function LoginForm() {
         });
 
         if (response.ok) {
-          // Adicionando efeito de transição suave antes de navegar
-          setFormActive(false);
-          setTimeout(() => {
-            router.push("/home");
-          }, 300);
+          // After successful registration, log the user in
+          try {
+            const loginResponse = await fetch("http://localhost:3000/users/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ email, password }),
+              credentials: "include",
+            });
+            
+            if (loginResponse.ok) {
+              // Use minimal user data based on registration info
+              const userData = {
+                id: Date.now(), // We'll get a real ID on next login
+                name: email.split('@')[0],
+                email: email,
+                role: "user"
+              };
+              
+              setUser(userData);
+              localStorage.setItem('user', JSON.stringify(userData));
+              console.log('User registered and logged in with backend:', userData);
+              
+              setFormActive(false);
+              setTimeout(() => {
+                router.push("/home");
+              }, 300);
+            } else {
+              // Registration succeeded but login failed
+              setErrors({ email: "Conta criada com sucesso! Faça login para continuar." });
+              setIsLogin(true);
+            }
+          } catch (loginError) {
+            console.error("Error during post-registration login:", loginError);
+            setErrors({ email: "Conta criada com sucesso! Faça login para continuar." });
+            setIsLogin(true);
+          }
         } else {
-          const errorData = await response.json();
-          setErrors({ email: errorData.message });
+          try {
+            const errorData = await response.json();
+            setErrors({ email: errorData.message || "Erro ao criar conta." });
+          } catch (e) {
+            setErrors({ email: "Erro ao criar conta. Tente novamente." });
+          }
         }
       }
     } catch (error) {
@@ -111,6 +199,7 @@ export default function LoginForm() {
       setFormActive(true);
     }, 300);
   };
+  
   return (
     <>
       <form 
@@ -154,7 +243,9 @@ export default function LoginForm() {
           />
           <label htmlFor="password">Senha</label>
           {errors.password && <div className={styles.inputError} role="alert">{errors.password}</div>}
-        </div>        {isLogin && (
+        </div>
+        
+        {isLogin && (
           <div className={styles.forgotPasswordContainer}>
             <button type="button" className={styles.forgotPassword}>
               Esqueceu sua senha?
@@ -178,7 +269,8 @@ export default function LoginForm() {
           ) : (
             isLogin ? "Entrar" : "Cadastrar"
           )}
-        </button>      </form>
+        </button>
+      </form>
 
       <div className={styles.divider}>ou</div>
       
@@ -225,5 +317,6 @@ export default function LoginForm() {
           </>
         )}
       </div>
-    </>  );
+    </>
+  );
 }

@@ -1,38 +1,35 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../../src/contexts/AuthContext';
 
 export default function SetAdminUser() {
+  const { user, setUser } = useAuth();
   const [isSet, setIsSet] = useState(false);
 
   useEffect(() => {
-    // Verifica se já existe um usuário no localStorage
-    const userData = localStorage.getItem('user');
-    
-    if (!userData) {
-      // Cria um usuário administrador de exemplo
-      const adminUser = {
-        id: 1,
-        name: "Admin",
-        email: "admin@uxperiment.com",
-        role: "admin"
-      };
-      
-      // Salva no localStorage
-      localStorage.setItem('user', JSON.stringify(adminUser));
-      setIsSet(true);
-    } else {
-      // Verifica se o usuário existente tem a role 'admin'
-      const user = JSON.parse(userData);
-      if (!user.role || user.role !== 'admin') {
-        // Atualiza o usuário para ter a role 'admin'
-        user.role = 'admin';
-        localStorage.setItem('user', JSON.stringify(user));
-        setIsSet(true);
+    // Only process if there's a real user (don't create fake users)
+    if (user && user.id) {
+      try {
+        // Update the real user to have admin role
+        if (user.role !== 'admin') {
+          const updatedUser = {
+            ...user,
+            role: 'admin'
+          };
+          
+          // Update both context and localStorage
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          setIsSet(true);
+          console.log('Updated real user to admin role:', updatedUser);
+        }
+      } catch (e) {
+        console.error('Failed to update user role:', e);
       }
     }
-  }, []);
+  }, [user, setUser]);
 
-  // Este componente não renderiza nada visualmente
+  // This component doesn't render anything visually
   return null;
 }

@@ -1,10 +1,25 @@
-/* Seção de geração com IA */
+/* Seção de geração com IA - refinada */
 .aiGeneratorSection {
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
   background-color: var(--surface-secondary);
   border-radius: var(--radius);
   border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.aiGeneratorSection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .sectionTitle {
@@ -15,12 +30,19 @@
   margin-top: 0;
   margin-bottom: var(--spacing-md);
   gap: var(--spacing-sm);
+  font-weight: 600;
+}
+
+.sectionTitle svg {
+  color: var(--primary);
 }
 
 .aiDescription {
   color: var(--text-secondary);
   margin-bottom: var(--spacing-md);
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: var(--font-size-base);
+  max-width: 800px;
 }
 
 .aiFormRow {
@@ -41,21 +63,28 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  padding: 12px 20px;
+  padding: 14px 24px;
   border-radius: var(--radius-sm);
   font-size: var(--font-size-base);
   font-weight: 500;
   color: white;
-  background-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   border: none;
   cursor: pointer;
-  transition: var(--transition);
-  margin-top: var(--spacing-sm);
+  transition: all 0.3s ease;
+  margin-top: var(--spacing-md);
   width: 100%;
+  box-shadow: 0 4px 6px rgba(var(--primary-rgb), 0.2);
 }
 
 .aiGenerateButton:hover:not(:disabled) {
-  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(var(--primary-rgb), 0.3);
+}
+
+.aiGenerateButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.2);
 }
 
 .aiGenerateButton:disabled {
@@ -63,12 +92,20 @@
   cursor: not-allowed;
 }
 
+.aiGenerateButton svg {
+  transition: transform 0.3s ease;
+}
+
+.aiGenerateButton:hover:not(:disabled) svg {
+  transform: rotate(45deg);
+}
+
 .refineButton {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  padding: 8px 16px;
+  padding: 10px 18px;
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
   font-weight: 500;
@@ -76,12 +113,19 @@
   background: var(--primary);
   border: none;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease;
   margin-top: var(--spacing-sm);
+  box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.15);
 }
 
 .refineButton:hover:not(:disabled) {
   background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(var(--primary-rgb), 0.2);
+}
+
+.refineButton:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .refineButton:disabled {
@@ -89,7 +133,7 @@
   cursor: not-allowed;
 }
 
-/* Seção de preview */
+/* Seção de preview - refinada */
 .previewSection {
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
@@ -97,6 +141,7 @@
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.4s ease;
 }
 
 .previewHeader {
@@ -120,31 +165,34 @@
   padding: 4px;
   border: 1px solid var(--border);
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .previewModeButton {
-  padding: 6px 12px;
+  padding: 8px 14px;
   font-size: var(--font-size-sm);
   background: none;
   border: none;
   border-radius: var(--radius-full);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .previewModeActive {
   background-color: var(--primary);
   color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .componentPreviewContainer {
   position: relative;
   width: 100%;
-  min-height: 240px;
+  min-height: 260px;
   overflow: hidden;
   border-radius: var(--radius);
-  transition: var(--transition);
+  transition: all 0.3s ease;
   margin-bottom: var(--spacing-md);
   display: flex;
   align-items: center;
@@ -155,14 +203,14 @@
   background-color: white;
   color: #333;
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
 .previewDark {
   background-color: #1a1a1a;
   color: #f0f0f0;
   border: 1px solid #333;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
 .componentPreviewFrame {
@@ -173,12 +221,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition);
+  transition: width 0.3s ease, height 0.3s ease;
 }
 
 .previewDesktop {
   width: 100%;
-  transition: width 0.3s ease, height 0.3s ease;
 }
 
 .previewTablet {
@@ -206,6 +253,9 @@
   padding: 8px;
   border-radius: var(--radius-full);
   box-shadow: var(--shadow-sm);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .previewResponsiveButton {
@@ -215,7 +265,7 @@
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -231,14 +281,29 @@
   background-color: var(--surface-hover);
 }
 
-/* Código e refinamento */
+/* Código e refinamento - melhorado */
 .refinementSection {
   margin-top: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
-  padding: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
   background-color: var(--surface-secondary);
   border-radius: var(--radius);
   border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.refinementSection::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  left: -50px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .codeViewSection {
@@ -246,6 +311,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .codeViewHeader {
@@ -270,7 +336,8 @@
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .codeTab:hover {
@@ -281,7 +348,7 @@
 .codeTabActive {
   background-color: var(--surface-hover);
   color: var(--primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .codeViewContainer {
@@ -308,7 +375,7 @@
 
 .codeEditor {
   width: 100%;
-  font-family: monospace;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   background-color: var(--surface-secondary);
   color: var(--text-primary);
   padding: var(--spacing-md);
@@ -317,50 +384,70 @@
   resize: vertical;
   font-size: 0.9rem;
   line-height: 1.5;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.codeEditor:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
 }
 
 .componentNameInput {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   font-size: var(--font-size-sm);
-  min-width: 200px;
+  min-width: 240px;
   background-color: var(--surface);
   color: var(--text-primary);
-  transition: var(--transition);
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .componentNameInput:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
 }
 
-/* Abas para criação manual/IA */
+/* Abas para criação manual/IA - refinadas */
 .tabsContainer {
   display: flex;
   margin-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--border);
+  background-color: var(--surface-secondary);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 4px;
+  gap: 4px;
 }
 
 .tab {
+  flex: 1;
   padding: var(--spacing-sm) var(--spacing-lg);
   font-weight: 500;
   color: var(--text-secondary);
   background: none;
   border: none;
-  border-bottom: 3px solid transparent;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .tab:hover {
   color: var(--text-primary);
+  background-color: rgba(var(--primary-rgb), 0.05);
 }
 
 .tabActive {
   color: var(--primary);
-  border-bottom-color: var(--primary);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .tabContent {
@@ -373,8 +460,8 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Responsividade para AI Form */

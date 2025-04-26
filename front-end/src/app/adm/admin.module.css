@@ -9,6 +9,7 @@
 .adminContainer {
   display: flex;
   flex: 1;
+  margin-top: 60px; /* Espaço para o header fixo, ajuste conforme a altura real do seu header */
 }
 
 .content {
@@ -17,10 +18,12 @@
   overflow-y: auto;
   transition: all 0.3s ease;
   width: calc(100% - 250px); /* Adjust width based on sidebar width */
+  margin-left: 250px; /* Corresponde à largura da sidebar */
 }
 
 .sidebarCollapsed .content {
   width: calc(100% - 60px); /* Adjust width when sidebar is collapsed */
+  margin-left: 60px; /* Corresponde à largura da sidebar colapsada */
 }
 
 /* Loading state */

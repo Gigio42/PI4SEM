@@ -5,6 +5,7 @@ import "./globals.css";
 import { SettingsProvider } from "../contexts/SettingsContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { NotificationProvider } from "../contexts/NotificationContext";
+import { AuthProvider } from "../contexts/AuthContext";
 import SetAdminUser from "./components/SetAdminUser";
 import BypassAuth from './components/BypassAuth';
 
@@ -19,16 +20,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        {/* Add this component to bypass authentication */}
-        <BypassAuth />
-        <SettingsProvider>
-          <ThemeProvider>
-            <NotificationProvider>
-              <SetAdminUser />
-              {children}
-            </NotificationProvider>
-          </ThemeProvider>
-        </SettingsProvider>
+        <AuthProvider>
+          {/* BypassAuth will now handle proper authentication */}
+          <BypassAuth />
+          <SettingsProvider>
+            <ThemeProvider>
+              <NotificationProvider>
+                <SetAdminUser />
+                {children}
+              </NotificationProvider>
+            </ThemeProvider>
+          </SettingsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,93 +1,65 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import styles from "./login.module.css";
+import { useEffect, useState } from "react";
+import { useTheme } from "../../../src/contexts/ThemeContext";
 import LoginForm from "./form";
-import ThemeToggle from "../components/ThemeToggle/ThemeToggle";
-import Image from "next/image";
+import styles from "./login.module.css";
 
 export default function LoginPage() {
-  const [loaded, setLoaded] = useState(false);
-  const [showLogo, setShowLogo] = useState(false);
-    useEffect(() => {
-    setLoaded(true);
+  const { isDarkMode, toggleTheme } = useTheme();
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Animation for page load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
     
-    // Check if login logo should be displayed from localStorage
-    const shouldShowLogo = localStorage.getItem('showLoginLogo') === 'true';
-    
-    // Also check for the appearance.showLoginLogo setting
-    try {
-      // First try the individual setting
-      if (localStorage.getItem('showLoginLogo') === 'true') {
-        setShowLogo(true);
-      } else {
-        // Try getting the site name to confirm settings are loaded
-        const siteName = localStorage.getItem('siteName');
-        if (siteName) {
-          // Default to showing logo if settings exist but showLoginLogo isn't explicitly false
-          const explicitlyHidden = localStorage.getItem('showLoginLogo') === 'false';
-          if (!explicitlyHidden) {
-            setShowLogo(true);
-          }
-        } else {
-          // If no settings are loaded yet, default to true
-          setShowLogo(true);
-        }
-      }
-    } catch (error) {
-      console.error('Error checking stored settings:', error);
-      // Default to showing logo if there's an error
-      setShowLogo(true);
-    }
-    
-    // Add event listener for settings changes
-    const handleSettingsUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.settings) {
-        // Check if showLoginLogo setting was updated
-        const logoSetting = customEvent.detail.settings.find(
-          (s: any) => s.section === 'appearance' && s.key === 'showLoginLogo'
-        );
-        if (logoSetting !== undefined) {
-          setShowLogo(!!logoSetting.value);
-        }
-      }
-    };
-    
-    document.addEventListener('settingsUpdated', handleSettingsUpdate);
-    
-    return () => {
-      document.removeEventListener('settingsUpdated', handleSettingsUpdate);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div className={`${styles.container} ${loaded ? styles.loaded : ""}`}>
+    <div className={`${styles.container} ${isLoaded ? styles.loaded : ""}`}>
+      <div className={styles.bgGradient}></div>
+      
       <div className={styles.themeToggleContainer}>
-        <ThemeToggle />
+        <button 
+          onClick={toggleTheme} 
+          aria-label={isDarkMode ? "Mudar para modo claro" : "Mudar para modo escuro"}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'var(--text-secondary)'
+          }}
+        >
+          {isDarkMode ? (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 2V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 20V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4.93 4.93L6.34 6.34" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M17.66 17.66L19.07 19.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12H4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M20 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4.93 19.07L6.34 17.66" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M17.66 6.34L19.07 4.93" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          ) : (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </button>
       </div>
       
       <div className={styles.loginCard}>
-        {showLogo && (
-          <div className={styles.logoContainer}>
-            <Image 
-              src="/logo.png" 
-              alt="UXperiment Labs Logo" 
-              width={120} 
-              height={120} 
-              className={styles.logo}
-              priority
-            />
-          </div>
-        )}
-        
         <h1 className={styles.title}>Bem-vindo</h1>
-        <p className={styles.subtitle}>Entre em sua conta para continuar</p>
+        <p className={styles.subtitle}>Entre com sua conta para continuar</p>
         
+        {/* Using the LoginForm component */}
         <LoginForm />
       </div>
-      
-      <div className={styles.bgGradient}></div>
     </div>
   );
 }

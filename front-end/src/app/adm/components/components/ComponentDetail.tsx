@@ -4,7 +4,6 @@ import { Component } from '@/types/component';
 import { FavoritosService } from '@/services/FavoritosService';
 import styles from '../components-detail.module.css';
 import aiStyles from '../components-ai.module.css';
-import compStyles from '../components.module.css';
 import FavoriteButton from '@/components/FavoriteButton/FavoriteButton';
 import { useNotification } from '@/contexts/NotificationContext';
 
@@ -23,7 +22,6 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   const { showToast } = useNotification();
   // ID do usuário atual (normalmente viria de um contexto de autenticação)
-  // Este é apenas um exemplo, você deve obter o ID real do usuário logado
   const userId = 1; // Substitua pelo ID real do usuário logado
 
   useEffect(() => {
@@ -36,6 +34,7 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
       checkIsFavorite();
     }
   }, [component]);
+
   const checkIsFavorite = async () => {
     if (!component) return;
     try {
@@ -49,6 +48,7 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
       setIsLoadingFavorite(false);
     }
   };
+
   const toggleFavorite = async () => {
     if (!component) return;
     
@@ -79,13 +79,38 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
   if (!component) {
     return null;
   }
+
   const handleCopy = (content: string, type: string) => {
     navigator.clipboard.writeText(content);
     showToast(`${type} copiado com sucesso!`, 'success');
   };
 
+  const handleDownload = () => {
+    // Create a Blob with CSS and HTML content
+    const fileContent = `/* ${component.name} CSS */\n${component.cssContent}\n\n/* ${component.name} HTML */\n${component.htmlContent || '<!-- Sem conteúdo HTML -->'}`;
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    
+    // Create a download link
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${component.name.replace(/\s+/g, '-').toLowerCase()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }, 100);
+    
+    // Show toast message
+    showToast('Componente baixado com sucesso!', 'success');
+  };
+
   const detailContent = (
-    <div className={styles.detailSidebar}>      <div className={styles.detailHeader}>
+    <div className={styles.detailSidebar}>
+      <div className={styles.detailHeader}>
         <button 
           type="button" 
           className={styles.closeButton}
@@ -119,12 +144,18 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
           className={`${styles.detailTab} ${activeTab === 'preview' ? styles.active : ''}`}
           onClick={() => setActiveTab('preview')}
         >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginRight: '6px'}}>
+            <path d="M12 5.25V3M12 5.25C15.7279 5.25 18.75 8.27208 18.75 12C18.75 15.7279 15.7279 18.75 12 18.75M12 5.25C8.27208 5.25 5.25 8.27208 5.25 12C5.25 15.7279 8.27208 18.75 12 18.75M12 18.75V21M18.75 12H21M3 12H5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
           Visualização
         </button>
         <button 
           className={`${styles.detailTab} ${activeTab === 'code' ? styles.active : ''}`}
           onClick={() => setActiveTab('code')}
         >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginRight: '6px'}}>
+            <path d="M17 7L21 12L17 17M7 7L3 12L7 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
           Código
         </button>
       </div>
@@ -156,6 +187,10 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
                   className={`${aiStyles.previewModeButton} ${previewMode === 'light' ? aiStyles.previewModeActive : ''}`}
                   onClick={() => setPreviewMode('light')}
                 >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginRight: '4px'}}>
+                    <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" fill="currentColor"/>
+                    <path d="M12 2V4M12 20V22M4 12H2M6.31412 6.31412L4.8999 4.8999M17.6859 6.31412L19.1001 4.8999M6.31412 17.69L4.8999 19.1042M17.6859 17.69L19.1001 19.1042M22 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                   Claro
                 </button>
                 <button
@@ -163,6 +198,9 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
                   className={`${aiStyles.previewModeButton} ${previewMode === 'dark' ? aiStyles.previewModeActive : ''}`}
                   onClick={() => setPreviewMode('dark')}
                 >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginRight: '4px'}}>
+                    <path d="M21.0672 11.8568L20.4253 11.469L21.0672 11.8568ZM12.1432 2.93276L11.7553 2.29085V2.29085L12.1432 2.93276ZM21.25 12C21.25 17.1086 17.1086 21.25 12 21.25V22.75C17.9371 22.75 22.75 17.9371 22.75 12H21.25ZM12 21.25C6.89137 21.25 2.75 17.1086 2.75 12H1.25C1.25 17.9371 6.06294 22.75 12 22.75V21.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75V1.25C6.06294 1.25 1.25 6.06294 1.25 12H2.75ZM15.5 14.25C12.3244 14.25 9.75 11.6756 9.75 8.5H8.25C8.25 12.5041 11.4959 15.75 15.5 15.75V14.25ZM20.4253 11.469C19.4172 13.1373 17.5882 14.25 15.5 14.25V15.75C18.1349 15.75 20.4407 14.3439 21.7092 12.2447L20.4253 11.469ZM9.75 8.5C9.75 6.41182 10.8627 4.5828 12.531 3.57467L11.7553 2.29085C9.65609 3.5593 8.25 5.86509 8.25 8.5H9.75ZM12 2.75C12.1696 2.75 12.3373 2.75661 12.5034 2.76974L12.64 1.27642C12.4266 1.25879 12.2145 1.25 12 1.25V2.75ZM21.7092 12.2447C21.9234 11.8971 22.0638 11.5043 22.1304 11.093L20.6496 10.8437C20.6078 11.1171 20.5244 11.3815 20.4253 11.469L21.7092 12.2447ZM12.531 3.57467C12.6185 3.47556 12.8829 3.39225 13.1563 3.35036L12.907 1.86964C12.4957 1.93622 12.1029 2.07658 11.7553 2.29085L12.531 3.57467Z" fill="currentColor"/>
+                  </svg>
                   Escuro
                 </button>
               </div>
@@ -198,10 +236,10 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
               </button>
             </div>
 
-            <div className={`${aiStyles.componentPreviewContainer} ${previewMode === 'light' ? aiStyles.previewLight : aiStyles.previewDark} ${aiStyles['preview' + previewDevice.charAt(0).toUpperCase() + previewDevice.slice(1)]}`}>
+            <div className={`${aiStyles.componentPreviewContainer} ${previewMode === 'light' ? aiStyles.previewLight : aiStyles.previewDark}`}>
               {component.htmlContent ? (
                 <div 
-                  className={`${aiStyles.componentPreviewFrame}`}
+                  className={`${aiStyles.componentPreviewFrame} ${aiStyles['preview' + previewDevice.charAt(0).toUpperCase() + previewDevice.slice(1)]}`}
                   dangerouslySetInnerHTML={{ 
                     __html: `
                     <style>
@@ -259,30 +297,31 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
               </div>
               <pre className={styles.codeContent}>{component.cssContent}</pre>
             </div>
-          </div>        )}      </div>      <div className={styles.detailActions}>
+          </div>
+        )}
+      </div>
+      
+      <div className={styles.detailActions}>
         <div className={styles.actionsGroup}>
-          <button className={styles.downloadButton}>
+          <button 
+            className={styles.downloadButton}
+            onClick={handleDownload}
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M7 10L12 15M12 15L17 10M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Download
-          </button>        </div>
+          </button>
+        </div>
       </div>
     </div>
-  );
-
-  const backdropOverlay = (
-    <div className={compStyles.backdropOverlay} onClick={onClose}></div>
   );
 
   // Renderizando diretamente no root do DOM
   return (
     <>
       {mounted && createPortal(
-        <>
-          {backdropOverlay}
-          {detailContent}
-        </>,
+        detailContent,
         document.body
       )}
     </>

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Component, CreateComponentDto } from '@/types/component';
 import { ComponentsService } from '@/services/ComponentsService';
 import { AIComponentService } from '@/services/AIComponentService';
 import styles from '../components.module.css';
+import formStyles from '../component-form.module.css';
 import aiStyles from '../components-ai.module.css';
 
 interface ComponentFormProps {
@@ -10,6 +11,7 @@ interface ComponentFormProps {
   onCancel: () => void;
 }
 
+// Opções de categorias para seleção
 const CATEGORY_OPTIONS = [
   'Buttons',
   'Cards',
@@ -21,6 +23,7 @@ const CATEGORY_OPTIONS = [
   'Outros'
 ];
 
+// Opções de cores para seleção
 const COLOR_OPTIONS = [
   { name: 'Primary', value: '#6366F1' },
   { name: 'Purple', value: '#8B5CF6' },
@@ -29,6 +32,46 @@ const COLOR_OPTIONS = [
   { name: 'Yellow', value: '#F59E0B' },
   { name: 'Red', value: '#EF4444' },
   { name: 'Pink', value: '#EC4899' },
+];
+
+// Component templates for quick start
+const COMPONENT_TEMPLATES = [
+  {
+    id: 'button-basic',
+    name: 'Botão Básico',
+    category: 'Buttons',
+    color: '#6366F1',
+    html: '<button class="button">Clique aqui</button>',
+    css: '.button {\n  padding: 10px 20px;\n  background-color: #6366F1;\n  color: white;\n  border: none;\n  border-radius: 4px;\n  font-size: 16px;\n  cursor: pointer;\n  transition: all 0.2s ease;\n}\n\n.button:hover {\n  background-color: #4F46E5;\n  transform: translateY(-2px);\n}',
+    preview: '📋'
+  },
+  {
+    id: 'card-simple',
+    name: 'Card Simples',
+    category: 'Cards',
+    color: '#3B82F6',
+    html: '<div class="card">\n  <div class="card-header">Título do Card</div>\n  <div class="card-body">Conteúdo do card...</div>\n  <div class="card-footer">Rodapé do card</div>\n</div>',
+    css: '.card {\n  border-radius: 8px;\n  border: 1px solid #e2e8f0;\n  overflow: hidden;\n  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n}\n\n.card-header {\n  padding: 15px;\n  background-color: #f8fafc;\n  border-bottom: 1px solid #e2e8f0;\n  font-weight: bold;\n}\n\n.card-body {\n  padding: 15px;\n}\n\n.card-footer {\n  padding: 15px;\n  background-color: #f8fafc;\n  border-top: 1px solid #e2e8f0;\n}',
+    preview: '🃏'
+  },
+  {
+    id: 'form-input',
+    name: 'Form Input',
+    category: 'Forms',
+    color: '#10B981',
+    html: '<div class="form-group">\n  <label for="example">Exemplo de Input</label>\n  <input type="text" id="example" class="form-input" placeholder="Digite aqui...">\n</div>',
+    css: '.form-group {\n  margin-bottom: 15px;\n}\n\nlabel {\n  display: block;\n  margin-bottom: 5px;\n  font-size: 14px;\n  font-weight: 500;\n}\n\n.form-input {\n  width: 100%;\n  padding: 10px 12px;\n  border: 1px solid #e2e8f0;\n  border-radius: 4px;\n  font-size: 16px;\n  transition: all 0.2s;\n}\n\n.form-input:focus {\n  outline: none;\n  border-color: #10B981;\n  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);\n}',
+    preview: '📝'
+  },
+  {
+    id: 'navbar-simple',
+    name: 'Barra de Nav',
+    category: 'Navigation',
+    color: '#8B5CF6',
+    html: '<nav class="navbar">\n  <div class="logo">Logo</div>\n  <ul class="nav-links">\n    <li><a href="#">Home</a></li>\n    <li><a href="#">Sobre</a></li>\n    <li><a href="#">Contato</a></li>\n  </ul>\n</nav>',
+    css: '.navbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 15px 30px;\n  background-color: #f8fafc;\n  border-bottom: 1px solid #e2e8f0;\n}\n\n.logo {\n  font-weight: bold;\n  font-size: 20px;\n}\n\n.nav-links {\n  display: flex;\n  list-style: none;\n  gap: 20px;\n  margin: 0;\n  padding: 0;\n}\n\n.nav-links a {\n  text-decoration: none;\n  color: #64748b;\n  transition: color 0.2s;\n}\n\n.nav-links a:hover {\n  color: #8B5CF6;\n}',
+    preview: '🧭'
+  }
 ];
 
 /**
@@ -41,7 +84,7 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
   // Form state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<CreateComponentDto>({
+  const [formData, setFormData] = useState<CreateComponentDto>( {
     name: '',
     cssContent: '',
     htmlContent: '',
@@ -59,6 +102,13 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
   const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
+  // New states for enhanced features
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [validationStatus, setValidationStatus] = useState({
+    name: { valid: false, message: '' },
+    css: { valid: false, message: '' }
+  });
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -66,6 +116,54 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
       [name]: value
     }));
   };
+  
+  // Handle template selection
+  const handleTemplateSelect = (templateId: string) => {
+    const template = COMPONENT_TEMPLATES.find(t => t.id === templateId);
+    if (template) {
+      setSelectedTemplate(templateId);
+      setFormData({
+        name: template.name,
+        category: template.category,
+        color: template.color,
+        htmlContent: template.html,
+        cssContent: template.css
+      });
+      
+      // Update validation status
+      validateFormField('name', template.name);
+      validateFormField('css', template.css);
+    }
+  };
+  
+  // Validate form fields
+  const validateFormField = (field: 'name' | 'css', value: string) => {
+    let valid = false;
+    let message = '';
+    
+    if (field === 'name') {
+      valid = value.trim().length >= 3;
+      message = valid ? 'Nome válido' : 'Nome deve ter pelo menos 3 caracteres';
+    }
+    
+    if (field === 'css') {
+      valid = value.trim().length > 0;
+      message = valid ? 'CSS válido' : 'CSS é obrigatório';
+    }
+    
+    setValidationStatus(prev => ({
+      ...prev,
+      [field]: { valid, message }
+    }));
+    
+    return valid;
+  };
+  
+  // Validate input as user types
+  useEffect(() => {
+    if (formData.name) validateFormField('name', formData.name);
+    if (formData.cssContent) validateFormField('css', formData.cssContent);
+  }, [formData.name, formData.cssContent]);
   
   // Generate component using AI
   const handleAIGenerate = async () => {
@@ -104,22 +202,23 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
     }
   };
   
-  // Handle form submission
+  // Enhanced form submission with validation
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate all required fields
+    const nameValid = validateFormField('name', formData.name);
+    const cssValid = validateFormField('css', formData.cssContent);
+    
+    if (!nameValid || !cssValid) {
+      setError('Por favor, corrija os erros de validação antes de prosseguir.');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     
     try {
-      // Validações básicas no lado do cliente
-      if (!formData.name.trim()) {
-        throw new Error('O nome do componente é obrigatório');
-      }
-      
-      if (!formData.cssContent.trim()) {
-        throw new Error('O conteúdo CSS é obrigatório');
-      }
-      
       const newComponent = await ComponentsService.createComponent(formData);
       onSuccess(newComponent);
     } catch (err) {
@@ -145,11 +244,11 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
   };
 
   return (
-    <div className={styles.componentForm}>
-      <h2 className={styles.formTitle}>Adicionar Novo Componente</h2>
+    <div className={formStyles.componentForm}>
+      <h2 className={formStyles.formTitle}>Adicionar Novo Componente</h2>
       
       {error && (
-        <div className={styles.errorMessage}>
+        <div className={formStyles.errorMessage}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -184,31 +283,31 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
           </p>
           
           {aiError && (
-            <div className={styles.errorMessage}>
+            <div className={formStyles.errorMessage}>
               <span>{aiError}</span>
             </div>
           )}
           
-          <div className={styles.formGroup}>
+          <div className={formStyles.formGroup}>
             <label htmlFor="aiDescription">Descreva o componente</label>
             <textarea
               id="aiDescription"
               value={aiDescription}
               onChange={(e) => setAiDescription(e.target.value)}
               placeholder="Ex: Um botão moderno com efeito de hover, cores gradientes e cantos arredondados"
-              className={styles.formTextarea}
+              className={formStyles.formTextarea}
               rows={3}
             />
           </div>
           
           <div className={aiStyles.aiFormRow}>
-            <div className={styles.formGroup}>
+            <div className={formStyles.formGroup}>
               <label htmlFor="aiComponentType">Tipo de componente</label>
               <select
                 id="aiComponentType"
                 value={aiComponentType}
                 onChange={(e) => setAiComponentType(e.target.value)}
-                className={styles.formSelect}
+                className={formStyles.formSelect}
               >
                 <option value="button">Botão</option>
                 <option value="card">Card</option>
@@ -221,13 +320,13 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
               </select>
             </div>
             
-            <div className={styles.formGroup}>
+            <div className={formStyles.formGroup}>
               <label htmlFor="aiCategory">Categoria</label>
               <select
                 id="aiCategory"
                 value={formData.category}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
-                className={styles.formSelect}
+                className={formStyles.formSelect}
               >
                 {CATEGORY_OPTIONS.map(category => (
                   <option key={category} value={category}>{category}</option>
@@ -235,13 +334,13 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
               </select>
             </div>
             
-            <div className={styles.formGroup}>
+            <div className={formStyles.formGroup}>
               <label htmlFor="aiTheme">Estilo</label>
               <select
                 id="aiTheme"
                 value={aiTheme}
                 onChange={(e) => setAiTheme(e.target.value)}
-                className={styles.formSelect}
+                className={formStyles.formSelect}
               >
                 <option value="modern">Moderno</option>
                 <option value="minimalist">Minimalista</option>
@@ -262,7 +361,7 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
           >
             {aiLoading ? (
               <>
-                <span className={styles.smallSpinner}></span>
+                <span className={formStyles.smallSpinner}></span>
                 Gerando componente...
               </>
             ) : (
@@ -337,6 +436,7 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
             </div>
             
             <div className={`${aiStyles.componentPreviewContainer} ${previewMode === 'light' ? aiStyles.previewLight : aiStyles.previewDark} ${aiStyles['preview' + previewDevice.charAt(0).toUpperCase() + previewDevice.slice(1)]}`}>
+
               <div 
                 className={`${aiStyles.componentPreviewFrame}`}
                 dangerouslySetInnerHTML={{ 
@@ -361,6 +461,7 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
                   type="button"
                   className={aiStyles.codeTab}
                   onClick={() => setFormData({ ...formData, name: `${aiComponentType.charAt(0).toUpperCase() + aiComponentType.slice(1)} ${aiTheme} - ${formData.category}` })}
+
                 >
                   Definir nome padrão
                 </button>
@@ -375,22 +476,23 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
             </div>
             
             <div className={aiStyles.aiOptionsRow}>
-              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+              <div className={formStyles.formGroup} style={{ marginBottom: 0 }}>
                 <label htmlFor="color">Cor Representativa</label>
-                <div className={styles.colorPickerContainer}>
+                <div className={formStyles.colorPickerContainer}>
                   <select
                     id="color"
                     name="color"
                     value={formData.color}
                     onChange={handleChange}
-                    className={styles.formSelect}
+                    className={formStyles.formSelect}
                   >
                     {COLOR_OPTIONS.map(color => (
                       <option key={color.value} value={color.value}>{color.name}</option>
                     ))}
+
                   </select>
                   <div 
-                    className={styles.colorPreview} 
+                    className={formStyles.colorPreview} 
                     style={{ backgroundColor: formData.color }}
                     aria-hidden="true"
                   ></div>
@@ -409,7 +511,7 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
                 value={aiDescription}
                 onChange={(e) => setAiDescription(e.target.value)}
                 placeholder="Descreva ajustes para refinar este componente. Ex: Adicione uma borda mais arredondada, mude a cor para tons de azul..."
-                className={styles.formTextarea}
+                className={formStyles.formTextarea}
                 rows={2}
               />
               <button 
@@ -419,10 +521,7 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
                 disabled={aiLoading}
               >
                 {aiLoading ? (
-                  <>
-                    <span className={styles.smallSpinner}></span>
-                    Refinando componente...
-                  </>
+                  <span className={formStyles.smallSpinner}></span>
                 ) : 'Refinar com IA'}
               </button>
             </div>
@@ -465,10 +564,10 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
               </div>
             </div>
             
-            <div className={styles.formActions}>
+            <div className={formStyles.formActions}>
               <button 
                 type="button" 
-                className={styles.cancelButton}
+                className={formStyles.cancelButton}
                 onClick={cancelForm}
                 disabled={loading}
               >
@@ -476,47 +575,91 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
               </button>
               <button 
                 type="button" 
-                className={styles.submitButton}
+                className={formStyles.submitButton}
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={loading || !validationStatus.name.valid || !validationStatus.css.valid}
               >
                 {loading ? (
                   <>
-                    <span className={styles.smallSpinner}></span>
+                    <span className={formStyles.smallSpinner}></span>
                     Criando...
                   </>
-                ) : 'Criar Componente'}
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 4V20M20 12L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Criar Componente
+                  </>
+                )}
               </button>
             </div>
           </div>
-        )}
+        )} 
       </div>
       
       {/* Manual Creation Tab */}
       <div className={`${aiStyles.tabContent} ${activeTab === 'manual' ? aiStyles.tabContentActive : ''}`}>
+        {/* Template section */}
+        <div className={formStyles.templateSection}>
+          <h3 className={formStyles.templateTitle}>Iniciar com um template</h3>
+          <div className={formStyles.templateGrid}>
+            {COMPONENT_TEMPLATES.map(template => (
+              <div 
+                key={template.id}
+                className={`${formStyles.templateItem} ${selectedTemplate === template.id ? formStyles.active : ''}`}
+                onClick={() => handleTemplateSelect(template.id)}
+              >
+                <div className={formStyles.templatePreview}>
+                  <span style={{ fontSize: '24px' }}>{template.preview}</span>
+                </div>
+                <p className={formStyles.templateName}>{template.name}</p>
+                <p className={formStyles.templateDescription}>{template.category}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        
         <form onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
+          <div className={formStyles.formGroup}>
             <label htmlFor="name">Nome do Componente *</label>
             <input
               type="text"
               id="name"
               name="name"
               value={formData.name}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                validateFormField('name', e.target.value);
+              }}
               placeholder="Ex: Botão Moderno"
-              className={styles.formInput}
+              className={formStyles.formInput}
               required
             />
+            {formData.name && (
+              <div className={`${formStyles.formValidationMessage} ${validationStatus.name.valid ? formStyles.valid : formStyles.invalid}`}>
+                {validationStatus.name.valid ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 9V12M12 15H12.01M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                )}
+                {validationStatus.name.message}
+              </div>
+            )}
           </div>
           
-          <div className={styles.formGroup}>
+          <div className={formStyles.formGroup}>
             <label htmlFor="category">Categoria</label>
             <select
               id="category"
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className={styles.formSelect}
+              className={formStyles.formSelect}
             >
               {CATEGORY_OPTIONS.map(category => (
                 <option key={category} value={category}>{category}</option>
@@ -524,29 +667,30 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
             </select>
           </div>
           
-          <div className={styles.formGroup}>
+          <div className={formStyles.formGroup}>
             <label htmlFor="color">Cor Representativa</label>
-            <div className={styles.colorPickerContainer}>
+            <div className={formStyles.colorPickerContainer}>
               <select
                 id="color"
                 name="color"
                 value={formData.color}
                 onChange={handleChange}
-                className={styles.formSelect}
+                className={formStyles.formSelect}
               >
                 {COLOR_OPTIONS.map(color => (
                   <option key={color.value} value={color.value}>{color.name}</option>
                 ))}
+
               </select>
               <div 
-                className={styles.colorPreview} 
+                className={formStyles.colorPreview} 
                 style={{ backgroundColor: formData.color }}
                 aria-hidden="true"
               ></div>
             </div>
           </div>
           
-          <div className={styles.formGroup}>
+          <div className={formStyles.formGroup}>
             <label htmlFor="htmlContent">Código HTML</label>
             <textarea
               id="htmlContent"
@@ -554,46 +698,84 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
               value={formData.htmlContent || ''}
               onChange={handleChange}
               placeholder="<button class='btn'>Click me</button>"
-              className={styles.formTextarea}
+              className={formStyles.formTextarea}
               rows={6}
             />
           </div>
           
-          <div className={styles.formGroup}>
+          <div className={formStyles.formGroup}>
             <label htmlFor="cssContent">Código CSS *</label>
             <textarea
               id="cssContent"
               name="cssContent"
               value={formData.cssContent}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                validateFormField('css', e.target.value);
+              }}
               placeholder=".component {\n  color: #6366F1;\n  padding: 1rem;\n}"
-              className={styles.formTextarea}
+              className={formStyles.formTextarea}
               rows={10}
               required
             />
+            {formData.cssContent && (
+              <div className={`${formStyles.formValidationMessage} ${validationStatus.css.valid ? formStyles.valid : formStyles.invalid}`}>
+                {validationStatus.css.valid ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 9V12M12 15H12.01M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                )}
+                {validationStatus.css.message}
+              </div>
+            )}
           </div>
           
-          <div className={styles.formActions}>
-            <button 
-              type="button" 
-              className={styles.cancelButton}
-              onClick={cancelForm}
-              disabled={loading}
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              className={styles.submitButton}
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className={styles.smallSpinner}></span>
-                  Criando...
-                </>
-              ) : 'Criar Componente'}
-            </button>
+          <div className={formStyles.formActions}>
+            <div>
+              {/* Add template button to toggle visibility */}
+              <button 
+                type="button" 
+                className={formStyles.cancelButton}
+                onClick={() => setSelectedTemplate(null)}
+                disabled={!selectedTemplate}
+              >
+                Limpar Template
+              </button>
+            </div>
+            
+            <div className={styles.buttonGroup}>
+              <button 
+                type="button" 
+                className={formStyles.cancelButton}
+                onClick={cancelForm}
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit" 
+                className={formStyles.submitButton}
+                disabled={loading || !validationStatus.name.valid || !validationStatus.css.valid}
+              >
+                {loading ? (
+                  <>
+                    <span className={formStyles.smallSpinner}></span>
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 4V20M20 12L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Criar Componente
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>
