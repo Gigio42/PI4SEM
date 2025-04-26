@@ -1,0 +1,142 @@
+.detailFavoriteButton {
+  position: absolute;
+  top: 12px;
+  right: 60px;
+  z-index: 15;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
+  cursor: pointer;
+}
+
+.detailFavoriteButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background-color: white;
+}
+
+.detailFavoriteButton:active {
+  transform: scale(0.95);
+}
+
+.favoriteActive {
+  background-color: rgba(var(--primary-rgb), 0.1);
+  border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+.favoriteActive:hover {
+  background-color: rgba(var(--primary-rgb), 0.15);
+}
+
+.favoriteIcon {
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+  width: 20px;
+  height: 20px;
+}
+
+.detailFavoriteButton:hover .favoriteIcon {
+  color: var(--text-primary);
+}
+
+.favoriteActive .favoriteIcon {
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+.favoriteActive:hover .favoriteIcon {
+  color: var(--primary-dark);
+}
+
+.actionButtonsGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.actionButton:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.actionButton svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.actionButton:hover svg {
+  transform: translateY(-1px);
+}
+
+.primaryAction {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.primaryAction:hover {
+  background-color: var(--primary-dark);
+  color: white;
+  border-color: var(--primary-dark);
+  box-shadow: 0 3px 10px rgba(var(--primary-rgb), 0.3);
+}
+
+/* Tooltip */
+.favoriteTooltip {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--surface);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.detailFavoriteButton:hover .favoriteTooltip {
+  opacity: 1;
+  transform: translate(-50%, -2px);
+}
+
+/* Animation for favorite action */
+@keyframes heartPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.favoriteSuccess {
+  animation: heartPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}

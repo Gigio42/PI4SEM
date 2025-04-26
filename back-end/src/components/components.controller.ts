@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Post, Delete, Param, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Put, Delete, Param, BadRequestException, UsePipes, ValidationPipe, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { ComponentsService } from './components.service';
+import { CreateComponentDto } from './dto/create-component.dto';
+import { UpdateComponentDto } from './dto/update-component.dto';
 
 /**
  * @Author: Dev-Ricas & Luanplays11
@@ -18,33 +20,19 @@ import { ComponentsService } from './components.service';
 @Controller('components')
 export class ComponentsController {
   constructor(private readonly componentsService: ComponentsService) {}
-
   @ApiOperation({ summary: 'Cria um novo componente'})
-  @ApiBody({
-    description: 'Objeto contendo nome do componente e o código CSS',
-    schema: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        cssContent: { type: 'string'}
-      }
-    }
-  })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Componente criado com sucesso' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos fornecidos' })
   @Post()
-  async createComponent(@Body() body: { name: string; cssContent: string }) {
-    const { name, cssContent } = body;
-
-    // Validação manual
-    if (!name || typeof name !== 'string' || name.trim() === '') {
-      throw new BadRequestException('O campo "name" é obrigatório e deve ser uma string não vazia.');
-    }
-
-    if (!cssContent || typeof cssContent !== 'string' || cssContent.trim() === '') {
-      throw new BadRequestException('O campo "cssContent" é obrigatório e deve ser uma string não vazia.');
-    }
-
-    // Chama o serviço para criar o componente
-    return this.componentsService.createComponent(name, cssContent);
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async createComponent(@Body() createComponentDto: CreateComponentDto) {
+    return this.componentsService.createComponent(
+      createComponentDto.name,
+      createComponentDto.cssContent,
+      createComponentDto.category,
+      createComponentDto.color,
+      createComponentDto.htmlContent
+    );
   }
 
   @ApiOperation({ summary: 'Retorna um componente especifico, definido pelo ID da rota'})
@@ -53,25 +41,47 @@ export class ComponentsController {
    description: 'ID do componente',
    type: 'string'
   })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Componente encontrado' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Componente não encontrado' })
   @Get(':id')
   async getComponentById(@Param('id') id: string){
     return this.componentsService.getComponentById(id);
   }
 
   @ApiOperation({ summary: 'Retorna todos os componentes'})
+  @ApiResponse({ status: HttpStatus.OK, description: 'Lista de componentes retornada com sucesso' })
   @Get()
   async getAllComponents() {
     return this.componentsService.getAllComponents();
   }
-
   @ApiOperation({ summary: 'Deleta um componente especifico, definido pelo ID da rota' })
   @ApiParam({
     name: 'id',
     description: 'ID do component',
     type: 'string'
   })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Componente excluído com sucesso' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Componente não encontrado' })
   @Delete(':id')
   async deleteComponent(@Param('id') id: string ){
     return this.componentsService.deleteComponent(id);
+  }
+
+  @ApiOperation({ summary: 'Atualiza um componente específico, definido pelo ID da rota' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do componente',
+    type: 'string'
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Componente atualizado com sucesso' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Componente não encontrado' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos fornecidos' })
+  @Put(':id')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async updateComponent(
+    @Param('id') id: string,
+    @Body() updateComponentDto: UpdateComponentDto
+  ) {
+    return this.componentsService.updateComponent(id, updateComponentDto);
   }
 }

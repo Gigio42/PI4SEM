@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ComponentsController } from './components.controller';
 import { ComponentsService } from './components.service';
+import { PrismaModule } from '../prisma/prisma.module';
 
 /**
  * @Author: Luanplays11
@@ -10,6 +11,7 @@ import { ComponentsService } from './components.service';
  * á manipulação de compones CSS
  */
 @Module({
+  imports: [PrismaModule],
   controllers: [ComponentsController],
   providers: [ComponentsService],
 })

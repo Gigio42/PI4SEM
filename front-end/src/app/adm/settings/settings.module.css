@@ -1,0 +1,319 @@
+/* Settings page specific styles */
+
+.settingsContainer {
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.settingsTabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.settingsTab {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.settingsTab:hover {
+  color: var(--text-primary);
+}
+
+.settingsTab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.settingsContent {
+  padding: var(--spacing-lg);
+}
+
+.settingsPanel {
+  display: none;
+}
+
+.settingsPanel.active {
+  display: block;
+}
+
+.settingGroup {
+  margin-bottom: var(--spacing-lg);
+}
+
+.settingLabel {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.settingInput, .settingTextarea, .settingSelect {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background-color: var(--surface);
+  transition: var(--transition);
+}
+
+.settingInput:focus, .settingTextarea:focus, .settingSelect:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+}
+
+.settingInput.unsaved, .settingTextarea.unsaved, .settingSelect.unsaved {
+  border-color: var(--action-packages);
+  background-color: rgba(245, 158, 11, 0.05);
+}
+
+.settingTextarea {
+  resize: vertical;
+  min-height: 5rem;
+}
+
+.settingSelect {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1rem;
+  padding-right: 2rem;
+}
+
+.settingHelp {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.settingToggleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 3.5rem;
+  height: 1.75rem;
+}
+
+.toggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleLabel {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--surface-hover);
+  transition: var(--transition);
+  border-radius: var(--radius-full);
+}
+
+.toggleInner:before {
+  position: absolute;
+  content: "";
+  height: 1.25rem;
+  width: 1.25rem;
+  left: 0.25rem;
+  bottom: 0.25rem;
+  background-color: white;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+input:checked + .toggleLabel {
+  background-color: var(--primary);
+}
+
+input:checked + .toggleLabel .toggleInner:before {
+  transform: translateX(1.75rem);
+}
+
+input:disabled + .toggleLabel {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.colorPickerWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.colorPicker {
+  width: 3rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.colorPicker.unsaved {
+  border-color: var(--action-packages);
+}
+
+.colorCode {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background-color: var(--surface);
+  text-transform: uppercase;
+  font-family: monospace;
+}
+
+.colorCode.unsaved {
+  border-color: var(--action-packages);
+  background-color: rgba(245, 158, 11, 0.05);
+}
+
+.settingsActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border);
+}
+
+.cancelButton, .saveButton, .dangerButton {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.cancelButton {
+  background-color: var(--surface-secondary);
+  color: var(--text-secondary);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: var(--surface-hover);
+}
+
+.saveButton {
+  background-color: var(--primary);
+  color: white;
+}
+
+.saveButton:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+}
+
+.dangerButton {
+  background-color: var(--google-red);
+  color: white;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background-color: var(--google-red-dark);
+}
+
+.cancelButton:disabled, .saveButton:disabled, .dangerButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.smallSpinner {
+  width: 1rem;
+  height: 1rem;
+  border: 0.125rem solid rgba(255, 255, 255, 0.3);
+  border-top: 0.125rem solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.successAlert {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #166534;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.errorAlert {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+  border-left: 4px solid #ef4444;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modalContent {
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 28rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+}

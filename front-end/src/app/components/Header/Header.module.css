@@ -1,17 +1,26 @@
+/* filepath: e:\4sem\UXperiment-Labs\front-end\src\app\components\Header\Header.module.css */
 .header {
   width: 100%;
   height: 64px;
-  background-color: var(--surface);
+  background-color: rgba(255, 255, 255, 0.85);
   border-bottom: 1px solid var(--border);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 70;
   display: flex;
   align-items: center;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode specific adjustments */
+:global([data-theme="dark"]) .header {
+  background-color: rgba(18, 18, 18, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .headerContent {
@@ -31,27 +40,62 @@
 }
 
 .logoWrapper {
-  cursor: pointer;
-  transition: var(--transition);
   display: flex;
   align-items: center;
-  height: 40px;
+  gap: 12px;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
 .logoWrapper:hover {
-  opacity: 0.9;
-  transform: scale(1.02);
+  transform: translateY(-2px);
+}
+
+.logoWrapper:active {
+  transform: translateY(0);
 }
 
 .logo {
   height: auto;
-  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+  transition: filter 0.3s ease;
 }
 
-/* Menu principal de navegação */
+:global([data-theme="dark"]) .logo {
+  filter: drop-shadow(0 2px 8px rgba(var(--primary-rgb), 0.3));
+}
+
+.siteTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-left: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(to right, var(--primary), var(--primary-light, #8e5dff));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 0;
+  transform: translateY(5px);
+  animation: fadeIn 0.5s ease forwards 0.2s;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Main navigation menu */
 .mainNav {
   display: flex;
   height: 100%;
+  margin: 0 auto;
 }
 
 .navList {
@@ -60,6 +104,7 @@
   height: 100%;
   margin: 0;
   padding: 0;
+  gap: 8px;
 }
 
 .navItem {
@@ -67,9 +112,15 @@
   display: flex;
   align-items: center;
   position: relative;
+  margin: 0 2px;
+  transition: all 0.2s ease;
 }
 
-.navLink {
+.navItem:hover {
+  background-color: var(--surface-hover);
+}
+
+.navItem a {
   padding: 0 20px;
   height: 100%;
   display: flex;
@@ -77,52 +128,114 @@
   color: var(--text-secondary);
   font-size: var(--font-size-base);
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  border-radius: 6px;
 }
 
-.navLink:hover {
+.navItem a:hover {
   color: var(--text-primary);
 }
 
-.navLink.active {
-  color: var(--primary);
+.navItem.active a {
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
-.navLink.active::after {
+.navItem.active a::after {
   content: '';
   position: absolute;
   bottom: 0;
-  left: 20%;
-  width: 60%;
+  left: 10%;
+  width: 80%;
   height: 2px;
-  background-color: var(--primary);
+  background-color: var(--text-primary);
   border-radius: 2px 2px 0 0;
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Área direita com pesquisa e controles de usuário */
+:global([data-theme="dark"]) .navItem.active a::after {
+  box-shadow: none;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* Right side elements - all using consistent styling */
 .rightContent {
   display: flex;
   align-items: center;
   gap: 16px;
+  height: 100%;
 }
 
+/* All interactive elements in header with consistent styling */
+.searchBar,
+.notificationBell,
+.userAvatar {
+  border-radius: 50%;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.searchBar:hover,
+.notificationBell:hover,
+.userAvatar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+:global([data-theme="dark"]) .searchBar:hover,
+:global([data-theme="dark"]) .notificationBell:hover,
+:global([data-theme="dark"]) .userAvatar:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.searchBar:active,
+.notificationBell:active,
+.userAvatar:active {
+  transform: translateY(0);
+}
+
+/* Search bar styling */
 .searchBar {
   position: relative;
-  width: 240px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  background-color: var(--surface-secondary);
+  border-radius: 18px;
+  padding: 6px 16px;
+  width: 260px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.searchBar:hover {
+  background-color: var(--surface-hover);
+  border-color: var(--border);
 }
 
 .searchBar.focused {
-  width: 320px;
+  background-color: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+  width: 300px;
+}
+
+:global([data-theme="dark"]) .searchBar.focused {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
 }
 
 .searchBar svg {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
   color: var(--text-tertiary);
+  margin-right: 8px;
   transition: color 0.2s ease;
 }
 
@@ -131,22 +244,13 @@
 }
 
 .searchInput {
-  width: 100%;
-  height: 38px;
-  background-color: var(--surface-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  padding: 0 16px 0 36px;
-  font-size: var(--font-size-sm);
-  color: var(--text-primary);
-  transition: all 0.3s ease;
-}
-
-.searchInput:focus {
+  background: transparent;
+  border: none;
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
-  background-color: var(--surface);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  width: 100%;
+  padding: 6px 0;
 }
 
 .searchInput::placeholder {
@@ -155,53 +259,75 @@
 
 .searchShortcut {
   position: absolute;
-  right: 10px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 11px;
+  background-color: var(--surface-secondary);
   color: var(--text-tertiary);
-  font-family: monospace;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.5;
 }
 
+/* User controls area */
 .userControls {
   display: flex;
   align-items: center;
   gap: 16px;
+  height: 100%;
 }
 
+/* Notification bell styling */
 .notificationBell {
   position: relative;
-  width: 36px;
-  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-secondary);
+  background-color: transparent;
 }
 
 .notificationBell:hover {
-  background-color: var(--surface-secondary);
+  background-color: var(--surface-hover);
   color: var(--text-primary);
 }
 
 .notificationIndicator {
   position: absolute;
-  top: 6px;
+  top: 8px;
   right: 8px;
   width: 8px;
   height: 8px;
-  background-color: var(--primary);
+  background-color: #e74c3c;
   border-radius: 50%;
   border: 2px solid var(--surface);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+  animation: pulse 2s infinite;
 }
 
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(231, 76, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+  }
+}
+
+/* User profile area */
 .userProfile {
   position: relative;
 }
@@ -210,22 +336,27 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background-color: #556270;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.2);
-  transition: var(--transition);
-  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .userAvatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(var(--primary-rgb), 0.3);
+  border-color: #718093;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.userAvatar:active {
+  transform: translateY(0);
 }
 
 .userMenu {
@@ -233,42 +364,47 @@
   top: calc(100% + 8px);
   right: 0;
   background-color: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   width: 200px;
-  z-index: 10;
   overflow: hidden;
-  animation: slideIn 0.2s ease-out;
+  z-index: 100;
+  animation: fadeInDown 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  transform-origin: top right;
 }
 
-@keyframes slideIn {
+@keyframes fadeInDown {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-8px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .userMenuList {
   list-style: none;
-  padding: 8px 0;
   margin: 0;
+  padding: 8px 0;
 }
 
 .userMenuList li {
   padding: 0;
+  margin: 0;
 }
 
 .userMenuList a {
-  display: block;
+  display: flex;
+  align-items: center;
   padding: 10px 16px;
   color: var(--text-primary);
-  transition: all 0.2s ease;
   font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .userMenuList a:hover {
@@ -276,47 +412,47 @@
   color: var(--primary);
 }
 
+.userMenuList a:active {
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
 .logoutLink {
-  border-top: 1px solid var(--border);
   color: var(--google-red) !important;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
 }
 
 .logoutLink:hover {
-  background-color: rgba(var(--google-red), 0.1) !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: var(--google-red) !important;
 }
 
-/* Botão de menu mobile */
+/* Mobile menu button */
 .mobileMenuButton {
   display: none;
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  position: relative;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px;
-  margin-right: 8px;
-  border-radius: var(--radius-sm);
-  transition: background-color 0.2s ease;
-}
-
-.mobileMenuButton:hover {
-  background-color: var(--surface-hover);
+  width: 24px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+  margin-right: 16px;
 }
 
 .menuBar {
-  display: block;
-  width: 20px;
+  width: 100%;
   height: 2px;
   background-color: var(--text-primary);
   border-radius: 2px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mobileMenuButton.active .menuBar:nth-child(1) {
-  transform: translateY(6px) rotate(45deg);
+  transform: translateY(8px) rotate(45deg);
+  background-color: var(--primary);
 }
 
 .mobileMenuButton.active .menuBar:nth-child(2) {
@@ -324,86 +460,151 @@
 }
 
 .mobileMenuButton.active .menuBar:nth-child(3) {
-  transform: translateY(-6px) rotate(-45deg);
+  transform: translateY(-8px) rotate(-45deg);
+  background-color: var(--primary);
 }
 
-/* Overlay para menu mobile */
-.mobileNavOverlay {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 89;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.mobileNavOverlay.active {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Responsividade */
+/* Responsive adjustments */
 @media (max-width: 1024px) {
-  .mainNav {
-    display: none;
-  }
-  
   .searchBar {
-    width: 180px;
+    width: 200px;
   }
   
   .searchBar.focused {
     width: 240px;
   }
   
-  .mobileMenuButton {
-    display: flex;
+  .siteTitle {
+    display: none;
   }
 }
 
 @media (max-width: 768px) {
-  .headerContent {
-    padding: 0 16px;
+  .mobileMenuButton {
+    display: flex;
+  }
+  
+  .mainNav {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    width: 100%;
+    height: auto;
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 90;
+  }
+  
+  .mainNav.open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .navList {
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+    gap: 0;
+  }
+  
+  .navItem {
+    width: 100%;
+    height: 56px;
+    margin: 0;
+  }
+  
+  .navItem a {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .navItem.active a::after {
+    bottom: 10px;
+    left: 25%;
+    width: 50%;
   }
   
   .searchBar {
     display: none;
   }
   
+  .mobileSearch {
+    display: flex;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    width: 100%;
+    padding: 12px 16px;
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 80;
+  }
+  
   .userControls {
     gap: 12px;
   }
-  
-  .logoContainer {
-    flex: 1;
-    justify-content: center;
-  }
-  
-  .logo {
-    width: 120px;
-    height: auto;
-  }
 }
 
-/* Animação para mobile */
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+/* Theme toggle button styling */
+.themeToggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  margin: 0 10px;
+  height: 28px;
+  width: 48px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.toggleTrack {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+}
+
+:global(.dark-mode) .toggleTrack {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.toggleThumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s cubic-bezier(0.45, 1.8, 0.5, 0.75);
+  color: #f1c40f;
+  transform: translateX(0);
+}
+
+.toggleThumb.darkMode {
+  transform: translateX(22px);
+  background-color: #2c3e50;
+  color: #f1c40f;
+}
+
+.toggleThumb svg {
+  transition: all 0.3s ease;
 }

@@ -1,0 +1,216 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.plansSection {
+  margin-bottom: 4rem;
+}
+
+.plansHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.plansHeader h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.plansHeader p {
+  font-size: 1.25rem;
+  color: #6b7280;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(74, 108, 247, 0.2);
+  border-radius: 50%;
+  border-top-color: #4a6cf7;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.plansGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.planCard {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.planCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.planHeader {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.planHeader h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.planPrice {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  color: #111827;
+}
+
+.currency {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-right: 0.25rem;
+}
+
+.amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.period {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-left: 0.5rem;
+}
+
+.planDescription {
+  color: #6b7280;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.featuresList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+  flex: 1;
+}
+
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  color: #4b5563;
+}
+
+.checkIcon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+  stroke: #10b981;
+}
+
+.selectButton {
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+  margin-top: auto;
+}
+
+.selectButton:hover {
+  background-color: #3a5bd9;
+}
+
+.faqSection {
+  margin-top: 5rem;
+}
+
+.faqSection h2 {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 3rem;
+}
+
+.faqGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: 2rem;
+}
+
+.faqItem {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.faqItem h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.faqItem p {
+  color: #6b7280;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .plansHeader h1 {
+    font-size: 2rem;
+  }
+  
+  .plansHeader p {
+    font-size: 1rem;
+  }
+  
+  .faqGrid {
+    grid-template-columns: 1fr;
+  }
+}

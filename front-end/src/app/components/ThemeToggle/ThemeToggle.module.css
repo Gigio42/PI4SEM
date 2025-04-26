@@ -1,33 +1,156 @@
 .toggleButton {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background-color: var(--surface-secondary);
-  border: 1px solid var(--border);
-  color: var(--foreground);
+  background-color: transparent;
+  border: none;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .toggleButton:hover {
   background-color: var(--surface-hover);
-  transform: translateY(-2px);
+  color: var(--text-primary);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .toggleButton:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.95);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.1s ease-out;
+}
+
+/* Icon container for smooth transitions */
+.iconContainer {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s ease;
+}
+
+.iconContainer:hover {
+  transform: scale(1.1);
+}
+
+/* Sun icon for light theme */
+.sunIcon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  color: #ff9d00; /* Cor mais vibrante e quente para o sol */
+  filter: drop-shadow(0 0 5px rgba(255, 157, 0, 0.6));
+  transform: scale(0) rotate(-90deg);
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Moon icon for dark theme */
+.moonIcon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Beautiful gradient for the moon */
+  color: #b39dff; /* Cor roxa mais vibrante e clara */
+  filter: drop-shadow(0 0 6px rgba(179, 157, 255, 0.7));
+  transform: scale(0) rotate(90deg);
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Moon glow effect for dark theme */
+.moonGlow {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 157, 255, 0.5) 0%, rgba(179, 157, 255, 0) 70%);
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: -1;
+  filter: blur(3px);
+}
+
+/* Active state for icons based on theme */
+:global([data-theme="light"]) .sunIcon {
+  transform: scale(1) rotate(0);
+  opacity: 1;
+  animation: spinSun 10s linear infinite, pulsateSun 3s ease-in-out infinite;
+}
+
+:global([data-theme="dark"]) .moonIcon {
+  transform: scale(1) rotate(0);
+  opacity: 1;
+  animation: floatMoon 4s ease-in-out infinite;
+}
+
+:global([data-theme="dark"]) .moonGlow {
+  opacity: 0.9;
+  transform: scale(1.2);
+  animation: pulsateGlow 4s ease-in-out infinite;
+}
+
+@keyframes spinSun {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulsateSun {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(249, 168, 37, 0.5)); }
+  50% { filter: drop-shadow(0 0 8px rgba(249, 168, 37, 0.8)); }
+}
+
+@keyframes floatMoon {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-3px) rotate(0); }
+}
+
+@keyframes pulsateGlow {
+  0%, 100% { transform: scale(1.2); opacity: 0.4; }
+  50% { transform: scale(1.5); opacity: 0.7; }
+}
+
+/* Ripple effect on click */
+.toggleButton::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(var(--primary-rgb), 0.1);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.4s ease-out;
+}
+
+.toggleButton:active::after {
+  transform: scale(1.5);
+  opacity: 1;
+  transition: 0s;
 }
 
 @media (max-width: 768px) {
   .toggleButton {
-    top: 15px;
-    right: 15px;
     width: 36px;
     height: 36px;
   }

@@ -1,0 +1,180 @@
+.plansContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.planCard {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  transition: var(--transition);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+}
+
+.planCard:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.highlightedPlan {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1), var(--shadow-md);
+}
+
+.recommendedBadge {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background-color: var(--primary);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.planName {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.planPrice {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.priceCurrency {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pricePeriod {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-left: 0.25rem;
+}
+
+.planDescription {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.featuresList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  flex-grow: 1;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.checkIcon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.selectPlanButton {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--surface-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: auto;
+}
+
+.selectPlanButton:hover {
+  background-color: var(--surface-hover);
+}
+
+.highlightedButton {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.highlightedButton:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Loading state */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(var(--primary-rgb), 0.2);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem;
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
+}
+
+.emptyIcon {
+  color: var(--text-tertiary);
+  margin-bottom: 1rem;
+}
+
+.emptyState h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.emptyState p {
+  color: var(--text-secondary);
+  max-width: 400px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .plansContainer {
+    grid-template-columns: 1fr;
+  }
+}

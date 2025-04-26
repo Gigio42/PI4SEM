@@ -1,0 +1,476 @@
+/* Enhanced Checkout Page Styling */
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f9fafb;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.checkoutContainer {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .checkoutContainer {
+    grid-template-columns: 1fr;
+  }
+}
+
+.orderSummary, .paymentForm {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+
+.orderSummary h2, .paymentForm h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.planDetails {
+  margin-bottom: 2rem;
+}
+
+.planDetails h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.planDescription {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.planFeatures {
+  margin-bottom: 1.5rem;
+}
+
+.planFeatures h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin: 0 0 0.75rem 0;
+}
+
+.planFeatures ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.planFeatures li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.checkIcon {
+  width: 18px;
+  height: 18px;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+  stroke: #10b981;
+}
+
+.planDuration {
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.planDuration p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.priceSummary {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1.5rem;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.totalRow {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+.paymentMethods {
+  margin-bottom: 2rem;
+}
+
+.paymentMethods h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.paymentOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.paymentOption {
+  display: flex;
+  cursor: pointer;
+}
+
+.paymentOption input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.optionContent {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.paymentOption input:checked + .optionContent {
+  border-color: #4a6cf7;
+  background-color: rgba(74, 108, 247, 0.05);
+}
+
+.optionIcon {
+  width: 24px;
+  height: 24px;
+  margin-right: 0.75rem;
+  stroke: #6b7280;
+}
+
+.paymentOption input:checked + .optionContent .optionIcon {
+  stroke: #4a6cf7;
+}
+
+.cardDetails {
+  margin-bottom: 2rem;
+}
+
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: #4a6cf7;
+  box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.1);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.pixInstructions {
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.pixInstructions p {
+  margin: 0 0 1rem 0;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.pixInfo {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #fff;
+  border-radius: 6px;
+  border: 1px dashed #d1d5db;
+}
+
+.infoIcon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.75rem;
+  stroke: #6b7280;
+}
+
+.pixInfo span {
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.formActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.backLink {
+  color: #6b7280;
+  font-size: 0.95rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.backLink:hover {
+  color: #4b5563;
+}
+
+.payButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  background-color: #4a6cf7;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 180px;
+}
+
+.payButton:hover {
+  background-color: #3a5bd9;
+}
+
+.payButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
+.loadingSpinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(74, 108, 247, 0.3);
+  border-radius: 50%;
+  border-top-color: #4a6cf7;
+  animation: spin 1s linear infinite;
+  margin-right: 0.75rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Payment Status */
+.paymentStatus {
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.paymentSuccess, .paymentError, .paymentPending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statusIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.paymentSuccess .statusIcon {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.paymentSuccess .statusIcon svg {
+  width: 32px;
+  height: 32px;
+  stroke: #10b981;
+}
+
+.paymentError .statusIcon {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.paymentError .statusIcon svg {
+  width: 32px;
+  height: 32px;
+  stroke: #ef4444;
+}
+
+.paymentPending .statusIcon {
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.paymentPending .statusIcon svg {
+  width: 32px;
+  height: 32px;
+  stroke: #f59e0b;
+}
+
+.statusMessage {
+  color: #6b7280;
+  margin-bottom: 2rem;
+}
+
+.primaryButton, .secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.primaryButton {
+  background-color: #4a6cf7;
+  color: white;
+}
+
+.primaryButton:hover {
+  background-color: #3a5bd9;
+}
+
+.secondaryButton {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.secondaryButton:hover {
+  background-color: #e5e7eb;
+}
+
+/* PIX Code Display */
+.pixCode {
+  background-color: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  word-break: break-all;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #4b5563;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.copyButton {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  color: #4a6cf7;
+  border: 1px solid #4a6cf7;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyButton:hover {
+  background-color: #4a6cf7;
+  color: white;
+}
+
+.pixExpiry {
+  margin: 1rem 0;
+  color: #ef4444;
+  font-size: 0.875rem;
+}
+
+.pixActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.pixInstructions h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.pixInstructions ol {
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.pixInstructions ol li {
+  margin-bottom: 0.5rem;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
