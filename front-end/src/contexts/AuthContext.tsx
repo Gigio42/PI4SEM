@@ -2,63 +2,70 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type User = {
+export interface User {
   id: number;
   name: string;
   email: string;
   role: string;
-};
+}
 
-type AuthContextType = {
+export interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
   isAuthenticated: boolean;
-  setUser: (user: User | null) => void;
+  isAdmin: boolean;
+  login: (user: User) => void;
   logout: () => void;
-};
+}
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
-  isLoading: true,
   isAuthenticated: false,
-  setUser: () => {},
+  isAdmin: false,
+  login: () => {},
   logout: () => {},
 });
 
-export const useAuth = () => useContext(AuthContext);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Check for user data in localStorage on initial load
-  useEffect(() => {
-    try {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(() => {
+    // Check for user data in localStorage on initial load
+    if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
-        console.log('Auth Provider: Initializing with stored user');
-        setUser(JSON.parse(storedUser));
+        try {
+          const userData = JSON.parse(storedUser);
+          console.log(`Loading stored user with role: "${userData.role}"`);
+          return userData;
+        } catch (e) {
+          console.error('Failed to parse stored user data:', e);
+          return null;
+        }
       }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+    return null;
+  });
 
+  // Calculate isAdmin based on exact role value - use strict comparison
+  const isAdmin = user?.role === 'admin';
+  
+  const login = (userData: User) => {
+    // Ensure role is preserved exactly as provided
+    console.log(`Setting user with role: "${userData.role}"`);
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+  
   const logout = () => {
-    console.log('Logging out user');
-    localStorage.removeItem('user');
     setUser(null);
+    localStorage.removeItem('user');
   };
+  
+  console.log('Auth Provider: Initializing with stored user', { user, isAdmin });
+  
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isAdmin, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-  const value = {
-    user,
-    setUser,
-    isLoading,
-    isAuthenticated: !!user,
-    logout,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+export const useAuth = () => useContext(AuthContext);

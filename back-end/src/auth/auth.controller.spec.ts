@@ -28,6 +28,26 @@ describe('AuthController (e2e)', () => {
       .expect(401); // 401 porque o teste não fornece um token válido
   });
 
+  it('/auth/session-check (GET) - should return authentication status', () => {
+    return request(app.getHttpServer())
+      .get('/auth/session-check')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('authenticated');
+        expect(res.body.authenticated).toBe(false);
+      });
+  });
+
+  it('/auth/check-auth (GET) - should return authentication status', () => {
+    return request(app.getHttpServer())
+      .get('/auth/check-auth')
+      .expect(401)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('authenticated');
+        expect(res.body.authenticated).toBe(false);
+      });
+  });
+
   afterAll(async () => {
     await app.close();
   });

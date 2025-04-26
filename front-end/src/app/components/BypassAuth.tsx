@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../../../src/contexts/AuthContext';
-import { usePathname, useRouter } from 'next/navigation';
 
 export default function BypassAuth() {
-  const { setUser, user } = useAuth();
+  const { login, user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
@@ -16,6 +16,32 @@ export default function BypassAuth() {
         // First check for already authenticated user in context
         if (user) {
           console.log('User already exists in context:', user);
+          console.log(`User role from context: "${user.role}"`);
+          
+          // Always verify with backend to ensure role is correct
+          try {
+            const response = await fetch('http://localhost:3000/auth/session-check', {
+              credentials: 'include',
+            });
+            
+            const data = await response.json();
+            if (data.authenticated && data.user && data.user.role) {
+              // Check if the backend role differs from context
+              if (data.user.role !== user.role) {
+                console.log(`Role mismatch! Context: "${user.role}", Backend: "${data.user.role}"`);
+                // Update with correct role from backend
+                const updatedUser = {
+                  ...user,
+                  role: data.user.role // Use exact role from backend
+                };
+                login(updatedUser);
+                console.log('Updated user with correct role from backend:', updatedUser);
+              }
+            }
+          } catch (error) {
+            console.error('Error verifying role with backend:', error);
+          }
+          
           setIsLoading(false);
           return;
         }
@@ -26,9 +52,9 @@ export default function BypassAuth() {
           try {
             const userData = JSON.parse(storedUser);
             console.log('Found user in localStorage:', userData);
-            setUser(userData);
+            console.log(`User role from localStorage: "${userData.role}"`);
             
-            // Verify this user with the backend
+            // Always verify with backend before using localStorage data
             try {
               const response = await fetch('http://localhost:3000/auth/session-check', {
                 credentials: 'include',
@@ -36,59 +62,45 @@ export default function BypassAuth() {
               
               const data = await response.json();
               
-              // If backend session doesn't match localStorage, clear it
-              if (!data.authenticated) {
-                console.log('Backend session expired. Clearing local user data.');
-                localStorage.removeItem('user');
-                setUser(null);
+              if (data.authenticated && data.user) {
+                // Use backend data as source of truth, especially for role
+                const backendUserData = {
+                  id: data.user.id,
+                  name: data.user.name || userData.name,
+                  email: data.user.email,
+                  role: data.user.role // Always use exact role from backend
+                };
                 
-                // Redirect to login if not on login page
+                console.log(`Using backend role: "${backendUserData.role}"`);
+                login(backendUserData);
+                console.log('Using authenticated user from backend:', backendUserData);
+              } else {
+                // Session not valid, but still use localStorage data for limited functionality
+                console.log('Backend session not valid, using localStorage with caution');
+                login(userData);
+                
+                // If not on login page, redirect
                 if (!pathname?.includes('/login') && !pathname?.includes('/signup')) {
                   router.push('/login');
                 }
               }
-            } catch (backendError) {
-              console.error('Error verifying session with backend:', backendError);
-              // We keep the localStorage user since backend might be down
+            } catch (error) {
+              console.error('Error verifying authentication with backend:', error);
+              // Use localStorage data if backend is unreachable
+              login(userData);
             }
-            
-            setIsLoading(false);
-            return;
           } catch (e) {
             console.error('Failed to parse user data from localStorage:', e);
             localStorage.removeItem('user');
-          }
-        }
-
-        // No user found, check with backend for active session
-        try {
-          const response = await fetch('http://localhost:3000/auth/session-check', {
-            credentials: 'include',
-          });
-          
-          const data = await response.json();
-          
-          if (data.authenticated && data.user) {
-            console.log('User authenticated from backend session:', data.user);
-            const userData = {
-              id: data.user.id,
-              name: data.user.name || 'User',
-              email: data.user.email,
-              role: data.user.role || 'user'
-            };
             
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
-          } else {
-            console.log('No authenticated user found in backend');
             // If not on login page, redirect
             if (!pathname?.includes('/login') && !pathname?.includes('/signup')) {
               router.push('/login');
             }
           }
-        } catch (error) {
-          console.error('Error checking authentication with backend:', error);
-          // If backend is down and we're not on login page, redirect
+        } else {
+          console.log('No authenticated user found');
+          // If not on login page, redirect
           if (!pathname?.includes('/login') && !pathname?.includes('/signup')) {
             router.push('/login');
           }
@@ -99,8 +111,11 @@ export default function BypassAuth() {
     };
 
     checkAuthentication();
-  }, [setUser, user, pathname, router]);
+  }, [login, pathname, router, user]);
 
-  // This component doesn't render anything visually
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return null;
 }

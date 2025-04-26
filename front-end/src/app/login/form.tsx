@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../..//src/contexts/AuthContext"; // Fix import path
+import { useAuth } from "../../../src/contexts/AuthContext"; // Fixed import path (removed extra slash)
 import styles from "./login.module.css";
 
 export default function LoginForm() {
@@ -13,7 +13,7 @@ export default function LoginForm() {
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
   const [formActive, setFormActive] = useState(false);
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { login } = useAuth(); // Changed from setUser to login
 
   // Efeito para animação inicial
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validação de formulário
+    // Validation of form
     if (!handleValidation()) {
       return;
     }
@@ -73,19 +73,20 @@ export default function LoginForm() {
             });
             
             const sessionData = await sessionResponse.json();
+            console.log('Session check response:', sessionData);
             
             if (sessionData.authenticated && sessionData.user) {
-              // Use real user data from backend
+              // Use real user data from backend with exact role value
               const userData = {
                 id: sessionData.user.id,
                 name: sessionData.user.name || email.split('@')[0],
                 email: sessionData.user.email,
-                role: sessionData.user.role || "user"
+                role: sessionData.user.role || "user" // Preserve exact role string
               };
               
-              // Update Auth Context and localStorage
-              setUser(userData);
-              localStorage.setItem('user', JSON.stringify(userData));
+              console.log(`Logging in with role from backend: "${userData.role}"`);
+              // Use login function from auth context
+              login(userData);
               console.log('User logged in with real backend data:', userData);
               
               // Smooth transition before navigating
@@ -95,18 +96,17 @@ export default function LoginForm() {
               }, 300);
             } else {
               // Fallback if session check doesn't return user data
-              console.log('Session check response:', sessionData);
               
               // Create minimal user data based on the login email
               const fallbackUserData = {
                 id: Date.now(),
                 name: email.split('@')[0],
                 email: email,
-                role: "user"
+                role: "user" // Default to regular user role
               };
               
-              setUser(fallbackUserData);
-              localStorage.setItem('user', JSON.stringify(fallbackUserData));
+              console.log(`Using fallback user data with default role: "${fallbackUserData.role}"`);
+              login(fallbackUserData);
               console.log('Using fallback user data:', fallbackUserData);
               
               setFormActive(false);
@@ -153,8 +153,7 @@ export default function LoginForm() {
                 role: "user"
               };
               
-              setUser(userData);
-              localStorage.setItem('user', JSON.stringify(userData));
+              login(userData); // Changed from setUser to login
               console.log('User registered and logged in with backend:', userData);
               
               setFormActive(false);
