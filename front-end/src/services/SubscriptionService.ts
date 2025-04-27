@@ -1,11 +1,19 @@
 import api from '@/services/api';
 import { Plan, Subscription } from '@/types/subscription';
 
+// Helper to ensure API calls have the authorization token
+const getAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export class SubscriptionService {
   static async getPlans(): Promise<Plan[]> {
     try {
-      // Fix the endpoint to match the actual backend URL structure
-      const response = await api.get('/subscriptions/plans?onlyActive=true');
+      // Include auth headers in the request
+      const response = await api.get('/subscriptions/plans?onlyActive=true', {
+        headers: getAuthHeader()
+      });
       return response.data;
     } catch (error: unknown) {
       console.error('Error fetching plans:', error);
@@ -17,7 +25,9 @@ export class SubscriptionService {
 
   static async getPlanById(planId: number): Promise<Plan> {
     try {
-      const response = await api.get(`/subscriptions/plans/${planId}`);
+      const response = await api.get(`/subscriptions/plans/${planId}`, {
+        headers: getAuthHeader()
+      });
       return response.data;
     } catch (error: unknown) {
       console.error(`Error fetching plan ${planId}:`, error);
@@ -27,7 +37,9 @@ export class SubscriptionService {
 
   static async getCurrentSubscription(userId: number): Promise<Subscription | null> {
     try {
-      const response = await api.get(`/subscriptions/user/${userId}`);
+      const response = await api.get(`/subscriptions/user/${userId}`, {
+        headers: getAuthHeader()
+      });
       return response.data;
     } catch (error: unknown) {
       // Type guard for response error
@@ -64,6 +76,8 @@ export class SubscriptionService {
         type: plan.name.toLowerCase(),
         paymentMethod: subscriptionData.paymentMethod,
         paymentStatus: 'paid'
+      }, {
+        headers: getAuthHeader()
       });
       
       return response.data;
@@ -75,7 +89,9 @@ export class SubscriptionService {
 
   static async cancelSubscription(subscriptionId: number): Promise<Subscription> {
     try {
-      const response = await api.patch(`/subscriptions/${subscriptionId}/cancel`);
+      const response = await api.patch(`/subscriptions/${subscriptionId}/cancel`, {}, {
+        headers: getAuthHeader()
+      });
       return response.data;
     } catch (error: unknown) {
       console.error('Error cancelling subscription:', error);
@@ -88,6 +104,8 @@ export class SubscriptionService {
       const plan = await this.getPlanById(planId);
       const response = await api.patch(`/subscriptions/${subscriptionId}/renew`, {
         duration: plan.duration
+      }, {
+        headers: getAuthHeader()
       });
       return response.data;
     } catch (error: unknown) {

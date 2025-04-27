@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FavoritosService } from '@/services/FavoritosService';
 import styles from './favorite-styles.module.css';
 import { useNotification } from '@/contexts/NotificationContext';
+import { useFavorite } from '@/contexts/FavoriteContext';
 
 interface FavoriteButtonProps {
   userId: number;
   componentId: number;
   size?: 'small' | 'medium' | 'large';
-  position?: 'card' | 'detail' | 'standalone';
+  position?: 'card' | 'detail' | 'standalone' | 'product';
   onFavoriteChange?: (isFavorite: boolean) => void;
+  initialFavoriteState?: boolean;
+  forceRefresh?: number;
 }
 
 export default function FavoriteButton({ 
@@ -18,17 +21,58 @@ export default function FavoriteButton({
   componentId, 
   size = 'medium',
   position = 'card',
-  onFavoriteChange
+  onFavoriteChange,
+  initialFavoriteState,
+  forceRefresh = 0
 }: FavoriteButtonProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(initialFavoriteState ?? false);
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [animating, setAnimating] = useState(false);
   const { showToast } = useNotification();
+  const { favoriteStates, updateFavoriteState, subscribeToFavoriteChanges } = useFavorite();
+  
+  // Use a ref to track the current favorite state to avoid dependency issues
+  const isFavoriteRef = useRef(isFavorite);
+  
+  // Update ref when state changes
+  useEffect(() => {
+    isFavoriteRef.current = isFavorite;
+  }, [isFavorite]);
 
+  // Generate a unique key for this component-user combination
+  const favoriteStateKey = `${userId}_${componentId}`;
+
+  // Check favorite status whenever props change or forceRefresh changes
   useEffect(() => {
     checkFavoriteStatus();
-  }, [userId, componentId]);
+  }, [userId, componentId, forceRefresh]);
+  
+  // Update internal state if initialFavoriteState changes
+  useEffect(() => {
+    if (initialFavoriteState !== undefined) {
+      setIsFavorite(initialFavoriteState);
+    }
+  }, [initialFavoriteState]);
+
+  // Subscribe to favorite state changes from the context
+  useEffect(() => {
+    // Check if there's a state for this component in the context
+    if (favoriteStates[favoriteStateKey] !== undefined) {
+      setIsFavorite(favoriteStates[favoriteStateKey]);
+    }
+    
+    // Subscribe to changes
+    const unsubscribe = subscribeToFavoriteChanges(() => {
+      const contextState = favoriteStates[favoriteStateKey];
+      if (contextState !== undefined && contextState !== isFavoriteRef.current) {
+        setIsFavorite(contextState);
+      }
+    });
+    
+    // Cleanup subscription on unmount
+    return unsubscribe;
+  }, [favoriteStates, favoriteStateKey, subscribeToFavoriteChanges]); // Removed isFavorite dependency
 
   const checkFavoriteStatus = async () => {
     if (!userId || !componentId) return;
@@ -36,7 +80,18 @@ export default function FavoriteButton({
     try {
       setIsLoading(true);
       const { isFavorito, favoritoData } = await FavoritosService.checkIsFavorito(userId, componentId);
-      setIsFavorite(isFavorito);
+      
+      // Only update state if the status has changed
+      if (isFavorito !== isFavoriteRef.current) {
+        setIsFavorite(isFavorito);
+        // Update global context
+        updateFavoriteState(componentId, userId, isFavorito);
+        // Notify parent of change if state was different
+        if (onFavoriteChange) {
+          onFavoriteChange(isFavorito);
+        }
+      }
+      
       setFavoriteId(favoritoData?.id || null);
     } catch (error) {
       console.error('Erro ao verificar status de favorito:', error);
@@ -62,12 +117,16 @@ export default function FavoriteButton({
         await FavoritosService.removeFavorito(favoriteId);
         setIsFavorite(false);
         setFavoriteId(null);
+        // Update global context
+        updateFavoriteState(componentId, userId, false);
         showToast('Componente removido dos favoritos', 'success');
       } else {
         // Adicionar aos favoritos
         const response = await FavoritosService.addFavorito(userId, componentId);
         setIsFavorite(true);
         setFavoriteId(response.id);
+        // Update global context
+        updateFavoriteState(componentId, userId, true);
         setAnimating(true);
         showToast('Componente adicionado aos favoritos', 'success');
         
@@ -75,7 +134,7 @@ export default function FavoriteButton({
         setTimeout(() => setAnimating(false), 700);
       }
       
-      // Notify parent component if callback provided
+      // Notify parent component if callback provided - always do this
       if (onFavoriteChange) {
         onFavoriteChange(!isFavorite);
       }
@@ -87,12 +146,17 @@ export default function FavoriteButton({
     }
   };
 
-  // Define appropriate class based on position prop
-  let buttonClass = styles.favoriteIcon;
+  // Enhanced class selection
+  let buttonClass = '';
   if (position === 'detail') {
-    buttonClass = `${styles.detailFavoriteButton} ${isFavorite ? styles.favoriteActive : ''} ${animating ? styles.favoriteSuccess : ''}`;
+    // Make the detail button appear like the card button
+    buttonClass = `${styles.favoriteIcon} ${isFavorite ? styles.favoriteActive : ''} ${animating ? styles.favoriteSuccess : ''}`;
   } else if (position === 'standalone') {
     buttonClass = `${styles.standaloneFavoriteButton} ${isFavorite ? styles.favoriteActive : ''}`;
+  } else if (position === 'product') {
+    buttonClass = `${styles.productCardFavorite} ${isFavorite ? styles.favoriteActive : ''} ${animating ? styles.favoriteSuccess : ''}`;
+  } else {
+    buttonClass = `${styles.favoriteIcon} ${isFavorite ? styles.favoriteActive : ''} ${animating ? styles.favoriteSuccess : ''}`;
   }
 
   // Define size class
@@ -118,23 +182,17 @@ export default function FavoriteButton({
           </svg>
         </span>
       ) : (
-        <span className={styles.favoriteIcon}>
+        <span>
           {isFavorite ? (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19.4615 9.58842L13.9855 8.6546L11.553 3.29851C11.453 3.03759 11.2712 2.85581 11.0103 2.75577C10.4878 2.55571 9.86547 2.85581 9.6648 3.29851L7.23238 8.6546L1.75632 9.58842C1.45564 9.62842 1.19491 9.7885 1.03429 10.0294C0.834131 10.3255 0.834278 10.6935 1.01358 10.9887C1.19288 11.2838 1.53422 11.474 1.91481 11.4785L6.06183 13.6168L4.9992 19.293C4.93939 19.5305 4.97392 19.7782 5.09603 19.9904C5.35581 20.4103 5.9776 20.5094 6.39729 20.2498L11.6089 17.2252L16.8205 20.2498C17.0605 20.3898 17.3612 20.4097 17.6217 20.3097C18.1843 20.1096 18.4648 19.4893 18.2185 18.9266L17.1559 13.6168L21.3029 11.4785H21.4035C21.8858 11.4785 22.2865 11.0783 22.2865 10.5959C22.2865 10.3354 22.1864 10.0949 21.9858 9.93418C21.8252 9.78852 21.6045 9.62842 19.4615 9.58842Z" />
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
             </svg>
           ) : (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11.4806 3.49883C11.6728 3.03685 12.3272 3.03685 12.5194 3.49883L14.6726 8.63525C14.7509 8.8138 14.9205 8.93616 15.1146 8.95147L20.7168 9.39702C21.2142 9.43472 21.4135 10.0491 21.0481 10.3821L16.8754 14.1365C16.7311 14.2663 16.6659 14.4653 16.7041 14.6561L18.0425 20.1627C18.1446 20.651 17.6274 21.0428 17.1879 20.7917L12.3187 17.9576C12.1431 17.8567 11.9268 17.8567 11.7513 17.9576L6.88216 20.7917C6.44255 21.0428 5.92538 20.651 6.02735 20.1627L7.36597 14.6561C7.40408 14.4653 7.33892 14.2663 7.19454 14.1365L2.95194 10.3821C2.58654 10.0491 2.78581 9.43472 3.28322 9.39702L8.88542 8.95147C9.07948 8.93616 9.24907 8.8138 9.32731 8.63525L11.4806 3.49883Z" 
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" 
+                stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
-        </span>
-      )}
-      
-      {position === 'detail' && (
-        <span className={styles.favoriteTooltip}>
-          {isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
         </span>
       )}
     </button>

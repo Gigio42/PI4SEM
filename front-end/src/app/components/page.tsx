@@ -7,6 +7,7 @@ import Header from "@/app/components/Header/Header";
 import Sidebar from "@/app/components/Sidebar/Sidebar";
 import ComponentDetail from "@/app/adm/components/components/ComponentDetail";
 import { useNotification } from "@/contexts/NotificationContext";
+import FavoriteButton from "@/app/components/FavoriteButton"; // Add import for the FavoriteButton component
 import styles from "./components.module.css";
 
 export default function ComponentsPage() {  
@@ -134,15 +135,28 @@ export default function ComponentsPage() {
           ) : (
             <>              <div className={styles.componentsGrid}>
                 {currentComponents.map((component) => (
-                  <div                    key={component.id} 
+                  <div key={component.id} 
                     className={styles.componentCard}
                     onClick={() => handleComponentClick(component)}
                   >
                     <div className={styles.componentHeader}>
                       <h3 className={styles.componentName}>{component.name}</h3>
+                      
                       {component.category && (
-                        <span className={styles.componentCategory}>{component.category}</span>
+                        <span 
+                          className={styles.componentCategory}
+                          data-category={component.category} // Add data attribute for category-specific styling
+                        >
+                          {component.category}
+                        </span>
                       )}
+                      
+                      <FavoriteButton 
+                        userId={userId}
+                        componentId={component.id}
+                        position="product"
+                        size="small"
+                      />
                     </div>
                     
                     <div 

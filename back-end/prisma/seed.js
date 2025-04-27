@@ -105,33 +105,33 @@ async function createPlans() {
         name: 'Free',
         description: 'Access to basic components',
         price: 0,
-        duration: 30,
-        features: ['Access to 10 basic components', 'PDF documentation', 'Community support'],
-        active: true
+        durationDays: 30, // Changed from duration to durationDays
+        features: JSON.stringify(['Access to 10 basic components', 'PDF documentation', 'Community support']),
+        isActive: true // Changed from active to isActive
       },
       {
         name: 'Pro',
         description: 'Unlimited access to all components',
         price: 29.99,
-        duration: 30,
-        features: ['Access to all components', 'Premium support', 'Source files', 'Monthly updates'],
-        active: true
+        durationDays: 30, // Changed from duration to durationDays
+        features: JSON.stringify(['Access to all components', 'Premium support', 'Source files', 'Monthly updates']),
+        isActive: true // Changed from active to isActive
       },
       {
         name: 'Enterprise',
         description: 'Full access with team collaboration',
         price: 99.99,
-        duration: 30,
-        features: ['Everything in Pro', 'Team management', 'API access', 'Custom components', 'Priority support'],
-        active: true
+        durationDays: 30, // Changed from duration to durationDays
+        features: JSON.stringify(['Everything in Pro', 'Team management', 'API access', 'Custom components', 'Priority support']),
+        isActive: true // Changed from active to isActive
       },
       {
         name: 'Annual Pro',
         description: 'Yearly subscription with discount',
         price: 299.99,
-        duration: 365,
-        features: ['Everything in Pro', '25% discount', 'Priority support'],
-        active: true
+        durationDays: 365, // Changed from duration to durationDays
+        features: JSON.stringify(['Everything in Pro', '25% discount', 'Priority support']),
+        isActive: true // Changed from active to isActive
       }
     ]
   }).then(() => prisma.plan.findMany());

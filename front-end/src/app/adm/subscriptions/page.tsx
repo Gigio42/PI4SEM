@@ -42,11 +42,16 @@ export default function AdminSubscriptionsPage() {
     try {
       setLoading(true);
       
+      console.log('Fetching subscription data...');
+      
       // Fetch subscriptions and plans in parallel
       const [fetchedSubscriptions, fetchedPlans] = await Promise.all([
         subscriptionsService.getAllSubscriptions(filters.status),
         subscriptionsService.getPlans(false) // Get all plans including inactive ones
       ]);
+      
+      console.log('Fetched plans:', fetchedPlans);
+      console.log('Fetched subscriptions:', fetchedSubscriptions);
       
       setSubscriptions(fetchedSubscriptions);
       setPlans(fetchedPlans);

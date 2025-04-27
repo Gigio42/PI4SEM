@@ -15,16 +15,20 @@ export class SubscriptionService {
       const prismaData = {
         ...createPlanDto,
         features: createPlanDto.features ? JSON.stringify(createPlanDto.features) : null,
-        durationDays: createPlanDto.duration // Map duration to durationDays
+        durationDays: createPlanDto.duration || 30 // Ensure durationDays always has a value
       };
       
       // Remove the duration property since it's not in the Prisma schema
       delete (prismaData as any).duration;
       
+      // Log the data being sent to Prisma for debugging
+      console.log('Creating plan with data:', prismaData);
+      
       return await this.prisma.plan.create({
         data: prismaData,
       });
     } catch (error) {
+      console.error('Error creating plan:', error);
       throw new BadRequestException('Erro ao criar plano: ' + error.message);
     }
   }

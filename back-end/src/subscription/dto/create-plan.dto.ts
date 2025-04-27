@@ -2,7 +2,7 @@ export class CreatePlanDto {
   name: string;
   description: string;
   price: number;
-  duration: number;  // Changed from durationDays to match Prisma schema
+  duration: number;  // Field that will be mapped to durationDays
   features: string[];
   isActive?: boolean = true;
 }

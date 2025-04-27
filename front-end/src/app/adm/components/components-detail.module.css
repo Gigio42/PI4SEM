@@ -15,6 +15,7 @@
   display: flex;
   flex-direction: column;
   animation: slideIn 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 @keyframes slideIn {
@@ -22,49 +23,59 @@
   to { transform: translateX(0); }
 }
 
+/* Adjust detail header to better position title and favorite button */
 .detailHeader {
-  padding: var(--spacing-lg);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  background-color: var(--surface);
-  z-index: 5;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  position: relative;
 }
 
 .closeButton {
-  width: 36px;
-  height: 36px;
+  margin-right: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary, #6b7280);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
 }
 
 .closeButton:hover {
-  background-color: var(--surface-hover);
-  color: var(--text-primary);
-  transform: rotate(90deg);
+  color: var(--text-primary, #1f2937);
+  background-color: var(--surface-hover, #f9fafb);
 }
 
 .detailTitle {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-lg, 1.125rem);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-primary, #1f2937);
   margin: 0;
   flex: 1;
-  margin-left: var(--spacing-md);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Position for the right side actions */
+.detailHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Adjust favorite button position in detail header */
+.detailHeader .detailFavoriteButton {
+  position: relative;
+  top: 0;
+  right: 0;
+  margin-left: 8px;
 }
 
 .detailTabs {
@@ -72,6 +83,7 @@
   padding: 0 var(--spacing-lg);
   border-bottom: 1px solid var(--border);
   background-color: var(--surface);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .detailTab {
@@ -83,7 +95,7 @@
   border-bottom: 2px solid transparent;
   background: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, color 0.3s ease;
 }
 
 .detailTab:hover {
@@ -99,6 +111,7 @@
   flex: 1;
   padding: var(--spacing-lg);
   overflow-y: auto;
+  transition: background-color 0.3s ease;
 }
 
 .componentInfo {
@@ -109,6 +122,7 @@
   padding: var(--spacing-md);
   background-color: var(--surface-secondary);
   border-radius: var(--radius);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .infoItem {
@@ -121,12 +135,14 @@
   font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .infoValue {
   font-size: var(--font-size-sm);
   color: var(--text-primary);
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .colorPreview {
@@ -177,6 +193,7 @@
   color: var(--text-primary);
   white-space: pre-wrap;
   max-height: 300px;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .copyButton {
@@ -227,7 +244,7 @@
   background: var(--primary);
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, background-color 0.3s ease;
   width: 100%;
 }
 
@@ -268,5 +285,24 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
+  }
+}
+
+/* Add dark mode specific improvements */
+@media (prefers-color-scheme: dark) {
+  .detailSidebar {
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.25);
+  }
+  
+  .closeButton {
+    border-color: var(--border);
+  }
+  
+  .closeButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .codeContent {
+    border-color: var(--border);
   }
 }

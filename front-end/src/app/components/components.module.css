@@ -165,31 +165,49 @@
 
 /* Cabeçalho do card */
 .componentHeader {
-  padding: 1rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  background-color: var(--surface, white);
+  border-top-left-radius: var(--radius-md, 6px);
+  border-top-right-radius: var(--radius-md, 6px);
 }
 
 .componentName {
-  font-size: 1.1rem;
+  font-size: var(--font-size-md, 0.95rem);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-primary, #1f2937);
   margin: 0;
+  flex: 1;
+  min-width: 0; /* Important for text overflow to work */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 70%;
 }
 
 .componentCategory {
-  font-size: 0.75rem;
-  color: var(--primary);
+  font-size: var(--font-size-xs, 0.75rem);
   background-color: rgba(var(--primary-rgb), 0.1);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-full);
+  color: var(--primary);
+  padding: 3px 8px;
+  border-radius: var(--radius-full, 9999px);
   font-weight: 500;
+  white-space: nowrap;
+  margin-left: 10px;
+  margin-right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(var(--primary-rgb), 0.15);
+  transition: all 0.2s ease;
+}
+
+.componentCategory:hover {
+  background-color: var(--primary-100, #e0e7ff);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Preview do componente */
