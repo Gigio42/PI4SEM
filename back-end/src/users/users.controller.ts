@@ -4,6 +4,7 @@ import { Response } from 'express';
 import { createHash } from 'crypto'; // Node.js built-in module  // This import will work after installing the packages
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Public } from '../auth/public.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -25,8 +26,8 @@ export class UsersController {
     const hashedPlain = await this.hashPassword(plain);
     return hashedPlain === hashed;
   }
-
   @Post()
+  @Public()
   async createUser(@Body() body: { email: string; password: string }) {
     const { email, password } = body;
 
@@ -63,8 +64,8 @@ export class UsersController {
     // Create the user with hashed password
     return this.usersService.createUser(email, hashedPassword);
   }
-
   @Post('login')
+  @Public()
   async loginUser(@Body() body: { email: string; password: string }, @Res({ passthrough: true }) response: Response) {
     try {
       const { email, password } = body;
@@ -121,13 +122,27 @@ export class UsersController {
     } catch (error) {
       this.logger.error(`Login error: ${error.message}`);
       throw error;
-    }
-  }
-
+    }  }
   @Post('logout')
-  async logout(@Res({ passthrough: true }) response: Response) {
-    // Clear the auth cookie
-    response.clearCookie('auth_token');
+  @Public()  async logout(@Res({ passthrough: true }) response: Response) {
+    // Clear both auth_token and user_info cookies
+    const secure = this.configService.get('NODE_ENV') === 'production';
+    
+    response.clearCookie('auth_token', {
+      httpOnly: true,
+      secure: secure,
+      sameSite: secure ? 'none' : 'lax',
+      path: '/'
+    });
+    
+    response.clearCookie('user_info', {
+      httpOnly: false,
+      secure: secure,
+      sameSite: secure ? 'none' : 'lax',
+      path: '/'
+    });
+    
+    this.logger.log('User logged out successfully, all cookies cleared');
     return { message: 'Logout bem-sucedido' };
   }
 }

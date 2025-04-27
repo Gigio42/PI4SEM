@@ -40,12 +40,11 @@ export class AuthService {
         // Set JWT as a cookie with proper settings for cross-domain
       const secure = this.configService.get('NODE_ENV') === 'production';
       const cookieDomain = this.configService.get('COOKIE_DOMAIN') || undefined;
-      
-      // Define cookie options
+        // Define cookie options
       const cookieOptions = {
         httpOnly: true,
         secure: secure,
-        sameSite: 'lax', // 'lax' is better for cross-domain redirects than 'strict'
+        sameSite: secure ? 'none' : 'lax', // Use 'none' for cross-domain in production with HTTPS
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: '/',
         domain: cookieDomain, // Only set if configured

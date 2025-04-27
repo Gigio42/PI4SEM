@@ -7,13 +7,13 @@ import { FavoritosModule } from './favoritos/favoritos.module';
 import { AuthModule } from './auth/auth.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { ComponentsModule } from './components/components.module'; // Added import
+import { UsersModule } from './users/users.module'; // Added UsersModule import
 import { CorsMiddleware } from './middleware/cors.middleware';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ConfigModule } from '@nestjs/config';
 // Import other modules as needed
 
-@Module({
-  imports: [
+@Module({  imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -22,6 +22,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule, // This imports JwtModule and JwtAuthGuard
     SubscriptionModule,
     ComponentsModule, // Added ComponentsModule
+    UsersModule, // Added UsersModule to enable users endpoints
     // Other modules
   ],
   controllers: [AppController],

@@ -9,9 +9,11 @@ import styles from "./login.module.css";
 
 export default function LoginPage() {
   const { isDarkMode, toggleTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
-  const router = useRouter();  // Check authentication status on load
+  const router = useRouter();  
+  
+  // Check authentication status on load
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
@@ -34,8 +36,8 @@ export default function LoginPage() {
         const userInfo = JSON.parse(decodeURIComponent(userInfoCookie.split('=')[1]));
         console.log("Found user_info cookie, using for authentication:", userInfo);
         
-        // Use the login function from auth context to set the user
-        useAuth().login(userInfo);
+        // Use the login function from auth context (obtained via destructuring)
+        login(userInfo);
         
         // Clear this cookie as we've processed it
         document.cookie = "user_info=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -60,7 +62,7 @@ export default function LoginPage() {
         .then(data => {
           if (data.authenticated && data.user) {
             console.log("Session check found authenticated user");
-            useAuth().login(data.user);
+            login(data.user); // Use the login function from destructuring
             handleAuthenticated(data.user);
           }
         })

@@ -298,8 +298,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('Setting user in context:', userData);
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
-  };
-  // Enhanced logout function
+  };  // Enhanced logout function
   const logout = async () => {
     try {
       console.log('Logging out...');
@@ -324,6 +323,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       localStorage.removeItem('user');
       
+      // Also clear cookies on the client side for redundancy
+      document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "user_info=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      
       console.log('Client-side logout successful');
       router.push('/login');
     } catch (error) {
@@ -332,6 +335,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Even if there's an error, ensure local state is cleared
       setUser(null);
       localStorage.removeItem('user');
+      
+      // Also clear cookies on the client side
+      document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "user_info=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      
       router.push('/login');
     }
   };

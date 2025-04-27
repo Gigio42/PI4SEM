@@ -12,25 +12,27 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { Public } from './public.decorator';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
   constructor(private readonly authService: AuthService) {}
-
   @Get('google')
+  @Public()
   @UseGuards(AuthGuard('google'))
   async googleAuth() {
     // This route initiates Google OAuth flow
     // The actual logic is handled by GoogleStrategy
   }
-
   @Get('google/redirect')
+  @Public()
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res) {
     return this.authService.handleGoogleLogin(req, res);
   }  @Get('session-check')
+  @Public()
   async checkSession(@Req() req: Request, @Res() res: Response) {
     try {
       this.logger.log('Session check requested');

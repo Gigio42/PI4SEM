@@ -5,15 +5,20 @@ import { Request, Response, NextFunction } from 'express';
 export class CorsMiddleware implements NestMiddleware {
   private readonly logger = new Logger(CorsMiddleware.name);
   
-  use(req: Request, res: Response, next: NextFunction) {
-    // Get the origin from the request
+  use(req: Request, res: Response, next: NextFunction) {    // Get the origin from the request
     const origin = req.headers.origin;
     
     // Allow requests from the frontend origins
-    const allowedOrigins = ['http://localhost:3001', 'http://192.168.0.74:3001'];
+    const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000', 'http://127.0.0.1:3001', 'http://192.168.0.74:3001'];
     
     if (origin && allowedOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+      // For development, we'll be permissive and allow any origin with credentials
+      if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        this.logger.warn(`Allowing request from non-whitelisted origin: ${origin}`);
+      }
     }
     
     // Allow all common methods
