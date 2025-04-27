@@ -30,8 +30,7 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res) {
     return this.authService.handleGoogleLogin(req, res);
-  }
-  @Get('session-check')
+  }  @Get('session-check')
   async checkSession(@Req() req: Request, @Res() res: Response) {
     try {
       this.logger.log('Session check requested');
@@ -46,21 +45,21 @@ export class AuthController {
         });
       }
       
-      // Try to validate the JWT token manually
+      // Try to validate the JWT token
       try {
         // Verify and extract user data from token
-        const user = req.user;
+        const user = await this.authService.validateToken(token);
         
         if (user) {
-          this.logger.log(`Session check: User authenticated - ${user['email']}`);
+          this.logger.log(`Session check: User authenticated - ${user.email}`);
           return res.status(200).json({
             authenticated: true,
             user: {
-              id: user['id'],
-              email: user['email'],
-              name: user['name'],
-              role: user['role'],
-              picture: user['picture']
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+              picture: user.picture
             }
           });
         }

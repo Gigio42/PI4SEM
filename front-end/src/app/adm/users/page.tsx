@@ -178,8 +178,16 @@ export default function ManageUsers() {
       
       // Default comparison
       if (sortDirection === 'asc') {
+        // Handle undefined cases
+        if (valueA === undefined && valueB === undefined) return 0;
+        if (valueA === undefined) return -1;
+        if (valueB === undefined) return 1;
         return valueA > valueB ? 1 : -1;
       } else {
+        // Handle undefined cases
+        if (valueA === undefined && valueB === undefined) return 0;
+        if (valueA === undefined) return 1;
+        if (valueB === undefined) return -1;
         return valueA < valueB ? 1 : -1;
       }
     });

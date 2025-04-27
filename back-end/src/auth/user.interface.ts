@@ -5,5 +5,4 @@ export interface User {
   role: string;
   picture?: string;
   googleId?: string;
-  sub?: number; // For JWT payload compatibility
 }

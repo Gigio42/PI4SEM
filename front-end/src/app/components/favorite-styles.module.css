@@ -7,6 +7,13 @@
   border-radius: 50%;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease-in-out;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
 }
 
 .favoriteIcon:hover {
@@ -22,4 +29,136 @@
 /* Melhoria para o cabeçalho dos cards */
 .componentHeader {
   position: relative;
+}
+
+/* Tamanhos para o botão */
+.favoriteSmall {
+  width: 28px;
+  height: 28px;
+}
+
+.favoriteSmall svg {
+  width: 16px;
+  height: 16px;
+}
+
+.favoriteLarge {
+  width: 40px;
+  height: 40px;
+}
+
+.favoriteLarge svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Botão standalone para uso em listas ou outros contextos */
+.standaloneFavoriteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.standaloneFavoriteButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.standaloneFavoriteButton.favoriteActive {
+  background-color: rgba(var(--primary-rgb, 99, 102, 241), 0.1);
+}
+
+/* Loading animation */
+.favoriteLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Tooltip e animação para favoritos */
+.favoriteTooltip {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--surface, white);
+  color: var(--text-primary, #1f2937);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--font-size-xs, 12px);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+  border: 1px solid var(--border, #e2e8f0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.detailFavoriteButton:hover .favoriteTooltip {
+  opacity: 1;
+  transform: translate(-50%, -2px);
+}
+
+/* Animation for favorite action */
+@keyframes heartPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.favoriteSuccess {
+  animation: heartPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Detail favorite button (usado na página de detalhes) */
+.detailFavoriteButton {
+  position: absolute;
+  top: 12px;
+  right: 60px;
+  z-index: 15;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(var(--primary-rgb, 99, 102, 241), 0.1);
+  cursor: pointer;
+}
+
+.detailFavoriteButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background-color: white;
+}
+
+.detailFavoriteButton:active {
+  transform: scale(0.95);
+}
+
+.favoriteActive {
+  background-color: rgba(var(--primary-rgb, 99, 102, 241), 0.1);
+  border-color: rgba(var(--primary-rgb, 99, 102, 241), 0.3);
+}
+
+.favoriteActive:hover {
+  background-color: rgba(var(--primary-rgb, 99, 102, 241), 0.15);
 }

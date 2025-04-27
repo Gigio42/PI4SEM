@@ -9,7 +9,9 @@ interface FavoritoResponse {
 }
 
 export class FavoritosService {
-  private static baseUrl = 'http://localhost:3000/favoritos';
+  private static baseUrl = process.env.NEXT_PUBLIC_API_URL 
+    ? `${process.env.NEXT_PUBLIC_API_URL}/favoritos` 
+    : 'http://localhost:3000/favoritos';
 
   /**
    * Marca um componente como favorito para um usuário
@@ -19,6 +21,7 @@ export class FavoritosService {
    */
   static async addFavorito(userId: number, componentId: number): Promise<FavoritoResponse> {
     try {
+      console.log('Enviando request para:', this.baseUrl);
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
@@ -28,6 +31,8 @@ export class FavoritosService {
       });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('Erro detalhado:', errorData);
         throw new Error(`Erro ao adicionar favorito: ${response.status}`);
       }
 
@@ -86,9 +91,16 @@ export class FavoritosService {
    */
   static async checkIsFavorito(userId: number, componentId: number): Promise<{ isFavorito: boolean; favoritoData: FavoritoResponse | null }> {
     try {
+      if (!userId || !componentId) {
+        return { isFavorito: false, favoritoData: null };
+      }
+      
       const response = await fetch(`${this.baseUrl}/check/${userId}/${componentId}`);
 
       if (!response.ok) {
+        if (response.status === 404) {
+          return { isFavorito: false, favoritoData: null };
+        }
         throw new Error(`Erro ao verificar favorito: ${response.status}`);
       }
 
@@ -99,7 +111,7 @@ export class FavoritosService {
       };
     } catch (error) {
       console.error('Erro ao verificar favorito:', error);
-      throw error;
+      return { isFavorito: false, favoritoData: null };
     }
   }
 

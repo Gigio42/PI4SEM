@@ -1,33 +1,40 @@
-import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
-import { CorsMiddleware } from './middleware/cors.middleware';
-import { ComponentsModule } from './components/components.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { SubscriptionModule } from './subscription/subscription.module';
+import { Module, MiddlewareConsumer, RequestMethod, NestModule } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ChromeDevToolsController } from './chrome-devtools/chrome-devtools.controller';
+import { PrismaModule } from './prisma/prisma.module';
+import { FavoritosModule } from './favoritos/favoritos.module';
+import { AuthModule } from './auth/auth.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { ComponentsModule } from './components/components.module'; // Added import
+import { CorsMiddleware } from './middleware/cors.middleware';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { ConfigModule } from '@nestjs/config';
+// Import other modules as needed
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    ComponentsModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     PrismaModule,
-    AuthModule,
-    UsersModule,
+    FavoritosModule,
+    AuthModule, // This imports JwtModule and JwtAuthGuard
     SubscriptionModule,
+    ComponentsModule, // Added ComponentsModule
+    // Other modules
   ],
-  controllers: [
-    ChromeDevToolsController,
-  ],
+  controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply CORS middleware to all routes
     consumer
       .apply(CorsMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.ALL });

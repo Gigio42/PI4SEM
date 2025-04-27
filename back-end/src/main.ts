@@ -12,16 +12,17 @@ async function bootstrap() {
   
   // Configure CORS with comprehensive settings
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: ['http://localhost:3001', 'http://192.168.0.74:3001'], // Allow local network access too
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: '*',  // Allow all headers in preflight requests
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 
+                    'Cache-Control', 'cache-control', 'Pragma', 'pragma', 'Expires', 'expires'],
     exposedHeaders: ['Set-Cookie'],
     preflightContinue: false,
     optionsSuccessStatus: 204
   });
   
   await app.listen(3000);
-  logger.log(`Application listening on port 3000 with CORS enabled for http://localhost:3001`);
+  logger.log(`Application listening on port 3000 with CORS enabled for frontend origins`);
 }
 bootstrap();

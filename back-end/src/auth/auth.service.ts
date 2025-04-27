@@ -83,4 +83,27 @@ export class AuthService {
       return res.redirect(`${this.frontendUrl}/login?error=server_error`);
     }
   }
+
+  async validateToken(token: string) {
+    try {
+      this.logger.log('Validating JWT token');
+      const payload = this.jwtService.verify(token);
+      
+      if (!payload || !payload.sub || !payload.email) {
+        this.logger.warn('Invalid token payload');
+        return null;
+      }
+      
+      return {
+        id: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        role: payload.role || 'user',
+        picture: payload.picture
+      };
+    } catch (error) {
+      this.logger.error(`Token validation failed: ${error.message}`);
+      return null;
+    }
+  }
 }

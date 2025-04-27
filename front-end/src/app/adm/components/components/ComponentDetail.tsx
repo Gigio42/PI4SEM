@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Component } from '@/types/component';
-import { FavoritosService } from '@/services/FavoritosService';
 import styles from '../components-detail.module.css';
 import aiStyles from '../components-ai.module.css';
 import { useNotification } from '@/contexts/NotificationContext';
+import FavoriteButton from '@/app/components/FavoriteButton';
 
 interface ComponentDetailProps {
   component: Component | null;
@@ -16,9 +16,6 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [mounted, setMounted] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [favoriteId, setFavoriteId] = useState<string | null>(null);
-  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   const { showToast } = useNotification();
   // ID do usuário atual (normalmente viria de um contexto de autenticação)
   const userId = 1; // Substitua pelo ID real do usuário logado
@@ -27,53 +24,6 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
     setMounted(true);
     return () => setMounted(false);
   }, []);
-
-  useEffect(() => {
-    if (component) {
-      checkIsFavorite();
-    }
-  }, [component]);
-
-  const checkIsFavorite = async () => {
-    if (!component) return;
-    try {
-      setIsLoadingFavorite(true);
-      const { isFavorito, favoritoData } = await FavoritosService.checkIsFavorito(userId, component.id);
-      setIsFavorite(isFavorito);
-      setFavoriteId(favoritoData?.id || null);
-    } catch (error) {
-      console.error('Erro ao verificar status de favorito:', error);
-    } finally {
-      setIsLoadingFavorite(false);
-    }
-  };
-
-  const toggleFavorite = async () => {
-    if (!component) return;
-    
-    try {
-      setIsLoadingFavorite(true);
-      
-      if (isFavorite && favoriteId) {
-        // Remover dos favoritos
-        await FavoritosService.removeFavorito(favoriteId);
-        setIsFavorite(false);
-        setFavoriteId(null);
-        showToast('Componente removido dos favoritos', 'success');
-      } else {
-        // Adicionar aos favoritos
-        const response = await FavoritosService.addFavorito(userId, component.id);
-        setIsFavorite(true);
-        setFavoriteId(response.id);
-        showToast('Componente adicionado aos favoritos', 'success');
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar favorito:', error);
-      showToast('Erro ao atualizar favoritos', 'error');
-    } finally {
-      setIsLoadingFavorite(false);
-    }
-  };
 
   if (!component) {
     return null;
@@ -121,7 +71,14 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
           </svg>
         </button>
         <h2 className={styles.detailTitle}>{component.name}</h2>
-       
+        
+        {/* Adicionando o botão de favorito */}
+        <FavoriteButton 
+          userId={userId} 
+          componentId={component.id} 
+          position="detail" 
+          size="medium"
+        />
       </div>
 
       <div className={styles.detailTabs}>

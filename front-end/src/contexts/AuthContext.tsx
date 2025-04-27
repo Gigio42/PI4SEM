@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiBaseUrl } from '../services/config';
 
 // Define the User type
 type User = {
@@ -23,7 +24,7 @@ type AuthContextType = {
 };
 
 // Create the context with default values
-const AuthContext = createContext<AuthContextType>({
+const AuthContext = createContext<AuthContextType>( {
   user: null,
   isLoading: true,
   isAuthenticated: false,
@@ -40,6 +41,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+    // Utility function for safer fetch with timeout and retry
+  const safeFetch = async (url: string, options: RequestInit = {}, retries = 2) => {
+    // Set default timeout if not provided
+    if (!options.signal) {
+      options.signal = AbortSignal.timeout(5000);
+    }
+    
+    // Ensure credentials are included for cookie-based auth
+    if (!options.credentials) {
+      options.credentials = 'include';
+    }
+    
+    // Remove problematic headers
+    if (options.headers) {
+      const headers = options.headers as Record<string, string>;
+      if (headers['Cache-Control']) {
+        delete headers['Cache-Control'];
+      }
+    }
+    
+    try {
+      return await fetch(url, options);
+    } catch (error) {
+      if (retries > 0) {
+        console.log(`Retrying fetch to ${url}, ${retries} attempts left`);
+        // Wait with exponential backoff before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000 * (3 - retries)));
+        return safeFetch(url, options, retries - 1);
+      }
+      throw error;
+    }
+  };
+  
   // Fix the checkAuthentication function definition
   const checkAuthentication = useCallback(async (): Promise<boolean> => {
     try {
@@ -109,16 +143,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const userData = JSON.parse(storedUser);
           console.log('Found user in localStorage, attempting to validate with backend...');
-          
-          // Try to validate with backend, but don't fail hard if backend is down
+            // Use try-catch with safeFetch for backend validation
           try {
-            const response = await fetch('http://localhost:3000/auth/session-check', {
-              credentials: 'include',
-              headers: {
-                'Cache-Control': 'no-cache',
-              },
-              // Set a reasonable timeout to avoid hanging
-              signal: AbortSignal.timeout(5000),
+            const response = await safeFetch(`${apiBaseUrl}/auth/session-check`, {
+              credentials: 'include'
             });
             
             if (response.ok) {
@@ -150,7 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           } catch (error) {
             // Network error or timeout - use localStorage data as fallback
-            console.warn('Backend unavailable, using localStorage data as fallback', error);
+            console.warn('Backend unavailable during validation, using localStorage data as fallback', error);
             setUser(userData);
             return true;
           }
@@ -159,17 +187,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           localStorage.removeItem('user');
         }
       }
-      
-      // Last resort: try backend session check
+        // Last resort: try backend session check
       try {
-        // If no user_info cookie, try the standard session check
-        const response = await fetch('http://localhost:3000/auth/session-check', {
-          credentials: 'include', // Important for cookies
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-          // Set a reasonable timeout
-          signal: AbortSignal.timeout(5000),
+        console.log('Attempting session check with backend at:', `${apiBaseUrl}/auth/session-check`);
+        
+        // Use safeFetch for more reliable network requests
+        const response = await safeFetch(`${apiBaseUrl}/auth/session-check`, {
+          credentials: 'include'
         });
         
         if (!response.ok) {
@@ -198,13 +222,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (error) {
         console.error('Error during backend session check:', error);
-        // Continue to return false
+        
+        // Enhanced error handling for network failures
+        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+          console.warn('Network error when contacting backend. Backend may be down or unreachable.');
+          
+          // Fallback to localStorage if available
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            try {
+              const userData = JSON.parse(storedUser);
+              console.log('Using cached user data due to backend unavailability');
+              setUser(userData);
+              return true;
+            } catch (e) {
+              console.error('Failed to parse cached user data', e);
+            }
+          }
+        }
       }
       
       console.log('User is not authenticated');
       return false;
     } catch (error) {
       console.error('Error checking authentication:', error);
+      
+      // Enhanced error handling
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.warn('Network error detected in authentication check. Falling back to local data if available.');
+      }
+      
+      // Fallback to localStorage if there was an error in the main authentication flow
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          return true;
+        } catch (e) {
+          console.error('Failed to parse user data', e);
+        }
+      }
+      
       return false;
     } finally {
       setIsLoading(false);
@@ -240,29 +299,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
   };
-
-  // Logout function
+  // Enhanced logout function
   const logout = async () => {
     try {
       console.log('Logging out...');
-      // Call the backend to clear the cookie
-      await fetch('http://localhost:3000/users/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
       
-      // Clear local state
+      // Call the backend to clear the cookie, but handle network failures gracefully
+      try {
+        await safeFetch(`${apiBaseUrl}/users/logout`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        console.log('Backend logout successful');
+      } catch (error) {
+        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+          console.warn('Backend appears to be down or unreachable during logout');
+        } else {
+          console.warn('Failed to contact backend for logout:', error);
+        }
+        console.log('Continuing with client-side logout');
+      }
+      
+      // Always clear local state regardless of backend response
       setUser(null);
-      
-      // Clear localStorage
       localStorage.removeItem('user');
       
-      console.log('Logout successful');
-      
-      // Redirect to login page
+      console.log('Client-side logout successful');
       router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
+      
+      // Even if there's an error, ensure local state is cleared
+      setUser(null);
+      localStorage.removeItem('user');
+      router.push('/login');
     }
   };
 
