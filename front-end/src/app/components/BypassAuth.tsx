@@ -16,12 +16,18 @@ export default function BypassAuth() {
         // First check for already authenticated user in context
         if (user) {
           console.log('User already exists in context:', user);
-          console.log(`User role from context: "${user.role}"`);
           
           // Always verify with backend to ensure role is correct
           try {
             const response = await fetch('http://localhost:3000/auth/session-check', {
+              method: 'GET',
               credentials: 'include',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+              },
+              // Prevent browser from adding cache-control headers
+              cache: 'no-store',
             });
             
             const data = await response.json();
