@@ -16,7 +16,7 @@ const SiteTitle = ({ className }: { className?: string }) => {
 
 export default function Header() {
   const { isDarkMode, toggleTheme } = useTheme();
-  const { user: authContextUser } = useAuth();
+  const { user: authContextUser, logout } = useAuth(); // Add logout from useAuth
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -182,6 +182,13 @@ export default function Header() {
     return <header className={styles.header} aria-hidden="true"></header>;
   }
 
+  // Add a handleLogout function
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setShowUserMenu(false); // Close the user menu
+    await logout();
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.headerContent}>
@@ -323,14 +330,14 @@ export default function Header() {
                       </li>
                     )}
                     <li role="menuitem">
-                      <Link href="/settings">
-                        Configurações
-                      </Link>
-                    </li>
-                    <li role="menuitem">
-                      <Link href="/login">
+                      {/* Change this to a button with onClick handler */}
+                      <button 
+                        onClick={handleLogout}
+                        className={styles.logoutButton} 
+                        aria-label="Sair da conta"
+                      >
                         <span className={styles.logoutLink}>Sair</span>
-                      </Link>
+                      </button>
                     </li>
                   </ul>
                 </div>

@@ -4,7 +4,6 @@ import { Component } from '@/types/component';
 import { FavoritosService } from '@/services/FavoritosService';
 import styles from '../components-detail.module.css';
 import aiStyles from '../components-ai.module.css';
-import FavoriteButton from '@/components/FavoriteButton/FavoriteButton';
 import { useNotification } from '@/contexts/NotificationContext';
 
 interface ComponentDetailProps {
@@ -122,21 +121,7 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
           </svg>
         </button>
         <h2 className={styles.detailTitle}>{component.name}</h2>
-        <FavoriteButton 
-          componentId={component.id}
-          userId={userId}
-          initialState={isFavorite}
-          size="medium"
-          onToggle={(isFavorited) => {
-            if (isFavorited) {
-              setIsFavorite(true);
-              showToast('Componente adicionado aos favoritos', 'success');
-            } else {
-              setIsFavorite(false);
-              showToast('Componente removido dos favoritos', 'success');
-            }
-          }}
-        />
+       
       </div>
 
       <div className={styles.detailTabs}>
@@ -172,12 +157,7 @@ export default function ComponentDetail({ component, onClose }: ComponentDetailP
                 <span className={styles.infoLabel}>Cor:</span>
                 <span className={styles.colorPreview} style={{ backgroundColor: component.color }}></span>
               </div>
-              {component.downloads !== undefined && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Downloads:</span>
-                  <span className={styles.infoValue}>{component.downloads}</span>
-                </div>
-              )}
+              
             </div>
 
             <div className={aiStyles.previewControls}>

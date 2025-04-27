@@ -1,45 +1,133 @@
-import { Body, Controller, Post, Get, Param, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, NotFoundException, BadRequestException, Res, UseGuards, Request, UnauthorizedException, Logger } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { Response } from 'express';
+import { createHash } from 'crypto'; // Node.js built-in module  // This import will work after installing the packages
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  private readonly logger = new Logger(UsersController.name);
+  
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService
+  ) {}
+
+  // Temporary password hash function until bcrypt is installed
+  private async hashPassword(password: string): Promise<string> {
+    // Simple SHA-256 hash (NOTE: This is not as secure as bcrypt for production)
+    return createHash('sha256').update(password).digest('hex');
+  }
+
+  private async comparePasswords(plain: string, hashed: string): Promise<boolean> {
+    const hashedPlain = await this.hashPassword(plain);
+    return hashedPlain === hashed;
+  }
 
   @Post()
   async createUser(@Body() body: { email: string; password: string }) {
     const { email, password } = body;
 
-    // Valida os dados
+    // Validate the data
     if (!email || !password) {
       throw new BadRequestException('Email e senha são obrigatórios.');
     }
 
-    // Valida o formato do email
+    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       throw new BadRequestException('Formato de email inválido.');
     }
 
-    // Valida o tamanho do email
+    // Validate email length
     if (email.length > 255) {
       throw new BadRequestException('O email é muito longo.');
     }
 
-    // Valida o tamanho da senha
+    // Validate password length
     if (password.length < 6 || password.length > 128) {
       throw new BadRequestException('A senha deve ter entre 6 e 128 caracteres.');
     }
 
-    return this.usersService.createUser(email, password);
+    // Check if user already exists
+    const existingUser = await this.usersService.findUserByEmail(email);
+    if (existingUser) {
+      throw new BadRequestException('Este email já está em uso.');
+    }
+
+    // Hash the password before storing
+    const hashedPassword = await this.hashPassword(password);
+
+    // Create the user with hashed password
+    return this.usersService.createUser(email, hashedPassword);
   }
 
   @Post('login')
-  async loginUser(@Body() body: { email: string; password: string }) {
-    const { email, password } = body;
-    const user = await this.usersService.findUserByEmailAndPassword(email, password);
-    if (!user) {
-      throw new NotFoundException('Usuário ou senha inválidos');
+  async loginUser(@Body() body: { email: string; password: string }, @Res({ passthrough: true }) response: Response) {
+    try {
+      const { email, password } = body;
+      
+      this.logger.log(`Login attempt for user: ${email}`);
+
+      // Find user by email
+      const user = await this.usersService.findUserByEmail(email);
+      if (!user) {
+        this.logger.warn(`Login failed: User with email ${email} not found`);
+        throw new UnauthorizedException('Usuário ou senha inválidos');
+      }
+
+      // Verify password using temporary function instead of bcrypt
+      if (user.password) {
+        const isPasswordValid = await this.comparePasswords(password, user.password);
+        if (!isPasswordValid) {
+          this.logger.warn(`Login failed: Invalid password for user ${email}`);
+          throw new UnauthorizedException('Usuário ou senha inválidos');
+        }
+      } else {
+        // User has no password (Google user), can't login with form
+        this.logger.warn(`Login failed: User ${email} has no password (Google account)`);
+        throw new UnauthorizedException('Esta conta foi criada com Google. Por favor, faça login com Google.');
+      }
+
+      // Generate JWT token
+      const payload = { 
+        sub: user.id, 
+        email: user.email,
+        name: user.name || email.split('@')[0],
+        role: user.role || 'user'
+      };
+      
+      const token = this.jwtService.sign(payload);
+      
+      // Set session cookie
+      const secure = this.configService.get('NODE_ENV') === 'production';
+      response.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: secure,
+        sameSite: secure ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      this.logger.log(`User ${email} logged in successfully`);
+      
+      // Return user data (excluding password)
+      const { password: _, ...userWithoutPassword } = user;
+      return {
+        message: 'Login bem-sucedido',
+        user: userWithoutPassword
+      };
+    } catch (error) {
+      this.logger.error(`Login error: ${error.message}`);
+      throw error;
     }
-    return { message: 'Login bem-sucedido' };
+  }
+
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) response: Response) {
+    // Clear the auth cookie
+    response.clearCookie('auth_token');
+    return { message: 'Logout bem-sucedido' };
   }
 }

@@ -8,8 +8,6 @@ export interface Component {
   htmlContent?: string;
   category?: string;
   color?: string;
-  downloads?: number;
-  status?: 'active' | 'inactive';
   createdAt?: Date;
   updatedAt?: Date;
 }

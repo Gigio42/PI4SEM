@@ -1,36 +1,28 @@
 "use client";
 
-import { useSettings } from '../context/SettingsContext';
 import { useEffect, useState } from 'react';
 
 export default function SiteMetadata() {
-  const { getSettingValue, loading } = useSettings();
   const [mounted, setMounted] = useState(false);
   
-  // Só executa no cliente para evitar erros de hidratação
+  // Only execute on client to avoid hydration errors
   useEffect(() => {
     setMounted(true);
+    
+    // Set default site metadata
+    if (typeof document !== 'undefined') {
+      document.title = 'UXperiment Labs';
+      
+      // Update meta description if it exists
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) {
+        metaDescription.setAttribute('content', 'Plataforma de componentes UX/UI para desenvolvedores');
+      }
+    }
   }, []);
   
-  // Não renderiza nada durante SSR
+  // Don't render anything during SSR
   if (!mounted) return null;
-  
-  // Aguarda o carregamento das configurações
-  if (loading) return null;
-  
-  // Obtém as configurações do site
-  const siteName = getSettingValue<string>('general', 'siteName', 'UXperiment Labs');
-  const siteDescription = getSettingValue<string>('general', 'siteDescription', 'Plataforma de componentes UX/UI para desenvolvedores');
-  
-  // Atualiza o título e a descrição da página dinamicamente
-  if (typeof document !== 'undefined') {
-    document.title = siteName;
-    // Atualiza a meta description se existir
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', siteDescription);
-    }
-  }
   
   return null;
 }

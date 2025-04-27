@@ -4,26 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./Sidebar.module.css";
 import { useState, useEffect, ReactNode } from "react";
-import { useSettings } from "../../../contexts/SettingsContext";
 
-// Definindo o tipo para os itens de navegação
+// Defining the navigation item type
 export interface NavItem {
   name: string;
   icon: ReactNode;
   href: string;
-  highlight?: boolean; // Para destacar itens importantes
-  badge?: string | number; // Para mostrar notificações ou contadores
-  alwaysActive?: boolean; // Para manter item sempre ativo
+  highlight?: boolean; // For highlighting important items
+  badge?: string | number; // For showing notifications or counters
+  alwaysActive?: boolean; // To keep an item always active
 }
 
-// Componente modular do Sidebar que aceita diferentes itens de navegação baseado no tipo de usuário
+// Modular Sidebar component that accepts different navigation items based on user type
 interface SidebarProps {
   items?: NavItem[];
   isAdmin?: boolean;
   onToggle?: (collapsed: boolean) => void;
 }
 
-// Itens de navegação padrão para usuários comuns
+// Default navigation items for regular users
 const userNavItems: NavItem[] = [
   { 
     name: "Componentes",
@@ -84,7 +83,7 @@ const userNavItems: NavItem[] = [
   }
 ];
 
-// Itens de navegação para administradores
+// Navigation items for admins
 const adminNavItems: NavItem[] = [
   { 
     name: "Dashboard", 
@@ -159,39 +158,34 @@ const adminNavItems: NavItem[] = [
 ];
 
 export default function Sidebar({ items, isAdmin = false }: SidebarProps) {
-  const { settings } = useSettings();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const pathname = usePathname();
   
-  // Apply settings once they're loaded
-  useEffect(() => {
-    if (settings && settings.appearance?.sidebarCollapsed !== undefined) {
-      setCollapsed(settings.appearance.sidebarCollapsed);
-    }
-  }, [settings]);
-
-  // Determinar quais itens de navegação usar
-  const navItemsToUse = items || (isAdmin ? adminNavItems : userNavItems);  // Verificar se o item está ativo com base na rota atual
+  // Determine which navigation items to use
+  const navItemsToUse = items || (isAdmin ? adminNavItems : userNavItems);
+  
+  // Check if an item is active based on the current route
   const isActive = (href: string, alwaysActive?: boolean, index?: number) => {
     if (alwaysActive) return true;
+    if (pathname === null) return false;
     if (href === "/home" && pathname === "/") return true;
     
-    // Se estivermos na página inicial e este for o primeiro item do menu (Componentes)
+    // If we're on the home page and this is the first item in the menu (Components)
     if ((pathname === "/" || pathname === "/home") && href === "/components" && !isAdmin) return true;
     
-    // Lógica especial para o dashboard admin
+    // Special logic for admin dashboard
     if (href === "/adm") {
-      // Se estamos exatamente na página /adm, marcar como ativo
+      // If we're exactly on the /adm page, mark as active
       return pathname === "/adm";
     }
     
-    // Para outros itens, verificar exatidão ou se é um subpath
+    // For other items, check for exact match or if it's a subpath
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  // Adiciona evento para ouvir toggle da sidebar vindo do header
+  // Add event to listen for sidebar toggle from header
   useEffect(() => {
     const handleToggleSidebar = (event: CustomEvent<boolean>) => {
       if (window.innerWidth <= 768) {
@@ -199,14 +193,14 @@ export default function Sidebar({ items, isAdmin = false }: SidebarProps) {
       }
     };
 
-    // Tipagem customizada para o evento
+    // Custom typing for the event
     const customEventListener = (e: Event) => {
       handleToggleSidebar(e as CustomEvent<boolean>);
     };
 
     document.addEventListener('toggleSidebar', customEventListener);
     
-    // Detectar mudanças no tamanho da tela
+    // Detect screen size changes
     const handleResize = () => {
       if (window.innerWidth > 768) {
         setMobileOpen(false);
@@ -274,7 +268,7 @@ export default function Sidebar({ items, isAdmin = false }: SidebarProps) {
                       )}
                     </div>
                     
-                    {/* Tooltip para o modo colapsado */}
+                    {/* Tooltip for collapsed mode */}
                     {collapsed && hoveredItem === item.name && (
                       <div className={styles.tooltip}>
                         {item.name}

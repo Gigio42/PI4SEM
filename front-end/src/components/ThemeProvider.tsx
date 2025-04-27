@@ -1,18 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import SettingsService from '@/services/SettingsService';
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeLoaded, setThemeLoaded] = useState(false);
 
-  async function loadTheme() {
+  function loadTheme() {
     try {
-      // Carregar configurações de cores
-      const mainColor = await SettingsService.getSetting('general', 'mainColor', '#663399');
-      const accentColor = await SettingsService.getSetting('general', 'accentColor', '#ff6b6b');
+      // Default theme colors
+      const mainColor = '#663399';
+      const accentColor = '#ff6b6b';
       
-      // Aplicar cores às variáveis CSS
+      // Apply colors to CSS variables
       document.documentElement.style.setProperty('--primary', mainColor);
       document.documentElement.style.setProperty('--primary-rgb', hexToRgb(mainColor));
       document.documentElement.style.setProperty('--primary-light', adjustBrightness(mainColor, 20));
@@ -22,16 +21,12 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
       setThemeLoaded(true);
     } catch (error) {
       console.error('Erro ao carregar tema:', error);
-      setThemeLoaded(true); // Continuar mesmo com erro
+      setThemeLoaded(true); // Continue even with error
     }
   }
 
   useEffect(() => {
     loadTheme();
-    
-    // Opcional: criar um evento para recarregar o tema quando as configurações forem alteradas
-    window.addEventListener('settings-updated', loadTheme);
-    return () => window.removeEventListener('settings-updated', loadTheme);
   }, []);
 
   return (
@@ -41,12 +36,12 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   );
 }
 
-// Função helper para converter hex para rgb
+// Helper function to convert hex to rgb
 function hexToRgb(hex: string): string {
-  // Remover # se presente
+  // Remove # if present
   hex = hex.replace(/^#/, '');
   
-  // Parse os componentes de cor
+  // Parse color components
   const r = parseInt(hex.substring(0, 2), 16);
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
@@ -54,7 +49,7 @@ function hexToRgb(hex: string): string {
   return `${r}, ${g}, ${b}`;
 }
 
-// Função helper para ajustar o brilho de uma cor (percentual positivo ou negativo)
+// Helper function to adjust brightness of a color (positive or negative percentage)
 function adjustBrightness(hex: string, percent: number): string {
   hex = hex.replace(/^#/, '');
   

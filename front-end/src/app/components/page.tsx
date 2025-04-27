@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import styles from "./components.module.css";
-import favStyles from "./favorite-styles.module.css";
-import Header from "../components/Header/Header";
-import Sidebar from "../components/Sidebar/Sidebar";
+import { useState, useEffect, useRef } from "react";
 import { Component } from "@/types/component";
 import { ComponentsService } from "@/services/ComponentsService";
-import ComponentDetail from "../adm/components/components/ComponentDetail";
-import FavoriteButton from "@/components/FavoriteButton/FavoriteButton";
+import Header from "@/app/components/Header/Header";
+import Sidebar from "@/app/components/Sidebar/Sidebar";
+import ComponentDetail from "@/app/adm/components/components/ComponentDetail";
 import { useNotification } from "@/contexts/NotificationContext";
+import styles from "./components.module.css";
 
 export default function ComponentsPage() {  
   const [loaded, setLoaded] = useState(false);
@@ -106,7 +104,7 @@ export default function ComponentsPage() {
                   <option value="">Todas as categorias</option>
                   {categories.map(category => (
                     <option key={category} value={category}>{category}</option>
-                  ))}
+                  ))} 
                 </select>
               </div>
             )}
@@ -144,22 +142,7 @@ export default function ComponentsPage() {
                       <h3 className={styles.componentName}>{component.name}</h3>
                       {component.category && (
                         <span className={styles.componentCategory}>{component.category}</span>
-                      )}                        <FavoriteButton 
-                          componentId={component.id}
-                          userId={userId}
-                          size="small"
-                          onToggle={(isFavorite) => {
-                            showToast(
-                              isFavorite 
-                                ? 'Componente adicionado aos favoritos' 
-                                : 'Componente removido dos favoritos',
-                              isFavorite ? 'success' : 'info'
-                            );
-                            // Evita o evento onClick do card
-                            setTimeout(() => {}, 0);
-                          }}
-                          className={styles.favoriteIcon}
-                        />
+                      )}
                     </div>
                     
                     <div 
@@ -218,7 +201,7 @@ export default function ComponentsPage() {
                       </button>
                     </div>
                   </div>
-                ))}
+                ))} 
               </div>
               
               {totalPages > 1 && (

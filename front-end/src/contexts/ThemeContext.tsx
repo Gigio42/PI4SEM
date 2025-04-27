@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useSettings } from './SettingsContext';
 
 type ThemeType = 'light' | 'dark' | 'system';
 
@@ -27,16 +26,16 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const { settings } = useSettings();
   const [theme, setTheme] = useState<ThemeType>('system');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Initialize theme from settings when they load
+  // Initialize theme from localStorage if available
   useEffect(() => {
-    if (settings?.appearance?.theme) {
-      setTheme(settings.appearance.theme as ThemeType);
+    const savedTheme = localStorage.getItem('theme') as ThemeType | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
     }
-  }, [settings]);
+  }, []);
 
   // Apply theme changes and detect system preference
   useEffect(() => {
@@ -50,13 +49,20 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
       } else if (theme === 'system') {
         // Check system preference
         shouldUseDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      }      // Apply dark mode if needed
+      }
+      
+      // Apply dark mode if needed
       if (shouldUseDark) {
         root.setAttribute('data-theme', 'dark');
+        document.body.classList.add('dark-theme');
       } else {
         root.removeAttribute('data-theme');
+        document.body.classList.remove('dark-theme');
       }
 
+      // Store theme preference
+      localStorage.setItem('theme', shouldUseDark ? 'dark' : 'light');
+      
       setIsDarkMode(shouldUseDark);
     };
 
@@ -79,7 +85,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     }
 
     return () => {
-      // Clean up listener with compatibility
+      // Clean up listener
       if (mediaQuery.removeEventListener) {
         mediaQuery.removeEventListener('change', handleChange);
       } else {
@@ -89,9 +95,14 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     };
   }, [theme]);
 
-  // Toggle between light and dark
+  // Function to toggle between light and dark mode
   const toggleTheme = () => {
-    setTheme(isDarkMode ? 'light' : 'dark');
+    setTheme(prevTheme => {
+      if (prevTheme === 'light') return 'dark';
+      if (prevTheme === 'dark') return 'light';
+      // If system, set according to current dark mode state but inverted
+      return isDarkMode ? 'light' : 'dark';
+    });
   };
 
   return (

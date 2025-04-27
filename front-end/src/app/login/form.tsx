@@ -15,6 +15,14 @@ export default function LoginForm() {
   const router = useRouter();
   const { login } = useAuth(); // Changed from setUser to login
 
+  // Reset form state when component mounts (useful when returning after logout)
+  useEffect(() => {
+    setEmail("");
+    setPassword("");
+    setErrors({});
+    setFormActive(true);
+  }, []);
+
   // Efeito para animação inicial
   useEffect(() => {
     setFormActive(true);

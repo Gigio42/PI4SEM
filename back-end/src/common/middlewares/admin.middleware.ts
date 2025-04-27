@@ -1,28 +1,27 @@
-import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NestMiddleware, Logger, ForbiddenException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class AdminMiddleware implements NestMiddleware {
   private readonly logger = new Logger(AdminMiddleware.name);
 
   use(req: Request, res: Response, next: NextFunction) {
+    // Check if user is authenticated and has admin role
     if (!req.user) {
-      this.logger.warn('Admin access denied - No user found');
-      throw new UnauthorizedException('Authentication required');
+      this.logger.warn('Unauthorized access attempt to admin route');
+      throw new ForbiddenException('You must be logged in to access this resource');
     }
 
-    const userRole = req.user['role'];
-    const isAdmin = userRole === 'admin';
+    // Use optional chaining and fallback values to avoid property errors
+    const userRole = (req.user as any)?.role;
+    const userEmail = (req.user as any)?.email || 'unknown';
 
-    this.logger.log(`Admin check - User: ${req.user['email']}, Role: ${userRole}, Is Admin: ${isAdmin}`);
-
-    if (!isAdmin) {
-      this.logger.warn(`Admin access denied - User role ${userRole} is not admin`);
-      throw new UnauthorizedException('Admin access required');
+    if (userRole !== 'admin') {
+      this.logger.warn(`Access denied for user ${userEmail}: Not an admin`);
+      throw new ForbiddenException('You do not have permission to access this resource');
     }
 
-    // User is admin, proceed to the next middleware/route handler
+    this.logger.log(`Admin access granted for user ${userEmail}`);
     next();
   }
 }

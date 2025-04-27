@@ -2,7 +2,6 @@ import type { Metadata } from "next/types";
 import { Inter } from "next/font/google";
 import { ReactNode } from "react";
 import "./globals.css";
-import { SettingsProvider } from "../contexts/SettingsContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { NotificationProvider } from "../contexts/NotificationContext";
 import { AuthProvider } from "../contexts/AuthContext";
@@ -23,14 +22,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <AuthProvider>
           {/* BypassAuth will now handle proper authentication */}
           <BypassAuth />
-          <SettingsProvider>
+          
             <ThemeProvider>
               <NotificationProvider>
                 <SetAdminUser />
                 {children}
               </NotificationProvider>
             </ThemeProvider>
-          </SettingsProvider>
+        
         </AuthProvider>
       </body>
     </html>
