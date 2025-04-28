@@ -7,14 +7,21 @@ const getAuthHeader = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export class SubscriptionService {
-  static async getPlans(): Promise<Plan[]> {
+export class SubscriptionService {  static async getPlans(): Promise<Plan[]> {
     try {
       // Include auth headers in the request
       const response = await api.get('/subscriptions/plans?onlyActive=true', {
         headers: getAuthHeader()
       });
-      return response.data;
+      
+      // Garante que cada plano tenha a propriedade features como um array
+      const plans = response.data.map((plan: any) => ({
+        ...plan,
+        features: Array.isArray(plan.features) ? plan.features : 
+                 (typeof plan.features === 'string' ? plan.features.split(',').map((f: string) => f.trim()) : [])
+      }));
+      
+      return plans;
     } catch (error: unknown) {
       console.error('Error fetching plans:', error);
       
@@ -54,7 +61,6 @@ export class SubscriptionService {
       return null;
     }
   }
-
   static async createSubscription(subscriptionData: {
     userId: number;
     planId: number;
@@ -72,10 +78,8 @@ export class SubscriptionService {
         planId: subscriptionData.planId,
         startDate,
         endDate,
-        status: true,
-        type: plan.name.toLowerCase(),
-        paymentMethod: subscriptionData.paymentMethod,
-        paymentStatus: 'paid'
+        status: 'ACTIVE',
+        paymentMethod: subscriptionData.paymentMethod
       }, {
         headers: getAuthHeader()
       });

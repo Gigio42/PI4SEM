@@ -15,8 +15,11 @@ model User {
   name          String?
   picture       String?
   role          String         @default("user")  // "user" ou "admin"
+  lastLogin     DateTime?
+  createdAt     DateTime       @default(now())
   subscriptions Subscription[]
   favoritos     Favorito[]     // Relação inversa
+  componentViews ComponentView[]
 }
 
 model Plan {
@@ -69,6 +72,7 @@ model Component {
   category    String   @default("Outros")
   color       String   @default("#6366F1")
   favoritos   Favorito[] // Relação inversa
+  views       ComponentView[]
 }
 
 model Setting {
@@ -91,4 +95,30 @@ model Favorito {
   component   Component @relation(fields: [componentId], references: [id])
 
   @@unique([userId, componentId])
+}
+
+model Statistics {
+  id                Int       @id @default(autoincrement())
+  date              DateTime  @default(now())
+  componentViews    Json?     // Contagem de visualizações por componente {componentId: count}
+  pageViews         Json?     // Contagem de visualizações por página {pagePath: count}
+  newUsers          Int       @default(0)
+  activeUsers       Int       @default(0)
+  totalSubscriptions Int      @default(0)
+  revenue           Decimal   @default(0) @db.Decimal(10, 2)
+  mostViewedComponents Json?  // Lista ordenada de componentes mais vistos
+  mostFavoritedComponents Json? // Lista ordenada de componentes mais favoritados
+  conversionRate    Decimal?  @db.Decimal(5, 2) // Taxa de conversão (%)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model ComponentView {
+  id          Int       @id @default(autoincrement())
+  componentId Int
+  userId      Int?
+  sessionId   String?
+  timestamp   DateTime  @default(now())
+  component   Component @relation(fields: [componentId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
 }

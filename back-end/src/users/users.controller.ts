@@ -64,6 +64,17 @@ export class UsersController {
     // Create the user with hashed password
     return this.usersService.createUser(email, hashedPassword);
   }
+
+  @Get('stats')
+  async getUserStats() {
+    try {
+      const stats = await this.usersService.getUserStats();
+      return stats;
+    } catch (error) {
+      this.logger.error(`Error fetching user stats: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
   @Post('login')
   @Public()
   async loginUser(@Body() body: { email: string; password: string }, @Res({ passthrough: true }) response: Response) {

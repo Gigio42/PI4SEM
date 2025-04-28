@@ -391,10 +391,9 @@ export default function SubscriptionPage() {
                 onRetry={handleRetry} 
               />
             ) : (
-              <>
-                {!showPaymentForm ? (
+              <>                {!showPaymentForm ? (
                   <>
-                    {currentPlan && (
+                    {currentPlan && currentPlan.id && currentPlan.planId && (
                       <SubscriptionDetails 
                         subscription={currentPlan} 
                         onCancelSubscription={handleCancelSubscription}
