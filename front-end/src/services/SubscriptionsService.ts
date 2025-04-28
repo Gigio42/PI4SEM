@@ -135,8 +135,12 @@ class SubscriptionsServiceClass {
   // Enhanced getPlans method to handle missing tokens gracefully
   async getPlans(onlyActive = true) {
     try {
-      const response = await this.safeFetch(`${apiBaseUrl}/subscriptions/plans?onlyActive=${onlyActive}`, {
-        headers: this.getAuthHeaders()
+      const url = `${apiBaseUrl}/subscriptions/plans?onlyActive=${onlyActive}`;
+      console.log('Fetching plans from URL:', url);
+      
+      const response = await this.safeFetch(url, {
+        headers: this.getAuthHeaders(),
+        credentials: 'include' // Importante para enviar cookies de autenticação
       });
       
       if (!response.ok) {
@@ -152,7 +156,22 @@ class SubscriptionsServiceClass {
         throw new Error(error.message || 'Error fetching plans');
       }
       
-      return await response.json();
+      const plans = await response.json();
+      console.log('Raw plans from API:', plans);
+      
+      if (!Array.isArray(plans)) {
+        console.warn('API returned non-array response for plans:', plans);
+        return [];
+      }
+      
+      // Map backend field names to frontend field names
+      return plans.map((plan: any) => ({
+        ...plan,
+        active: plan.isActive, // Map isActive to active
+        duration: plan.durationDays, // Map durationDays to duration
+        features: Array.isArray(plan.features) ? plan.features : 
+                 (typeof plan.features === 'string' ? JSON.parse(plan.features) : [])
+      }));
     } catch (error) {
       console.error('Error fetching plans:', error);
       
@@ -181,7 +200,16 @@ class SubscriptionsServiceClass {
         }));
         throw new Error(error.message || `Error fetching plan ${id}`);
       }
-      return await response.json();
+      const plan = await response.json();
+      
+      // Map backend field names to frontend field names
+      return {
+        ...plan,
+        active: plan.isActive, // Map isActive to active
+        duration: plan.durationDays, // Map durationDays to duration
+        features: Array.isArray(plan.features) ? plan.features : 
+                 (typeof plan.features === 'string' ? JSON.parse(plan.features) : [])
+      };
     } catch (error) {
       console.error(`Error fetching plan ${id}:`, error);
       throw error;
@@ -198,8 +226,9 @@ class SubscriptionsServiceClass {
         name: planData.name,
         description: planData.description,
         price: planData.price,
-        durationDays: duration, // Ensure durationDays is properly included with a value
-        features: Array.isArray(planData.features) ? JSON.stringify(planData.features) : planData.features,
+        duration: duration, // Backend will map this to durationDays
+        features: Array.isArray(planData.features) ? planData.features : 
+                 (typeof planData.features === 'string' ? JSON.parse(planData.features) : []),
         isActive: planData.active // Map active to isActive
       };
       
@@ -235,7 +264,16 @@ class SubscriptionsServiceClass {
         throw new Error(error.message || 'Error creating plan');
       }
       
-      return await response.json();
+      const plan = await response.json();
+      
+      // Map backend field names to frontend field names
+      return {
+        ...plan,
+        active: plan.isActive,
+        duration: plan.durationDays,
+        features: Array.isArray(plan.features) ? plan.features : 
+                 (typeof plan.features === 'string' ? JSON.parse(plan.features) : [])
+      };
     } catch (error) {
       console.error('Error creating plan:', error);
       
@@ -259,21 +297,18 @@ class SubscriptionsServiceClass {
       // Transform frontend model to match backend schema
       const backendPlanData: any = { ...planData };
       
-      // Map field names to match backend schema
-      if ('duration' in backendPlanData) {
-        backendPlanData.durationDays = backendPlanData.duration;
-        delete backendPlanData.duration;
-      }
-      
+      // Mapear campos do frontend para o backend
       if ('active' in backendPlanData) {
         backendPlanData.isActive = backendPlanData.active;
         delete backendPlanData.active;
       }
       
-      // Handle features array if present
-      if (backendPlanData.features && Array.isArray(backendPlanData.features)) {
-        backendPlanData.features = JSON.stringify(backendPlanData.features);
+      if ('duration' in backendPlanData) {
+        // O backend vai mapear 'duration' para 'durationDays' automaticamente
+        // Não precisamos converter aqui
       }
+      
+      console.log(`Updating plan ${id} with data:`, backendPlanData);
       
       const response = await fetch(`${apiBaseUrl}/subscriptions/plans/${id}`, {
         method: 'PATCH',
@@ -281,13 +316,28 @@ class SubscriptionsServiceClass {
         body: JSON.stringify(backendPlanData),
         credentials: 'include'
       });
+      
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Admin authentication required to update plans. Please login with an admin account.');
+        }
+        
         const error = await response.json().catch(() => ({
           message: `HTTP error ${response.status}`
         }));
         throw new Error(error.message || `Error updating plan ${id}`);
       }
-      return await response.json();
+      
+      const plan = await response.json();
+      
+      // Map backend field names to frontend field names
+      return {
+        ...plan,
+        active: plan.isActive,
+        duration: plan.durationDays,
+        features: Array.isArray(plan.features) ? plan.features : 
+                 (typeof plan.features === 'string' ? JSON.parse(plan.features) : [])
+      };
     } catch (error) {
       console.error(`Error updating plan ${id}:`, error);
       throw error;
@@ -313,17 +363,25 @@ class SubscriptionsServiceClass {
       throw error;
     }
   }
-
   // === Subscriptions API ===
-  async getAllSubscriptions(status?: boolean) {
+  async getAllSubscriptions(status?: string | boolean) {
     try {
-      const url = status !== undefined 
-        ? `${apiBaseUrl}/subscriptions?status=${status}` 
+      // Converter status boolean para string ACTIVE/CANCELLED se necessário
+      let statusParam = status;
+      if (typeof status === 'boolean') {
+        statusParam = status ? 'ACTIVE' : 'CANCELLED';
+      }
+      
+      const url = statusParam !== undefined 
+        ? `${apiBaseUrl}/subscriptions?status=${statusParam}` 
         : `${apiBaseUrl}/subscriptions`;
+      
+      console.log('Fetching subscriptions from URL:', url);
       
       // Use safeFetch instead of direct fetch for better error handling
       const response = await this.safeFetch(url, {
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(),
+        credentials: 'include' // Importante para enviar cookies de autenticação
       });
       
       if (!response.ok) {
@@ -339,7 +397,35 @@ class SubscriptionsServiceClass {
         throw new Error(error.message || 'Error fetching subscriptions');
       }
       
-      return await response.json();
+      const subscriptions = await response.json();
+      console.log('Raw subscriptions from API:', subscriptions);
+      
+      if (!Array.isArray(subscriptions)) {
+        console.warn('API returned non-array response for subscriptions:', subscriptions);
+        return [];
+      }
+      
+      // Map backend subscription data to frontend format
+      return subscriptions.map((sub: any) => {
+        // Process plan data if it exists
+        const plan = sub.plan ? {
+          ...sub.plan,
+          active: sub.plan.isActive,
+          duration: sub.plan.durationDays,
+          features: Array.isArray(sub.plan.features) ? sub.plan.features :
+                   (typeof sub.plan.features === 'string' ? JSON.parse(sub.plan.features) : [])
+        } : null;
+        
+        // Map database field names to frontend field names
+        return {
+          ...sub,
+          // Convert string 'ACTIVE'/'CANCELLED' to boolean
+          status: sub.status === 'ACTIVE',
+          // Map cancelDate to canceledAt if it exists
+          canceledAt: sub.cancelDate,
+          plan: plan
+        };
+      });
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
       // Return empty array instead of throwing to prevent UI errors
@@ -373,7 +459,21 @@ class SubscriptionsServiceClass {
         throw new Error(error.message || `Error fetching subscription for user ${userId}`);
       }
       
-      return await response.json();
+      const subscription = await response.json();
+      
+      // Map backend fields to frontend fields
+      return {
+        ...subscription,
+        status: subscription.status === 'ACTIVE',
+        canceledAt: subscription.cancelDate,
+        plan: subscription.plan ? {
+          ...subscription.plan,
+          active: subscription.plan.isActive,
+          duration: subscription.plan.durationDays,
+          features: Array.isArray(subscription.plan.features) ? subscription.plan.features :
+                   (typeof subscription.plan.features === 'string' ? JSON.parse(subscription.plan.features) : [])
+        } : null
+      };
     } catch (error) {
       console.error(`Error fetching user subscription ${userId}:`, error);
       // Return null instead of throwing for better user experience
@@ -392,7 +492,22 @@ class SubscriptionsServiceClass {
         }));
         throw new Error(error.message || `Error fetching subscription ${id}`);
       }
-      return await response.json();
+      
+      const subscription = await response.json();
+      
+      // Map backend field names to frontend field names
+      return {
+        ...subscription,
+        status: subscription.status === 'ACTIVE',
+        canceledAt: subscription.cancelDate,
+        plan: subscription.plan ? {
+          ...subscription.plan,
+          active: subscription.plan.isActive,
+          duration: subscription.plan.durationDays,
+          features: Array.isArray(subscription.plan.features) ? subscription.plan.features :
+                   (typeof subscription.plan.features === 'string' ? JSON.parse(subscription.plan.features) : [])
+        } : null
+      };
     } catch (error) {
       console.error(`Error fetching subscription ${id}:`, error);
       throw error;
@@ -401,10 +516,19 @@ class SubscriptionsServiceClass {
 
   async createSubscription(subscriptionData: any) {
     try {
+      // Ajustar dados para o formato esperado pelo backend
+      const adjustedData = {
+        ...subscriptionData,
+        // Garantir que os campos boolean são enviados corretamente
+        status: subscriptionData.status === true ? 'ACTIVE' : 'CANCELLED'
+      };
+      
+      console.log('Creating subscription with data:', adjustedData);
+      
       const response = await fetch(`${apiBaseUrl}/subscriptions`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(subscriptionData)
+        body: JSON.stringify(adjustedData)
       });
       if (!response.ok) {
         const error = await response.json().catch(() => ({
@@ -412,7 +536,22 @@ class SubscriptionsServiceClass {
         }));
         throw new Error(error.message || 'Error creating subscription');
       }
-      return await response.json();
+      
+      const subscription = await response.json();
+      
+      // Mapear campos do backend para o frontend
+      return {
+        ...subscription,
+        status: subscription.status === 'ACTIVE',
+        canceledAt: subscription.cancelDate,
+        plan: subscription.plan ? {
+          ...subscription.plan,
+          active: subscription.plan.isActive,
+          duration: subscription.plan.durationDays,
+          features: Array.isArray(subscription.plan.features) ? subscription.plan.features :
+                   (typeof subscription.plan.features === 'string' ? JSON.parse(subscription.plan.features) : [])
+        } : null
+      };
     } catch (error) {
       console.error('Error creating subscription:', error);
       throw error;
@@ -421,10 +560,20 @@ class SubscriptionsServiceClass {
 
   async updateSubscription(id: number, updateData: any) {
     try {
+      // Ajustar dados para o formato esperado pelo backend
+      const adjustedData = { ...updateData };
+      
+      // Converter status boolean para string se existir
+      if (typeof adjustedData.status === 'boolean') {
+        adjustedData.status = adjustedData.status ? 'ACTIVE' : 'CANCELLED';
+      }
+      
+      console.log(`Updating subscription ${id} with data:`, adjustedData);
+      
       const response = await fetch(`${apiBaseUrl}/subscriptions/${id}`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(adjustedData)
       });
       if (!response.ok) {
         const error = await response.json().catch(() => ({
@@ -432,7 +581,22 @@ class SubscriptionsServiceClass {
         }));
         throw new Error(error.message || `Error updating subscription ${id}`);
       }
-      return await response.json();
+      
+      const subscription = await response.json();
+      
+      // Mapear campos do backend para o frontend
+      return {
+        ...subscription,
+        status: subscription.status === 'ACTIVE',
+        canceledAt: subscription.cancelDate,
+        plan: subscription.plan ? {
+          ...subscription.plan,
+          active: subscription.plan.isActive,
+          duration: subscription.plan.durationDays,
+          features: Array.isArray(subscription.plan.features) ? subscription.plan.features :
+                   (typeof subscription.plan.features === 'string' ? JSON.parse(subscription.plan.features) : [])
+        } : null
+      };
     } catch (error) {
       console.error(`Error updating subscription ${id}:`, error);
       throw error;
@@ -502,19 +666,47 @@ class SubscriptionsServiceClass {
 
   async getPaymentsBySubscription(subscriptionId: number) {
     try {
-      const response = await fetch(`${apiBaseUrl}/subscriptions/${subscriptionId}/payments`, {
-        headers: this.getAuthHeaders()
+      const url = `${apiBaseUrl}/subscriptions/${subscriptionId}/payments`;
+      console.log('Fetching payment history from URL:', url);
+      
+      const response = await fetch(url, {
+        headers: this.getAuthHeaders(),
+        credentials: 'include' // Importante para enviar cookies de autenticação
       });
+      
       if (!response.ok) {
+        // Retornar array vazio para erro 404 (sem pagamentos)
+        if (response.status === 404) {
+          console.warn(`No payments found for subscription ${subscriptionId}`);
+          return [];
+        }
+        
         const error = await response.json().catch(() => ({
           message: `HTTP error ${response.status}`
         }));
         throw new Error(error.message || `Error fetching payments for subscription ${subscriptionId}`);
       }
-      return await response.json();
+      
+      const payments = await response.json();
+      console.log('Raw payments from API:', payments);
+      
+      if (!Array.isArray(payments)) {
+        console.warn('API returned non-array response for payments:', payments);
+        return [];
+      }
+      
+      // Garantir que todos os campos necessários estejam presentes
+      return payments.map((payment: any) => ({
+        ...payment,
+        // Certificar que o status está no formato correto
+        status: payment.status || 'PAID',
+        // Formatar data se necessário
+        paymentDate: payment.paymentDate || new Date().toISOString()
+      }));
     } catch (error) {
       console.error(`Error fetching payments for subscription ${subscriptionId}:`, error);
-      throw error;
+      // Retornar array vazio em vez de lançar erro para evitar quebrar a UI
+      return [];
     }
   }
 }

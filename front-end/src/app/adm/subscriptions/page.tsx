@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { subscriptionsService, SubscriptionType, PlanType, PaymentType } from '@/services/SubscriptionsService';
 import styles from './subscriptions.module.css';
 import { useToast } from '@/hooks/useToast';
+import { apiBaseUrl } from '@/services/config';
 
 // Types for filter and pagination
 interface FilterOptions {
-  status?: boolean;
+  status?: string; // Agora é string: 'ACTIVE', 'CANCELLED', etc.
   searchTerm?: string;
 }
 
@@ -27,22 +28,43 @@ export default function AdminSubscriptionsPage() {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   
+  // Sort states
+  const [sortField, setSortField] = useState<string>('id');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
   // Filter and pagination states
   const [filters, setFilters] = useState<FilterOptions>({});
   const [searchTerm, setSearchTerm] = useState('');
   
   const { showToast } = useToast();
 
-  useEffect(() => {
-    fetchData();
-  }, [filters]);
-
   // Function to fetch all required data
   const fetchData = async () => {
     try {
       setLoading(true);
       
-      console.log('Fetching subscription data...');
+      console.log('Fetching subscription data with filters:', filters);
+      
+      try {
+        // Primeiro, teste a conexão com o backend
+        const response = await fetch(`${apiBaseUrl}/subscriptions/plans?onlyActive=false`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        console.log('API connection test response status:', response.status);
+        
+        if (!response.ok) {
+          console.error('API connection test failed with status:', response.status);
+          const errorText = await response.text();
+          console.error('Error details:', errorText);
+        }
+      } catch (connectionError) {
+        console.error('API connection test error:', connectionError);
+      }
       
       // Fetch subscriptions and plans in parallel
       const [fetchedSubscriptions, fetchedPlans] = await Promise.all([
@@ -50,8 +72,10 @@ export default function AdminSubscriptionsPage() {
         subscriptionsService.getPlans(false) // Get all plans including inactive ones
       ]);
       
-      console.log('Fetched plans:', fetchedPlans);
-      console.log('Fetched subscriptions:', fetchedSubscriptions);
+      console.log('Fetched plans (count):', fetchedPlans?.length || 0);
+      console.log('Fetched plans data:', JSON.stringify(fetchedPlans, null, 2));
+      console.log('Fetched subscriptions (count):', fetchedSubscriptions?.length || 0);
+      console.log('Fetched subscriptions data:', JSON.stringify(fetchedSubscriptions, null, 2));
       
       setSubscriptions(fetchedSubscriptions);
       setPlans(fetchedPlans);
@@ -250,6 +274,79 @@ export default function AdminSubscriptionsPage() {
     );
   });
 
+  // Função para ordenar assinaturas
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      // Toggle direction if already sorting by this field
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new field and default to ascending
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Função para obter iniciais do nome do usuário
+  const getUserInitials = (name: string): string => {
+    const parts = name.split(' ');
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length-1].charAt(0)).toUpperCase();
+  };
+
+  // Função para verificar se a assinatura está prestes a expirar (menos de 7 dias)
+  const isSubscriptionExpiringSoon = (subscription: SubscriptionType): boolean => {
+    if (!subscription.endDate) return false;
+    
+    const endDate = new Date(subscription.endDate);
+    const today = new Date();
+    const diffTime = endDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays <= 7 && diffDays > 0;
+  };
+
+  // Ordenar as assinaturas com base no campo e direção selecionados
+  const sortedSubscriptions = [...filteredSubscriptions].sort((a, b) => {
+    let valueA: any;
+    let valueB: any;
+
+    // Definir valores para comparação com base no campo de ordenação
+    switch (sortField) {
+      case 'id':
+        valueA = a.id;
+        valueB = b.id;
+        break;
+      case 'userId':
+        valueA = a.user?.name || a.userId;
+        valueB = b.user?.name || b.userId;
+        break;
+      case 'planId':
+        valueA = a.plan?.name || a.planId;
+        valueB = b.plan?.name || b.planId;
+        break;
+      case 'startDate':
+        valueA = new Date(a.startDate).getTime();
+        valueB = new Date(b.startDate).getTime();
+        break;
+      case 'endDate':
+        valueA = new Date(a.endDate).getTime();
+        valueB = new Date(b.endDate).getTime();
+        break;
+      case 'status':
+        valueA = String(a.status);
+        valueB = String(b.status);
+        break;
+      default:
+        valueA = a.id;
+        valueB = b.id;
+    }
+
+    // Ordenação baseada na direção (asc/desc)
+    if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+    if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   // Function to format dates consistently
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -258,6 +355,54 @@ export default function AdminSubscriptionsPage() {
       year: 'numeric'
     });
   };
+
+  // Funções auxiliares para lidar com valores de status
+  const getStatusText = (status: string): string => {
+    switch(status) {
+      case 'ACTIVE': return 'Ativa';
+      case 'CANCELLED': return 'Cancelada';
+      case 'EXPIRED': return 'Expirada';
+      case 'PENDING': return 'Pendente';
+      default: return status ? String(status) : 'Desconhecido';
+    }
+  };
+  
+  const getStatusBadgeClass = (status: string): string => {
+    switch(status) {
+      case 'ACTIVE': return styles.statusActive;
+      case 'CANCELLED': return styles.statusCancelled;
+      case 'EXPIRED': return styles.statusExpired;
+      case 'PENDING': return styles.statusPending;
+      default: return '';
+    }
+  };
+
+  // Function to handle tab change
+  const handleTabChange = async (tab: 'subscriptions' | 'plans' | 'history') => {
+    setActiveTab(tab);
+    
+    // Se mudar para a aba de histórico e tiver uma assinatura selecionada, busca o histórico
+    if (tab === 'history' && selectedSubscription) {
+      await fetchPaymentHistory(selectedSubscription.id);
+    }
+    
+    // Se mudar para qualquer aba, recarrega todos os dados para garantir que estejam atualizados
+    fetchData();
+  };
+  
+  // Efeito para buscar dados ao carregar a página e quando os filtros mudarem
+  useEffect(() => {
+    fetchData();
+    
+    // Definir um intervalo para atualizar os dados a cada 30 segundos
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing data...');
+      fetchData();
+    }, 30000);
+    
+    // Limpar o intervalo quando o componente for desmontado
+    return () => clearInterval(interval);
+  }, [filters]);
 
   return (
     <div className={styles.contentContainer}>
@@ -272,24 +417,19 @@ export default function AdminSubscriptionsPage() {
       <div className={styles.tabs}>
         <button 
           className={`${styles.tabButton} ${activeTab === 'subscriptions' ? styles.active : ''}`}
-          onClick={() => setActiveTab('subscriptions')}
+          onClick={() => handleTabChange('subscriptions')}
         >
           Assinaturas
         </button>
         <button 
           className={`${styles.tabButton} ${activeTab === 'plans' ? styles.active : ''}`}
-          onClick={() => setActiveTab('plans')}
+          onClick={() => handleTabChange('plans')}
         >
           Planos
         </button>
         <button 
           className={`${styles.tabButton} ${activeTab === 'history' ? styles.active : ''}`}
-          onClick={() => {
-            setActiveTab('history');
-            if (selectedSubscription) {
-              fetchPaymentHistory(selectedSubscription.id);
-            }
-          }}
+          onClick={() => handleTabChange('history')}
         >
           Histórico de Pagamentos
         </button>
@@ -311,19 +451,20 @@ export default function AdminSubscriptionsPage() {
                 Buscar
               </button>
             </div>
-            
-            <div className={styles.filterContainer}>
+              <div className={styles.filterContainer}>
               <select 
-                value={filters.status?.toString() || 'all'} 
+                value={filters.status as string || 'all'} 
                 onChange={(e) => setFilters({
                   ...filters, 
-                  status: e.target.value === 'all' ? undefined : e.target.value === 'true'
+                  status: e.target.value === 'all' ? undefined : e.target.value
                 })}
                 className={styles.filterSelect}
               >
                 <option value="all">Todos os status</option>
-                <option value="true">Ativas</option>
-                <option value="false">Canceladas</option>
+                <option value="ACTIVE">Ativas</option>
+                <option value="CANCELLED">Canceladas</option>
+                <option value="EXPIRED">Expiradas</option>
+                <option value="PENDING">Pendentes</option>
               </select>
             </div>
             
@@ -339,38 +480,135 @@ export default function AdminSubscriptionsPage() {
           <div className={styles.tableContainer}>
             <table className={styles.subscriptionsTable}>
               <thead>
-                <tr className={`${styles.subscriptionRow} ${styles.tableHeader}`}>
-                  <th className={styles.tableCell}>ID</th>
-                  <th className={styles.tableCell}>Usuário</th>
-                  <th className={styles.tableCell}>Plano</th>
-                  <th className={styles.tableCell}>Início</th>
-                  <th className={styles.tableCell}>Término</th>
-                  <th className={styles.tableCell}>Status</th>
+                <tr className={styles.tableHeader}>
+                  <th className={styles.tableCell}>
+                    <div className={styles.sortableHeader} onClick={() => handleSort('id')}>
+                      ID
+                      {sortField === 'id' && (
+                        <span className={styles.sortIcon}>
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th className={styles.tableCell}>
+                    <div className={styles.sortableHeader} onClick={() => handleSort('userId')}>
+                      Usuário
+                      {sortField === 'userId' && (
+                        <span className={styles.sortIcon}>
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th className={styles.tableCell}>
+                    <div className={styles.sortableHeader} onClick={() => handleSort('planId')}>
+                      Plano
+                      {sortField === 'planId' && (
+                        <span className={styles.sortIcon}>
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th className={styles.tableCell}>
+                    <div className={styles.sortableHeader} onClick={() => handleSort('startDate')}>
+                      Início
+                      {sortField === 'startDate' && (
+                        <span className={styles.sortIcon}>
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th className={styles.tableCell}>
+                    <div className={styles.sortableHeader} onClick={() => handleSort('endDate')}>
+                      Término
+                      {sortField === 'endDate' && (
+                        <span className={styles.sortIcon}>
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th className={styles.tableCell}>
+                    <div className={styles.sortableHeader} onClick={() => handleSort('status')}>
+                      Status
+                      {sortField === 'status' && (
+                        <span className={styles.sortIcon}>
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
                   <th className={styles.tableCell}>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className={styles.loadingCell}>Carregando...</td>
+                    <td colSpan={7} className={styles.loadingCell}>
+                      <div className={styles.loadingIndicator}>
+                        <div className={styles.loadingSpinner}></div>
+                        <span>Carregando...</span>
+                      </div>
+                    </td>
                   </tr>
-                ) : filteredSubscriptions.length === 0 ? (
+                ) : sortedSubscriptions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className={styles.emptyCell}>Nenhuma assinatura encontrada</td>
+                    <td colSpan={7} className={styles.emptyCell}>
+                      <div className={styles.emptyStateContainer}>
+                        <div className={styles.emptyIcon}>
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 6C3 4.34315 4.34315 3 6 3H14C15.6569 3 17 4.34315 17 6V18C17 19.6569 15.6569 21 14 21H6C4.34315 21 3 19.6569 3 18V6Z" stroke="currentColor" strokeWidth="2" />
+                            <path d="M17 6H19C20.6569 6 22 7.34315 22 9V15C22 17.2091 20.2091 19 18 19H17" stroke="currentColor" strokeWidth="2" />
+                            <path d="M7 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M7 11H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M7 15H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <p>Nenhuma assinatura encontrada</p>
+                      </div>
+                    </td>
                   </tr>
                 ) : (
-                  filteredSubscriptions.map(subscription => (
+                  sortedSubscriptions.map(subscription => (
                     <tr key={subscription.id} 
                         className={styles.subscriptionRow}
                         onClick={() => handleSelectSubscription(subscription)}>
-                      <td className={styles.tableCell}>{subscription.id}</td>
-                      <td className={styles.tableCell}>{subscription.user?.name || `Usuário #${subscription.userId}`}</td>
-                      <td className={styles.tableCell}>{subscription.plan?.name || `Plano #${subscription.planId}`}</td>
-                      <td className={styles.tableCell}>{formatDate(subscription.startDate)}</td>
-                      <td className={styles.tableCell}>{formatDate(subscription.endDate)}</td>
                       <td className={styles.tableCell}>
-                        <span className={`${styles.statusBadge} ${subscription.status ? styles.statusActive : styles.statusInactive}`}>
-                          {subscription.status ? 'Ativa' : 'Cancelada'}
+                        <span className={styles.idBadge}>#{subscription.id}</span>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <div className={styles.userInfo}>
+                          <div className={styles.userAvatar}>
+                            {getUserInitials(subscription.user?.name || `U${subscription.userId}`)}
+                          </div>
+                          <div>
+                            <div className={styles.userName}>{subscription.user?.name || `Usuário #${subscription.userId}`}</div>
+                            {subscription.user?.email && <div className={styles.userEmail}>{subscription.user.email}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <span className={styles.planTag}>{subscription.plan?.name || `Plano #${subscription.planId}`}</span>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <div className={styles.dateInfo}>
+                          <span className={styles.dateValue}>{formatDate(subscription.startDate)}</span>
+                        </div>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <div className={styles.dateInfo}>
+                          <span className={styles.dateValue}>{formatDate(subscription.endDate)}</span>
+                          {isSubscriptionExpiringSoon(subscription) && 
+                            <span className={styles.expiryBadge}>Expira em breve</span>
+                          }
+                        </div>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <span className={`${styles.statusBadge} ${getStatusBadgeClass(subscription.status)}`}>
+                          {getStatusText(subscription.status)}
                         </span>
                       </td>
                       <td className={styles.tableCell}>
@@ -382,11 +620,16 @@ export default function AdminSubscriptionsPage() {
                               setIsEditModalOpen(true);
                             }}
                             className={`${styles.actionButton} ${styles.editButton}`}
-                            disabled={!subscription.status}
+                            disabled={subscription.status !== 'ACTIVE'}
+                            title={subscription.status !== 'ACTIVE' ? 'Não é possível editar assinaturas não ativas' : 'Editar assinatura'}
                           >
-                            Editar
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M11 4H4C2.89543 4 2 4.89543 2 6V20C2 21.1046 2.89543 22 4 22H18C19.1046 22 20 21.1046 20 20V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M18.5 2.5C19.3284 1.67157 20.6716 1.67157 21.5 2.5C22.3284 3.32843 22.3284 4.67157 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            <span>Editar</span>
                           </button>
-                          {subscription.status && (
+                          {subscription.status === 'ACTIVE' && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -394,8 +637,13 @@ export default function AdminSubscriptionsPage() {
                                 setIsCancelModalOpen(true);
                               }}
                               className={`${styles.actionButton} ${styles.cancelButton}`}
+                              title="Cancelar assinatura"
                             >
-                              Cancelar
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <span>Cancelar</span>
                             </button>
                           )}
                         </div>
@@ -465,11 +713,23 @@ export default function AdminSubscriptionsPage() {
                     .filter(plan => !searchTerm || plan.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map(plan => (
                       <tr key={plan.id} className={styles.subscriptionRow}>
-                        <td className={styles.tableCell}>{plan.id}</td>
-                        <td className={styles.tableCell}>{plan.name}</td>
-                        <td className={styles.tableCell}>{plan.description.length > 50 ? `${plan.description.substring(0, 50)}...` : plan.description}</td>
-                        <td className={styles.tableCell}>R$ {Number(plan.price).toFixed(2)}</td>
-                        <td className={styles.tableCell}>{plan.duration}</td>
+                        <td className={styles.tableCell}>
+                          <span className={styles.idBadge}>#{plan.id}</span>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <span className={styles.planTag}>{plan.name}</span>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <span className={styles.descriptionText}>
+                            {plan.description.length > 30 ? `${plan.description.substring(0, 30)}...` : plan.description}
+                          </span>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <span className={styles.priceBadge}>{Number(plan.price).toFixed(0)}R$</span>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <span className={styles.durationTag}>{plan.duration} dias</span>
+                        </td>
                         <td className={styles.tableCell}>
                           <span className={`${styles.statusBadge} ${plan.active ? styles.statusActive : styles.statusInactive}`}>
                             {plan.active ? 'Ativo' : 'Inativo'}
@@ -589,15 +849,13 @@ export default function AdminSubscriptionsPage() {
               const startDate = new Date();
               const endDate = new Date();
               endDate.setDate(endDate.getDate() + selectedPlan.duration);
-              
-              handleAddSubscription({
+                handleAddSubscription({
                 userId: Number(formData.get('userId')),
                 planId: planId,
                 startDate,
                 endDate,
-                status: true,
-                paymentMethod: formData.get('paymentMethod'),
-                paymentStatus: 'completed',
+                status: 'ACTIVE',
+                paymentMethod: formData.get('paymentMethod') as string,
               });
             }}>
 

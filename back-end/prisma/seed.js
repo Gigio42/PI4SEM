@@ -22,7 +22,7 @@ async function main() {
     console.log(`Created ${subscriptions.length} subscriptions`);
     
     // Create payments
-    const payments = await createPayments(subscriptions);
+    const payments = await createPayments(subscriptions, plans);
     console.log(`Created ${payments.length} payments`);
     
     // Create components
@@ -148,54 +148,56 @@ async function createSubscriptions(users, plans) {
   return await prisma.subscription.createMany({
     data: [
       {
-        type: 'monthly',
         startDate: now,
         endDate: oneMonthLater,
-        status: true,
+        status: 'ACTIVE',
         userId: users[0].id,
-        planId: plans[1].id,
-        paymentMethod: 'credit_card',
-        paymentStatus: 'completed',
-        nextPaymentDate: oneMonthLater
+        planId: plans[1].id
       },
       {
-        type: 'free',
         startDate: now,
         endDate: oneMonthLater,
-        status: true,
+        status: 'ACTIVE',
         userId: users[1].id,
-        planId: plans[0].id,
-        paymentMethod: null,
-        paymentStatus: null,
-        nextPaymentDate: null
+        planId: plans[0].id
       },
       {
-        type: 'yearly',
         startDate: now,
         endDate: oneYearLater,
-        status: true,
+        status: 'ACTIVE',
         userId: users[2].id,
-        planId: plans[3].id,
-        paymentMethod: 'paypal',
-        paymentStatus: 'completed',
-        nextPaymentDate: oneYearLater
+        planId: plans[3].id
       }
     ]
   }).then(() => prisma.subscription.findMany());
 }
 
-async function createPayments(subscriptions) {
+async function createPayments(subscriptions, plans) {
   const now = new Date();
   
-  // Filter out free subscriptions
-  const paidSubscriptions = subscriptions.filter(sub => sub.paymentStatus === 'completed');
-  
-  const paymentData = paidSubscriptions.map(sub => {
+  // Todas as assinaturas agora são pagas, pois não temos mais campo paymentStatus
+  const paymentData = subscriptions.map(sub => {
+    // Determinar o valor com base no plano (usando o planId)
+    let amount = 29.99; // valor padrão para plano mensal
+    
+    // Se for o plano anual (planId 4 conforme nosso script de seed)
+    if (sub.planId === 4) {
+      amount = 299.99;
+    }
+    // Se for o plano gratuito (planId 1 conforme nosso script de seed)
+    else if (sub.planId === 1) {
+      amount = 0;
+    }
+    // Se for o plano enterprise (planId 3 conforme nosso script de seed)
+    else if (sub.planId === 3) {
+      amount = 99.99;
+    }
+    
     return {
       subscriptionId: sub.id,
-      amount: sub.type === 'monthly' ? 29.99 : 299.99,
-      status: 'completed',
-      paymentMethod: sub.paymentMethod,
+      amount: amount,
+      status: 'PAID',
+      paymentMethod: 'credit_card', // valor padrão
       transactionId: `txn_${Math.random().toString(36).substring(2, 12)}`,
       paymentDate: now
     };

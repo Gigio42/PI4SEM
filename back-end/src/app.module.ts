@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { ComponentsModule } from './components/components.module'; // Added import
 import { UsersModule } from './users/users.module'; // Added UsersModule import
+import { StatisticsModule } from './statistics/statistics.module'; // Added StatisticsModule import
 import { CorsMiddleware } from './middleware/cors.middleware';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ConfigModule } from '@nestjs/config';
@@ -23,6 +24,7 @@ import { ConfigModule } from '@nestjs/config';
     SubscriptionModule,
     ComponentsModule, // Added ComponentsModule
     UsersModule, // Added UsersModule to enable users endpoints
+    StatisticsModule, // Added StatisticsModule
     // Other modules
   ],
   controllers: [AppController],

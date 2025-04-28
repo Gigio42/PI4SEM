@@ -6,10 +6,11 @@ export interface Plan {
   name: string;
   description: string;
   price: number;
-  duration: number;
+  duration: number; // Equivalente a durationDays no backend
   features: string[];
-  active: boolean;
-  highlighted?: boolean;
+  active: boolean; // Equivalente a isActive no backend
+  highlighted?: boolean; // Campo apenas para UI
+  discount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,14 +22,10 @@ export interface Subscription {
   id: number;
   userId: number;
   planId: number;
-  type: string;
   startDate: string;
   endDate: string;
-  nextPaymentDate?: string;
-  status: boolean;
-  paymentMethod: string;
-  paymentStatus: string;
-  canceledAt?: string;
+  status: string; // 'ACTIVE', 'CANCELLED', 'EXPIRED', 'PENDING'
+  cancelDate?: string;
   createdAt: string;
   updatedAt: string;
   plan?: Plan;
@@ -40,10 +37,9 @@ export interface Subscription {
 export interface CreateSubscriptionDto {
   userId: number;
   planId: number;
-  paymentMethod: string;
-  type?: string;
+  paymentMethod?: string;
   startDate?: string | Date;
   endDate?: string | Date;
-  status?: boolean;
-  paymentStatus?: string;
+  status?: string;
+  transactionId?: string;
 }

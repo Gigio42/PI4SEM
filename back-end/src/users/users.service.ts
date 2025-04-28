@@ -68,7 +68,7 @@ export class UsersService {
     googleId: string, 
     email: string, 
     firstName: string, 
-    picture: string, 
+    picture: string,
     lastName?: string, 
     displayName?: string
   ) {
@@ -115,5 +115,46 @@ export class UsersService {
         email, // Update email in case it changed
       },
     });
+  }
+
+  // Get user statistics for admin dashboard
+  async getUserStats() {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    // Get total users count
+    const totalUsers = await this.prisma.user.count();
+    
+    // Get admin users count
+    const admins = await this.prisma.user.count({
+      where: {
+        role: 'admin'
+      }
+    });
+    
+    // Get active users (users who have logged in at least once)
+    const activeUsers = await this.prisma.user.count({
+      where: {
+        lastLogin: {
+          not: null
+        }
+      }
+    });
+    
+    // Get new users registered this month
+    const newUsersThisMonth = await this.prisma.user.count({
+      where: {
+        createdAt: {
+          gte: firstDayOfMonth
+        }
+      }
+    });
+    
+    return {
+      totalUsers,
+      activeUsers,
+      admins,
+      newUsersThisMonth
+    };
   }
 }

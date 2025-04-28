@@ -10,20 +10,25 @@ interface SubscriptionDetailsProps {
 export default function SubscriptionDetails({ subscription, onCancelSubscription }: SubscriptionDetailsProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
-  
-  const formatDate = (dateString: string) => {
+    const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    // Verifica se a data é válida
+    return !isNaN(date.getTime()) ? date.toLocaleDateString('pt-BR') : 'N/A';
   };
 
-  const getRemainingDays = (endDate: string) => {
+  const getRemainingDays = (endDate?: string) => {
+    if (!endDate) return 0;
     const end = new Date(endDate);
+    // Verifica se a data é válida
+    if (isNaN(end.getTime())) return 0;
+    
     const today = new Date();
     const diffTime = end.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const remainingDays = getRemainingDays(subscription.endDate);
+  const remainingDays = getRemainingDays(subscription?.endDate);
 
   const handleCancelClick = () => {
     setIsConfirmingCancel(true);
@@ -38,6 +43,37 @@ export default function SubscriptionDetails({ subscription, onCancelSubscription
     setIsConfirmingCancel(false);
   };
 
+  // Helper functions para lidar com o status da assinatura
+  const getStatusText = (status: string): string => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'Ativo';
+      case 'CANCELLED':
+        return 'Cancelado';
+      case 'EXPIRED':
+        return 'Expirado';
+      case 'PENDING':
+        return 'Pendente';
+      default:
+        return 'Desconhecido';
+    }
+  };
+
+  const getStatusStyle = (status: string): string => {
+    switch (status) {
+      case 'ACTIVE':
+        return styles.statusActive;
+      case 'CANCELLED':
+        return styles.statusCanceled;
+      case 'EXPIRED':
+        return styles.statusExpired;
+      case 'PENDING':
+        return styles.statusPending;
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className={styles.currentSubscriptionSection}>
       <div className={styles.currentSubscriptionHeader}>
@@ -46,18 +82,19 @@ export default function SubscriptionDetails({ subscription, onCancelSubscription
       </div>
       
       <div className={styles.currentSubscriptionCard}>
-        <div className={styles.currentSubscriptionDetails}>
-          <h3 className={styles.currentPlanName}>
-            {subscription.plan?.name || subscription.type}
+        <div className={styles.currentSubscriptionDetails}>          <h3 className={styles.currentPlanName}>
+            {subscription.plan?.name || (subscription.planId ? `Plano #${subscription.planId}` : 'Plano não identificado')}
           </h3>
           <div className={styles.subscriptionMeta}>
             <div className={styles.subscriptionMetaItem}>
               <span className={styles.metaLabel}>Valor:</span>
               <span className={styles.metaValue}>
-                {subscription.plan ? subscription.plan.price.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
-                }) : 'N/A'}
+                {subscription.plan && typeof subscription.plan.price === 'number' 
+                  ? subscription.plan.price.toLocaleString('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }) 
+                  : 'N/A'}
               </span>
             </div>
             <div className={styles.subscriptionMetaItem}>
@@ -66,12 +103,19 @@ export default function SubscriptionDetails({ subscription, onCancelSubscription
             </div>
             <div className={styles.subscriptionMetaItem}>
               <span className={styles.metaLabel}>Dias restantes:</span>
-              <span className={styles.metaValue}>{remainingDays} dias</span>
-            </div>
-            <div className={styles.subscriptionMetaItem}>
+              <span className={styles.metaValue}>
+                {remainingDays > 0 ? `${remainingDays} dias` : 'Expirado'}
+              </span>
+            </div>            <div className={styles.subscriptionMetaItem}>
               <span className={styles.metaLabel}>Status:</span>
-              <span className={`${styles.metaValue} ${styles.activeStatus}`}>
-                {subscription.status ? 'Ativo' : 'Inativo'}
+              <span className={`${styles.metaValue} ${
+                subscription.status === 'ACTIVE' 
+                  ? styles.activeStatus 
+                  : subscription.status === 'CANCELLED' 
+                    ? styles.canceledStatus 
+                    : styles.expiredStatus
+              }`}>
+                {getStatusText(subscription.status)}
               </span>
             </div>
           </div>

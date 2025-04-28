@@ -1,66 +1,77 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, FormEvent, ChangeEvent } from "react";
 import Header from "../../components/Header/Header";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import adminStyles from "../admin.module.css";
 import styles from "./stats.module.css";
 
-// Mock chart data - this would come from an API
-const mockChartData = {
-  users: {
-    "7days": [110, 115, 118, 125, 130, 135, 142],
-    "30days": [90, 95, 105, 110, 115, 118, 125, 130, 132, 135, 138, 140, 142, 146, 150, 155, 160, 165, 168, 170, 173, 175, 178, 180, 182, 185, 188, 190, 192, 194],
-    "3months": [50, 60, 75, 85, 90, 100, 110, 120, 130, 142, 150, 165, 178, 190, 200],
-    "6months": [20, 35, 45, 60, 75, 90, 105, 115, 125, 140, 155, 165, 180, 194, 210],
-    "year": [0, 15, 25, 35, 50, 65, 80, 95, 110, 125, 140, 160, 175, 194, 210]
-  },
-  downloads: {
-    "7days": [245, 285, 310, 340, 375, 410, 450],
-    "30days": [100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3500, 4000, 4500, 5000, 5324],
-    "3months": [500, 800, 1200, 1500, 1800, 2100, 2400, 2700, 3000, 3300, 3600, 3900, 4500, 4900, 5324],
-    "6months": [200, 500, 800, 1100, 1400, 1700, 2000, 2300, 2600, 2900, 3200, 3800, 4400, 4900, 5324],
-    "year": [0, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2800, 3200, 3800, 4500, 5000, 5324]
-  },
-  revenue: {
-    "7days": [1200, 1350, 1400, 1550, 1700, 1850, 2000],
-    "30days": [500, 700, 900, 1100, 1300, 1500, 1700, 1900, 2100, 2400, 2700, 3000, 3400, 3800, 4200, 4600, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9200, 9400, 9600, 9800, 10000],
-    "3months": [2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 12000, 14000, 16000, 18000, 20000, 22000],
-    "6months": [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 12000, 15000, 18000, 21000, 24000, 28000],
-    "year": [0, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000, 22000, 25000, 28450]
-  },
-  conversion: {
-    "7days": [4.2, 4.3, 4.1, 4.4, 4.3, 4.5, 4.5],
-    "30days": [3.8, 3.9, 4.0, 4.1, 4.0, 4.2, 4.3, 4.2, 4.4, 4.3, 4.5, 4.4, 4.6, 4.5, 4.7, 4.6, 4.8, 4.7, 4.9, 4.8, 5.0, 4.9, 4.8, 4.7, 4.6, 4.5, 4.6, 4.5, 4.6, 4.5],
-    "3months": [3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.5],
-    "6months": [3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.5],
-    "year": [2.5, 2.8, 3.0, 3.2, 3.5, 3.8, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.8, 4.5]
-  }
-};
+// Define interfaces for type checking
+interface StatsData {
+  users: number;
+  usersChange: number;
+  downloads: number;
+  downloadsChange: number;
+  revenue: number;
+  revenueChange: number;
+  conversion: number;
+  conversionChange: number;
+}
 
-// Top components data
-const mockTopComponents = [
-  { id: '1', name: 'Card Moderno', color: '#6366F1', downloads: 1245 },
-  { id: '2', name: 'Botão Glassmórfico', color: '#8B5CF6', downloads: 876 },
-  { id: '3', name: 'Input Animado', color: '#10B981', downloads: 654 },
-  { id: '4', name: 'Navbar Responsiva', color: '#F59E0B', downloads: 532 },
-  { id: '5', name: 'Alerta Toast', color: '#EF4444', downloads: 428 }
-];
+interface ChartData {
+  users: number[];
+  downloads: number[];
+  revenue: number[];
+  conversion: number[];
+}
 
-// Subscription plan distribution
-const mockPlanDistribution = [
-  { name: 'Básico', percentage: 45, color: '#6366F1' },
-  { name: 'Profissional', percentage: 32, color: '#8B5CF6' },
-  { name: 'Empresarial', percentage: 23, color: '#10B981' }
-];
+interface ComponentItem {
+  id: string | number;
+  name: string;
+  color: string;
+  downloads: number;
+}
+
+interface PlanItem {
+  name: string;
+  percentage: number;
+  color: string;
+}
+
+interface TooltipState {
+  visible: boolean;
+  x: number;
+  y: number;
+  value: string | number;
+  label: string;
+}
+
+interface DateRangeState {
+  start: string;
+  end: string;
+}
+
+type ChartType = "line" | "bar" | "area";
+type PeriodType = "7days" | "30days" | "3months" | "6months" | "year" | "custom";
+type DataType = "users" | "downloads" | "revenue" | "conversion" | "default";
 
 export default function Statistics() {
-  const [loaded, setLoaded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedPeriod, setSelectedPeriod] = useState("30days");
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [chartType, setChartType] = useState("line");
-  const [stats, setStats] = useState({
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("30days");
+  const [dateRange, setDateRange] = useState<DateRangeState>({ start: '', end: '' });
+  const [chartType, setChartType] = useState<ChartType>("line");
+  const [activeTooltip, setActiveTooltip] = useState<TooltipState>({ 
+    visible: false, 
+    x: 0, 
+    y: 0, 
+    value: 0, 
+    label: '' 
+  });
+  const [error, setError] = useState<string>('');
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  
+  const [stats, setStats] = useState<StatsData>({
     users: 0,
     usersChange: 0,
     downloads: 0,
@@ -70,14 +81,16 @@ export default function Statistics() {
     conversion: 0,
     conversionChange: 0
   });
-  const [chartData, setChartData] = useState({
+  
+  const [chartData, setChartData] = useState<ChartData>({
     users: [],
     downloads: [],
     revenue: [],
     conversion: []
   });
-  const [topComponents, setTopComponents] = useState([]);
-  const [planDistribution, setPlanDistribution] = useState([]);
+  
+  const [topComponents, setTopComponents] = useState<ComponentItem[]>([]);
+  const [planDistribution, setPlanDistribution] = useState<PlanItem[]>([]);
   
   // Calculate the date strings based on selected period
   const dateRangeLabels = useMemo(() => {
@@ -120,60 +133,40 @@ export default function Statistics() {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        // Simulate API request delay
-        await new Promise(resolve => setTimeout(resolve, 800));
+        setError('');
         
-        // In a real scenario, this would be API calls like:
-        // const response = await fetch(`/api/stats?period=${selectedPeriod}&start=${dateRange.start}&end=${dateRange.end}`);
-        // const data = await response.json();
+        // Fetch data from API endpoints
+        // Example API calls:
+        // const statsResponse = await fetch(`/api/statistics?period=${selectedPeriod}&start=${dateRange.start}&end=${dateRange.end}`);
+        // const statsData = await statsResponse.json();
         
-        // For now, we'll use our mock data
+        // For demonstration, use empty data
+        // In a real application, replace this with actual API calls
         setChartData({
-          users: mockChartData.users[selectedPeriod],
-          downloads: mockChartData.downloads[selectedPeriod],
-          revenue: mockChartData.revenue[selectedPeriod],
-          conversion: mockChartData.conversion[selectedPeriod]
+          users: [],
+          downloads: [],
+          revenue: [],
+          conversion: []
         });
-        
-        // Set current stats (latest values)
-        const latestData = {
-          users: mockChartData.users[selectedPeriod][mockChartData.users[selectedPeriod].length - 1],
-          downloads: mockChartData.downloads[selectedPeriod][mockChartData.downloads[selectedPeriod].length - 1],
-          revenue: mockChartData.revenue[selectedPeriod][mockChartData.revenue[selectedPeriod].length - 1],
-          conversion: mockChartData.conversion[selectedPeriod][mockChartData.conversion[selectedPeriod].length - 1]
-        };
-        
-        // Calculate percentage change
-        const previousData = {
-          users: mockChartData.users[selectedPeriod][0],
-          downloads: mockChartData.downloads[selectedPeriod][0],
-          revenue: mockChartData.revenue[selectedPeriod][0],
-          conversion: mockChartData.conversion[selectedPeriod][0]
-        };
-        
-        const calculateChange = (current, previous) => {
-          if (previous === 0) return 100; // If starting from zero, it's a 100% increase
-          return ((current - previous) / previous) * 100;
-        };
         
         setStats({
-          users: latestData.users,
-          usersChange: calculateChange(latestData.users, previousData.users),
-          downloads: latestData.downloads,
-          downloadsChange: calculateChange(latestData.downloads, previousData.downloads),
-          revenue: latestData.revenue,
-          revenueChange: calculateChange(latestData.revenue, previousData.revenue),
-          conversion: latestData.conversion,
-          conversionChange: calculateChange(latestData.conversion, previousData.conversion)
+          users: 0,
+          usersChange: 0,
+          downloads: 0,
+          downloadsChange: 0,
+          revenue: 0,
+          revenueChange: 0,
+          conversion: 0,
+          conversionChange: 0
         });
         
-        // Set other data
-        setTopComponents(mockTopComponents);
-        setPlanDistribution(mockPlanDistribution);
+        setTopComponents([]);
+        setPlanDistribution([]);
         
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching statistics:', error);
+        setError('Ocorreu um erro ao carregar as estatísticas. Por favor, tente novamente.');
         setIsLoading(false);
       }
     };
@@ -183,14 +176,51 @@ export default function Statistics() {
   }, [selectedPeriod, dateRange.start, dateRange.end]);
 
   // Handle custom date range submission
-  const handleDateFilterSubmit = (e) => {
+  const handleDateFilterSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real app, this would trigger a new API request with the custom date range
+    // This would trigger a new API request with the custom date range
     setSelectedPeriod("custom");
   };
 
-  // Simple chart rendering function (in a real app, you would use a chart library)
-  const renderChart = (data, type) => {
+  // Format values for different data types
+  const formatValue = useCallback((value: number, type: DataType): string => {
+    switch(type) {
+      case 'revenue':
+        return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      case 'conversion':
+        return `${value.toFixed(1)}%`;
+      default:
+        return value.toLocaleString();
+    }
+  }, []);
+
+  // Handle tooltip for chart interaction
+  const handleChartHover = useCallback((e: React.MouseEvent<HTMLDivElement>, data: number[], dataType: DataType, label: string) => {
+    if (!data || data.length === 0) return;
+    
+    const chartRect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - chartRect.left;
+    const width = chartRect.width;
+    
+    // Calculate which data point is being hovered
+    const index = Math.min(Math.floor((x / width) * data.length), data.length - 1);
+    const value = data[index];
+    
+    setActiveTooltip({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      value: formatValue(value, dataType),
+      label
+    });
+  }, [formatValue]);
+
+  const handleChartLeave = useCallback(() => {
+    setActiveTooltip(prev => ({ ...prev, visible: false }));
+  }, []);
+
+  // Simple chart rendering function with enhanced interactivity
+  const renderChart = useCallback((data: number[], type: ChartType, label: string, dataType: DataType = 'default') => {
     if (!data || data.length === 0) return null;
     
     const max = Math.max(...data);
@@ -199,7 +229,14 @@ export default function Statistics() {
     const height = 100; // Chart height in percentage
     
     return (
-      <div className={styles.chartContainer} aria-hidden="true">
+      <div 
+        className={styles.chartContainer} 
+        aria-hidden="true"
+        onMouseMove={(e) => handleChartHover(e, data, dataType, label)}
+        onMouseLeave={handleChartLeave}
+        role="img"
+        aria-label={`${label} ${type} chart`}
+      >
         {type === "line" && (
           <svg className={styles.lineChart} viewBox={`0 0 ${data.length} ${height}`} preserveAspectRatio="none">
             <path
@@ -223,6 +260,8 @@ export default function Statistics() {
                   key={i}
                   className={styles.bar}
                   style={{height: `${normalizedHeight}%`}}
+                  data-value={formatValue(val, dataType)}
+                  aria-label={`${formatValue(val, dataType)}`}
                 ></div>
               );
             })}
@@ -250,16 +289,17 @@ export default function Statistics() {
         )}
       </div>
     );
-  };
+  }, [handleChartHover, handleChartLeave, formatValue]);
 
-  // Render donut chart for plan distribution
-  const renderDonutChart = () => {
+  // Render donut chart for plan distribution with better interaction
+  const renderDonutChart = useCallback(() => {
     if (!planDistribution || planDistribution.length === 0) return null;
     
     let cumulativePercentage = 0;
+    const total = planDistribution.reduce((sum, segment) => sum + segment.percentage, 0);
     
     return (
-      <div className={styles.donutChartContainer} aria-hidden="true">
+      <div className={styles.donutChartContainer} aria-label="Gráfico de distribuição de planos">
         <div className={styles.donutChart}>
           {planDistribution.map((segment, index) => {
             const startAngle = cumulativePercentage * 3.6; // Convert to degrees (360 / 100)
@@ -283,43 +323,22 @@ export default function Statistics() {
                     Z
                   `}
                   fill={segment.color}
+                  aria-label={`${segment.name}: ${segment.percentage}%`}
+                  tabIndex={0}
                 />
               </svg>
             );
           })}
-          <div className={styles.donutHole}></div>
+          <div className={styles.donutHole}>
+            {total}%
+          </div>
         </div>
       </div>
     );
-  };
+  }, [planDistribution]);
 
-  return (
-    <div className={adminStyles.pageWrapper}>
-      <Header />
-      <div className={adminStyles.layoutContainer}>
-        <Sidebar isAdmin={true} />
-        <main className={`${adminStyles.mainContent} ${loaded ? adminStyles.loaded : ""}`}>
-          <div className={adminStyles.contentHeader}>
-            <h1 className={adminStyles.pageTitle}>Estatísticas</h1>
-            <p className={adminStyles.pageDescription}>
-              Visualize métricas e tendências da plataforma
-            </p>
-          </div>
-
-          <div className={styles.dateFilter} role="form">
-            <select 
-              className={styles.periodSelect}
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              aria-label="Selecionar período"
-            >
-              <option value="7days">Últimos 7 dias</option>
-              <option value="30days">Últimos 30 dias</option>
-              <option value="3months">Últimos 3 meses</option>
-              <option value="6months">Últimos 6 meses</option>
-              <option value="year">Último ano</option>
-              {selectedPeriod === "custom" && <option value="custom">Personalizado</option>}
-            </select>
+  // Format period label for display
+  const getPeriodLabel = useCallback((period: PeriodType): string => {
             
             <form onSubmit={handleDateFilterSubmit} className={styles.dateRangeForm}>
               <div className={styles.dateRangePicker}>
@@ -346,6 +365,10 @@ export default function Statistics() {
                 aria-label="Aplicar filtro de datas"
                 disabled={!dateRange.start || !dateRange.end}
               >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" 
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
                 Aplicar Filtro
               </button>
             </form>
@@ -354,7 +377,36 @@ export default function Statistics() {
           {isLoading ? (
             <div className={styles.loadingContainer}>
               <div className={styles.loadingSpinner}></div>
-              <p>Carregando estatísticas...</p>
+              <p>Carregando estatísticas para o período: {getPeriodLabel(selectedPeriod)}</p>
+            </div>
+          ) : error ? (
+            <div className={styles.noDataState}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0378 2.66667 10.2679 4L3.33975 16C2.56998 17.3333 3.53223 19 5.07183 19Z" 
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <h3>Erro ao carregar dados</h3>
+              <p>{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className={styles.filterButton}
+                style={{ marginTop: 'var(--spacing-md)' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 4V10H7M23 20V14H17M20.49 9C19.9828 7.56678 19.1209 6.2854 17.9845 5.27542C16.8482 4.26543 15.4745 3.55976 13.9917 3.22426C12.5089 2.88875 10.9652 2.93434 9.50481 3.35677C8.04437 3.77921 6.71475 4.56471 5.64 5.64L1 10M23 14L18.36 18.36C17.2853 19.4353 15.9556 20.2208 14.4952 20.6432C13.0348 21.0657 11.4911 21.1112 10.0083 20.7757C8.52547 20.4402 7.1518 19.7346 6.01547 18.7246C4.87913 17.7146 4.01717 16.4332 3.51 15" 
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Tentar Novamente
+              </button>
+            </div>
+          ) : chartData.users.length === 0 ? (
+            <div className={styles.noDataState}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 8V16M12 11V16M8 14V16M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <h3>Sem dados para exibir</h3>
+              <p>Não há dados disponíveis para o período selecionado. Tente selecionar outro período ou conectar a API de estatísticas.</p>
             </div>
           ) : (
             <>
@@ -362,7 +414,11 @@ export default function Statistics() {
                 <div className={styles.statsCard}>
                   <div className={styles.statsCardHeader}>
                     <h3>Usuários Registrados</h3>
-                    <button className={styles.infoButton} aria-label="Informações sobre usuários registrados">
+                    <button 
+                      className={styles.infoButton} 
+                      aria-label="Informações sobre usuários registrados"
+                      title="Total de usuários cadastrados na plataforma"
+                    >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M12 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -388,14 +444,18 @@ export default function Statistics() {
                     </div>
                   </div>
                   <div className={styles.statsChart}>
-                    {renderChart(chartData.users, "line")}
+                    {renderChart(chartData.users, "line", "Usuários", "users")}
                   </div>
                 </div>
                 
                 <div className={styles.statsCard}>
                   <div className={styles.statsCardHeader}>
                     <h3>Downloads de Componentes</h3>
-                    <button className={styles.infoButton} aria-label="Informações sobre downloads de componentes">
+                    <button 
+                      className={styles.infoButton} 
+                      aria-label="Informações sobre downloads de componentes"
+                      title="Total de componentes baixados pelos usuários"
+                    >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M12 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -421,14 +481,18 @@ export default function Statistics() {
                     </div>
                   </div>
                   <div className={styles.statsChart}>
-                    {renderChart(chartData.downloads, "line")}
+                    {renderChart(chartData.downloads, "line", "Downloads", "downloads")}
                   </div>
                 </div>
                 
                 <div className={styles.statsCard}>
                   <div className={styles.statsCardHeader}>
                     <h3>Receita Total</h3>
-                    <button className={styles.infoButton} aria-label="Informações sobre receita total">
+                    <button 
+                      className={styles.infoButton} 
+                      aria-label="Informações sobre receita total"
+                      title="Receita total gerada no período"
+                    >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M12 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -456,14 +520,18 @@ export default function Statistics() {
                     </div>
                   </div>
                   <div className={styles.statsChart}>
-                    {renderChart(chartData.revenue, "area")}
+                    {renderChart(chartData.revenue, "area", "Receita", "revenue")}
                   </div>
                 </div>
                 
                 <div className={styles.statsCard}>
                   <div className={styles.statsCardHeader}>
                     <h3>Taxa de Conversão</h3>
-                    <button className={styles.infoButton} aria-label="Informações sobre taxa de conversão">
+                    <button 
+                      className={styles.infoButton} 
+                      aria-label="Informações sobre taxa de conversão"
+                      title="Porcentagem de visitantes que se tornam assinantes"
+                    >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M12 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -489,15 +557,21 @@ export default function Statistics() {
                     </div>
                   </div>
                   <div className={styles.statsChart}>
-                    {renderChart(chartData.conversion, "bar")}
+                    {renderChart(chartData.conversion, "bar", "Taxa de Conversão", "conversion")}
                   </div>
                 </div>
               </div>
 
               <div className={styles.statsRow}>
                 <div className={styles.wideStatsCard}>
-                  <div className={styles.statsCardHeader}>
-                    <h3>Tendências de Downloads</h3>
+                  <div className={styles.cardHeader}>
+                    <h3 className={styles.cardTitle}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 8V16M12 11V16M8 14V16M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Tendências de Downloads
+                    </h3>
                     <div className={styles.cardActions}>
                       <select 
                         className={styles.chartTypeSelect}
@@ -512,14 +586,17 @@ export default function Statistics() {
                       <button 
                         className={styles.exportButton}
                         aria-label="Exportar dados"
-                        onClick={() => alert('Funcionalidade de exportação será implementada futuramente.')}
-                      >
+                        onClick={() => alert('Funcionalidade de exportação será implementada futuramente.')}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M17 8L12 3M12 3L7 8M12 3V15" 
+                            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
                         Exportar
                       </button>
                     </div>
                   </div>
                   <div className={styles.largeChart}>
-                    {renderChart(chartData.downloads, chartType)}
+                    {renderChart(chartData.downloads, chartType, "Downloads de Componentes", "downloads")}
                     <div className={styles.chartLabels}>
                       <div className={styles.chartAxisX}>
                         <span>{new Date(dateRange.start).toLocaleDateString('pt-BR')}</span>
@@ -532,12 +609,22 @@ export default function Statistics() {
 
               <div className={styles.statsRow}>
                 <div className={styles.halfStatsCard}>
-                  <div className={styles.statsCardHeader}>
-                    <h3>Componentes Mais Populares</h3>
+                  <div className={styles.cardHeader}>
+                    <h3 className={styles.cardTitle}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 4H8C5.79086 4 4 5.79086 4 8V16C4 18.2091 5.79086 20 8 20H16C18.2091 20 20 18.2091 20 16V8C20 5.79086 18.2091 4 16 4Z" 
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Componentes Mais Populares
+                    </h3>
                     <button 
                       className={styles.viewAllButton}
                       aria-label="Ver todos os componentes"
                     >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                       Ver todos
                     </button>
                   </div>
@@ -546,7 +633,11 @@ export default function Statistics() {
                       <div className={styles.statsListItem} key={component.id}>
                         <div className={styles.statsListRank}>#{index + 1}</div>
                         <div className={styles.statsListItemContent}>
-                          <div className={styles.componentPreview} style={{backgroundColor: component.color}}></div>
+                          <div 
+                            className={styles.componentPreview} 
+                            style={{backgroundColor: component.color}}
+                            title={component.name}
+                          ></div>
                           <div className={styles.statsListItemName}>{component.name}</div>
                         </div>
                         <div className={styles.statsListItemValue}>{component.downloads.toLocaleString()} downloads</div>
@@ -556,12 +647,27 @@ export default function Statistics() {
                 </div>
 
                 <div className={styles.halfStatsCard}>
-                  <div className={styles.statsCardHeader}>
-                    <h3>Usuários por Plano</h3>
+                  <div className={styles.cardHeader}>
+                    <h3 className={styles.cardTitle}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" 
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" 
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" 
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" 
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Usuários por Plano
+                    </h3>
                     <button 
                       className={styles.viewAllButton}
                       aria-label="Ver detalhes de usuários por plano"
                     >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                       Detalhes
                     </button>
                   </div>
@@ -569,7 +675,7 @@ export default function Statistics() {
                     {renderDonutChart()}
                     <div className={styles.donutLegend}>
                       {planDistribution.map((plan, index) => (
-                        <div className={styles.legendItem} key={index}>
+                        <div className={styles.legendItem} key={index} tabIndex={0}>
                           <div className={styles.legendColor} style={{backgroundColor: plan.color}}></div>
                           <div className={styles.legendLabel}>{plan.name}</div>
                           <div className={styles.legendValue}>{plan.percentage}%</div>
@@ -580,6 +686,21 @@ export default function Statistics() {
                 </div>
               </div>
             </>
+          )}
+
+          {/* Tooltip for chart interactions */}
+          {activeTooltip.visible && (
+            <div 
+              ref={tooltipRef}
+              className={`${styles.chartTooltip} ${styles.visible}`}
+              style={{
+                left: `${activeTooltip.x}px`,
+                top: `${activeTooltip.y - 40}px`,
+              }}
+            >
+              <div className={styles.tooltipLabel}>{activeTooltip.label}</div>
+              <div className={styles.tooltipValue}>{activeTooltip.value}</div>
+            </div>
           )}
         </main>
       </div>

@@ -223,85 +223,88 @@
   height: 16px;
 }
 
-/* Subscriptions Table */
+/* Table styling - Minimal version */
 .tableContainer {
   background-color: var(--surface);
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
-  margin-bottom: var(--spacing-lg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-top: var(--spacing-md);
+  border: 1px solid var(--border);
 }
 
 .subscriptionsTable {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  table-layout: fixed;
-}
-
-.subscriptionRow {
-  position: relative;
-  transition: background-color 0.2s ease;
-}
-
-.subscriptionRow:hover:not(.tableHeader) {
-  background-color: var(--surface-hover);
-}
-
-.subscriptionRow:not(.tableHeader):not(:last-child)::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: var(--spacing-md);
-  right: var(--spacing-md);
-  height: 1px;
-  background-color: var(--border);
+  border-collapse: collapse;
+  font-size: 0.875rem;
 }
 
 .tableHeader {
   background-color: var(--surface-secondary);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: left;
 }
 
 .tableCell {
-  padding: 9px var(--spacing-md);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 
 .tableHeader .tableCell {
-  color: var(--text-secondary);
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  font-size: var(--font-size-xs);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+  padding-top: 0.875rem;
+  padding-bottom: 0.875rem;
+}
+
+.sortableHeader {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.sortableHeader:hover {
+  color: var(--primary);
+}
+
+.sortIcon {
+  margin-left: 0.375rem;
+  font-size: 0.625rem;
+  color: var(--primary);
+}
+
+.subscriptionRow {
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.subscriptionRow:hover {
+  background-color: var(--surface-hover);
 }
 
 .loadingCell, .emptyCell {
-  padding: 60px var(--spacing-lg);
   text-align: center;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  padding: 1.5rem !important;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
 }
 
-.loadingCell {
-  position: relative;
-  padding-top: 100px;
+.loadingIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
 }
 
-.loadingCell::before {
-  content: '';
-  position: absolute;
-  top: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 30px;
+.loadingSpinner {
+  width: 20px;
+  height: 20px;
   border: 2px solid rgba(var(--primary-rgb), 0.2);
   border-radius: 50%;
   border-top-color: var(--primary);
@@ -309,83 +312,169 @@
 }
 
 @keyframes spin {
-  0% { transform: translateX(-50%) rotate(0deg); }
-  100% { transform: translateX(-50%) rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Status Badges */
-.statusBadge {
-  display: inline-flex;
+.emptyStateContainer {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 4px 10px;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+}
+
+.emptyIcon {
+  color: var(--text-tertiary);
+  opacity: 0.6;
+}
+
+/* Status badges - Minimal version */
+.statusBadge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  font-size: var(--font-size-xs);
+  font-size: 0.6875rem;
   font-weight: 500;
   text-transform: uppercase;
-  min-width: 70px;
-  justify-content: center;
+  letter-spacing: 0.3px;
 }
 
 .statusActive {
   background-color: rgba(16, 185, 129, 0.1);
-  color: #166534;
+  color: #10B981;
 }
 
-.statusInactive {
+.statusInactive, .statusCancelled {
   background-color: rgba(239, 68, 68, 0.1);
-  color: var(--google-red);
+  color: #EF4444;
 }
 
-.statusPending {
+.statusPending, .statusExpired {
   background-color: rgba(245, 158, 11, 0.1);
-  color: #92400e;
+  color: #F59E0B;
 }
 
-/* Action Buttons */
+/* User info styling - Minimal version */
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.userAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-light);
+  color: white;
+  font-weight: 500;
+  font-size: 0.6875rem;
+}
+
+.userName {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  margin-bottom: 0.125rem;
+}
+
+.userEmail {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Plan info styling - Minimal version */
+.planInfo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.planName {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+}
+
+.planPrice {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-tertiary);
+  background-color: var(--surface-secondary);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+}
+
+/* Date info styling - Minimal version */
+.dateInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dateValue {
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+}
+
+.expiryBadge {
+  display: inline-block;
+  font-size: 0.625rem;
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ID badge - Minimal version */
+.idBadge {
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Action buttons - Minimal version */
 .actionButtons {
   display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
+  gap: 0.375rem;
 }
 
 .actionButton {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
+  gap: 0.25rem;
+  padding: 0.3125rem 0.5rem;
   border-radius: 4px;
-  font-size: var(--font-size-xs);
+  border: none;
+  font-size: 0.6875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .editButton {
-  background-color: rgba(var(--primary-rgb), 0.1);
+  background-color: rgba(var(--primary-rgb), 0.08);
   color: var(--primary);
-  border-color: rgba(var(--primary-rgb), 0.2);
 }
 
 .editButton:hover {
   background-color: rgba(var(--primary-rgb), 0.15);
 }
 
-.detailsButton {
-  background-color: var(--surface-secondary);
-  color: var(--text-secondary);
-  border-color: var(--border);
-}
-
-.detailsButton:hover {
-  background-color: var(--surface-hover);
-  color: var(--text-primary);
-}
-
 .cancelButton {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--google-red);
-  border-color: rgba(239, 68, 68, 0.2);
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #EF4444;
 }
 
 .cancelButton:hover {
@@ -736,4 +825,41 @@
     flex-direction: column;
     gap: var(--spacing-sm);
   }
+}
+
+/* Plan tag - Super minimal version */
+.planTag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--primary);
+  background-color: rgba(var(--primary-rgb), 0.06);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Description text styling */
+.descriptionText {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Price badge - Mini price tag */
+.priceBadge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  background-color: rgba(var(--primary-rgb), 0.04);
+  color: var(--primary);
+  padding: 0.2rem 0.375rem;
+  border-radius: 4px;
+  letter-spacing: 0.2px;
+}
+
+/* Duration tag */
+.durationTag {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }

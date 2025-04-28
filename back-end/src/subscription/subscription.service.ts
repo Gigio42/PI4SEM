@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
+import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
+import { UpdatePlanDto } from './dto/update-plan.dto';
 
 @Injectable()
 export class SubscriptionService {
@@ -81,8 +83,7 @@ export class SubscriptionService {
       throw new NotFoundException('Erro ao buscar plano: ' + error.message);
     }
   }
-
-  async updatePlan(id: number, updateData: Partial<CreatePlanDto>) {
+  async updatePlan(id: number, updateData: UpdatePlanDto) {
     try {
       // Verificar se o plano existe
       const exists = await this.prisma.plan.findUnique({
@@ -112,10 +113,11 @@ export class SubscriptionService {
         data: prismaUpdateData,
       });
       
-      // Parse features JSON string back to array
+      // Parse features JSON string back to array and add active field for frontend
       return {
         ...updatedPlan,
         features: updatedPlan.features ? JSON.parse(updatedPlan.features as string) : [],
+        active: updatedPlan.isActive // Adiciona campo "active" para compatibilidade com frontend
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -193,14 +195,29 @@ export class SubscriptionService {
       if (existingSubscription) {
         throw new BadRequestException(`Usuário já possui uma assinatura ativa (ID: ${existingSubscription.id})`);
       }
-        // Criar a nova assinatura
+      
+      // Preparar os dados para a criação da assinatura
+      const startDate = createSubscriptionDto.startDate || new Date();
+      const endDate = createSubscriptionDto.endDate || this.calculateEndDate(plan.durationDays, startDate);
+      
+      // Criar a nova assinatura
       const subscription = await this.prisma.subscription.create({
         data: {
           userId: createSubscriptionDto.userId,
           planId: createSubscriptionDto.planId,
-          startDate: createSubscriptionDto.startDate || new Date(),
-          endDate: this.calculateEndDate(plan.durationDays),
-          status: 'ACTIVE',
+          startDate: startDate,
+          endDate: endDate,
+          status: createSubscriptionDto.status || 'ACTIVE',
+        },
+        include: {
+          plan: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       });
       
@@ -218,6 +235,14 @@ export class SubscriptionService {
         });
       }
       
+      // Processando o plano para o formato esperado pelo frontend
+      if (subscription.plan?.features) {
+        subscription.plan = {
+          ...subscription.plan,
+          features: JSON.parse(subscription.plan.features as string),
+        };
+      }
+      
       return subscription;
     } catch (error) {
       if (
@@ -229,9 +254,8 @@ export class SubscriptionService {
       throw new BadRequestException('Erro ao criar assinatura: ' + error.message);
     }
   }
-
-  private calculateEndDate(durationDays: number): Date {
-    const endDate = new Date();
+  private calculateEndDate(durationDays: number, startDate: Date = new Date()): Date {
+    const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + durationDays);
     return endDate;
   }
@@ -330,7 +354,6 @@ export class SubscriptionService {
       return null;
     }
   }
-
   async cancelSubscription(id: number) {
     try {
       // Verificar se a assinatura existe
@@ -348,13 +371,33 @@ export class SubscriptionService {
       }
       
       // Cancelar a assinatura
-      return await this.prisma.subscription.update({
+      const updatedSubscription = await this.prisma.subscription.update({
         where: { id },
         data: {
           status: 'CANCELLED',
           cancelDate: new Date(),
         },
+        include: {
+          plan: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
       });
+      
+      // Processando o plano para o formato esperado pelo frontend
+      if (updatedSubscription.plan?.features) {
+        updatedSubscription.plan = {
+          ...updatedSubscription.plan,
+          features: JSON.parse(updatedSubscription.plan.features as string),
+        };
+      }
+      
+      return updatedSubscription;
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -409,8 +452,7 @@ export class SubscriptionService {
   async getUserSubscription(userId: number) {
     return this.getUserSubscriptions(userId);
   }
-  
-  async renewSubscription(id: number, duration: number) {
+    async renewSubscription(id: number, duration: number) {
     try {
       const subscription = await this.prisma.subscription.findUnique({
         where: { id },
@@ -425,14 +467,34 @@ export class SubscriptionService {
       const newEndDate = new Date();
       newEndDate.setDate(newEndDate.getDate() + (duration || subscription.plan.durationDays));
       
-      return await this.prisma.subscription.update({
+      const updatedSubscription = await this.prisma.subscription.update({
         where: { id },
         data: {
           endDate: newEndDate,
           status: 'ACTIVE',
           cancelDate: null,
         },
+        include: {
+          plan: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
       });
+      
+      // Processando o plano para o formato esperado pelo frontend
+      if (updatedSubscription.plan?.features) {
+        updatedSubscription.plan = {
+          ...updatedSubscription.plan,
+          features: JSON.parse(updatedSubscription.plan.features as string),
+        };
+      }
+      
+      return updatedSubscription;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -440,8 +502,7 @@ export class SubscriptionService {
       throw new BadRequestException('Erro ao renovar assinatura: ' + error.message);
     }
   }
-  
-  async updateSubscription(id: number, updateData: any) {
+    async updateSubscription(id: number, updateData: UpdateSubscriptionDto) {
     try {
       const subscription = await this.prisma.subscription.findUnique({
         where: { id },
@@ -451,12 +512,27 @@ export class SubscriptionService {
         throw new NotFoundException(`Assinatura com ID ${id} não encontrada`);
       }
       
+      // Validar status se estiver sendo atualizado
+      if (updateData.status && !['ACTIVE', 'CANCELLED', 'EXPIRED', 'PENDING'].includes(updateData.status)) {
+        throw new BadRequestException(`Status inválido: ${updateData.status}. Use ACTIVE, CANCELLED, EXPIRED ou PENDING`);
+      }
+      
       return await this.prisma.subscription.update({
         where: { id },
         data: updateData,
+        include: {
+          plan: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
       });
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new BadRequestException('Erro ao atualizar assinatura: ' + error.message);
@@ -514,8 +590,7 @@ export class SubscriptionService {
       return [];
     }
   }
-  
-  async togglePlanStatus(id: number) {
+    async togglePlanStatus(id: number) {
     try {
       const plan = await this.prisma.plan.findUnique({
         where: { id },
@@ -525,12 +600,19 @@ export class SubscriptionService {
         throw new NotFoundException(`Plano com ID ${id} não encontrado`);
       }
       
-      return await this.prisma.plan.update({
+      const updatedPlan = await this.prisma.plan.update({
         where: { id },
         data: {
           isActive: !plan.isActive,
         },
       });
+      
+      // Parse features JSON string back to array
+      return {
+        ...updatedPlan,
+        features: updatedPlan.features ? JSON.parse(updatedPlan.features as string) : [],
+        active: updatedPlan.isActive // Adiciona campo "active" para compatibilidade com frontend
+      };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
