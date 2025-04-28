@@ -59,9 +59,13 @@ async function clearDatabase() {
 }
 
 async function createUsers() {
+  // First delete all existing users to ensure clean state
+  await prisma.user.deleteMany({});
+  
   return await prisma.user.createMany({
     data: [
       {
+        id: 1, // Explicitly set id to 1 for the admin user
         email: 'admin@uxperiment.com',
         password: '$2b$10$YeE5vy5Ka0QEHHO96uuc7cOYWt.WBCy.jkLLNogq1VXW2T1CGnXr/', // 'admin123'
         name: 'Admin User',
@@ -69,6 +73,7 @@ async function createUsers() {
         picture: 'https://ui-avatars.com/api/?name=Admin+User'
       },
       {
+        id: 2, // Explicitly set id to 2 for this user
         email: 'user@example.com',
         password: '$2b$10$owq2iiUQJOkIuAR.AKeFO.2SeYJPV5hbW85Oj0OCR5SdOrgO46IqS', // 'password123'
         name: 'John Doe',
@@ -100,33 +105,33 @@ async function createPlans() {
         name: 'Free',
         description: 'Access to basic components',
         price: 0,
-        duration: 30,
-        features: ['Access to 10 basic components', 'PDF documentation', 'Community support'],
-        active: true
+        durationDays: 30, // Changed from duration to durationDays
+        features: JSON.stringify(['Access to 10 basic components', 'PDF documentation', 'Community support']),
+        isActive: true // Changed from active to isActive
       },
       {
         name: 'Pro',
         description: 'Unlimited access to all components',
         price: 29.99,
-        duration: 30,
-        features: ['Access to all components', 'Premium support', 'Source files', 'Monthly updates'],
-        active: true
+        durationDays: 30, // Changed from duration to durationDays
+        features: JSON.stringify(['Access to all components', 'Premium support', 'Source files', 'Monthly updates']),
+        isActive: true // Changed from active to isActive
       },
       {
         name: 'Enterprise',
         description: 'Full access with team collaboration',
         price: 99.99,
-        duration: 30,
-        features: ['Everything in Pro', 'Team management', 'API access', 'Custom components', 'Priority support'],
-        active: true
+        durationDays: 30, // Changed from duration to durationDays
+        features: JSON.stringify(['Everything in Pro', 'Team management', 'API access', 'Custom components', 'Priority support']),
+        isActive: true // Changed from active to isActive
       },
       {
         name: 'Annual Pro',
         description: 'Yearly subscription with discount',
         price: 299.99,
-        duration: 365,
-        features: ['Everything in Pro', '25% discount', 'Priority support'],
-        active: true
+        durationDays: 365, // Changed from duration to durationDays
+        features: JSON.stringify(['Everything in Pro', '25% discount', 'Priority support']),
+        isActive: true // Changed from active to isActive
       }
     ]
   }).then(() => prisma.plan.findMany());
@@ -362,30 +367,112 @@ async function createSettings() {
 }
 
 async function createFavoritos(users, components) {
-  return await prisma.favorito.createMany({
-    data: [
-      {
-        userId: users[1].id,
-        componentId: components[0].id
-      },
-      {
-        userId: users[1].id,
-        componentId: components[2].id
-      },
-      {
-        userId: users[2].id,
-        componentId: components[1].id
-      },
-      {
-        userId: users[2].id,
-        componentId: components[3].id
-      },
-      {
-        userId: users[2].id,
-        componentId: components[4].id
+  try {
+    // First clear any existing favorites
+    await prisma.favorito.deleteMany({});
+    
+    // Validate that we have users and components before creating favorites
+    if (!users || users.length === 0) {
+      console.warn('No users found, skipping favorites creation');
+      return [];
+    }
+    
+    if (!components || components.length === 0) {
+      console.warn('No components found, skipping favorites creation');
+      return [];
+    }
+    
+    // Log available user and component IDs for debugging
+    console.log('Available users for favorites:', users.map(u => ({ id: u.id, name: u.name })));
+    console.log('Available components for favorites:', components.map(c => ({ id: c.id, name: c.name })));
+    
+    // Make sure we have at least one favorite for user 1 and 2
+    const favoritosData = [];
+    
+    // Verify user 1 exists before adding
+    const user1 = users.find(u => u.id === 1);
+    if (user1 && components.length > 0) {
+      favoritosData.push({
+        userId: 1, // Admin user
+        componentId: components[0].id // First component
+      });
+    }
+    
+    // Verify user 2 exists before adding
+    const user2 = users.find(u => u.id === 2);
+    if (user2 && components.length > 1) {
+      favoritosData.push({
+        userId: 2, // Regular user
+        componentId: components[1].id // Second component 
+      });
+    }
+    
+    // Add the rest of the favorites if we have enough users and components
+    if (users.length > 2 && components.length > 4) {
+      // Use existing user IDs rather than array indices
+      const user1Id = users[0].id;
+      const user2Id = users[1].id;
+      const user3Id = users[2].id;
+      
+      favoritosData.push(
+        {
+          userId: user1Id,
+          componentId: components[0].id
+        },
+        {
+          userId: user2Id,
+          componentId: components[2].id
+        },
+        {
+          userId: user3Id,
+          componentId: components[1].id
+        },
+        {
+          userId: user3Id,
+          componentId: components[3].id
+        }
+      );
+      
+      // Only add this if we have enough components
+      if (components.length > 4) {
+        favoritosData.push({
+          userId: user3Id,
+          componentId: components[4].id
+        });
       }
-    ]
-  }).then(() => prisma.favorito.findMany());
+    }
+    
+    console.log(`Creating ${favoritosData.length} favorites with data:`, JSON.stringify(favoritosData, null, 2));
+    
+    // Create the favorites
+    const result = await prisma.favorito.createMany({
+      data: favoritosData
+    });
+    
+    console.log(`Created ${result.count} favorites successfully`);
+    
+    // Return all created favorites
+    return await prisma.favorito.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        component: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error creating favorites:', error);
+    return [];
+  }
 }
 
 // Execute the seed function

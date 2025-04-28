@@ -1,22 +1,83 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "../../../src/contexts/ThemeContext";
+import { useAuth } from "../../../src/contexts/AuthContext";
 import LoginForm from "./form";
 import styles from "./login.module.css";
 
 export default function LoginPage() {
   const { isDarkMode, toggleTheme } = useTheme();
+  const { user, login } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
-
-  // Animation for page load
+  const router = useRouter();  
+  
+  // Check authentication status on load
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
     }, 100);
     
+    // Function to handle successful authentication and redirect
+    const handleAuthenticated = (userData: any) => {
+      console.log("User authenticated, redirecting to home");
+      router.push('/home');
+    };
+    
+    // Check for user_info cookie which may be set by Google OAuth
+    const userInfoCookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('user_info='));
+      
+    if (userInfoCookie) {
+      try {
+        // Parse and use the user info from the cookie
+        const userInfo = JSON.parse(decodeURIComponent(userInfoCookie.split('=')[1]));
+        console.log("Found user_info cookie, using for authentication:", userInfo);
+        
+        // Use the login function from auth context (obtained via destructuring)
+        login(userInfo);
+        
+        // Clear this cookie as we've processed it
+        document.cookie = "user_info=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        
+        // Redirect to home
+        handleAuthenticated(userInfo);
+        return () => clearTimeout(timer);
+      } catch (e) {
+        console.error("Error parsing user_info cookie:", e);
+      }
+    }
+    
+    // If user is already authenticated in context, redirect to home
+    if (user) {
+      handleAuthenticated(user);
+    } else {
+      // Check for authentication session from backend
+      fetch("http://localhost:3000/auth/session-check", {
+        credentials: "include", // Important for cookies
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.authenticated && data.user) {
+            console.log("Session check found authenticated user");
+            login(data.user); // Use the login function from destructuring
+            handleAuthenticated(data.user);
+          }
+        })
+        .catch(error => {
+          console.error("Error checking authentication:", error);
+        });
+    }
+    
     return () => clearTimeout(timer);
-  }, []);
+  }, [user, router]);
+
+  // Prevent flashing the login form if already authenticated
+  if (user) {
+    return null;
+  }
 
   return (
     <div className={`${styles.container} ${isLoaded ? styles.loaded : ""}`}>

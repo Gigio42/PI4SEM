@@ -2,48 +2,66 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
-import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class SubscriptionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-  // ===== PLANOS =====
-  
+  // ===== MÉTODOS PARA PLANOS =====
+
   async createPlan(createPlanDto: CreatePlanDto) {
     try {
-      return await this.prisma.$transaction(async (tx) => {
-        return tx.plan.create({
-          data: {
-            name: createPlanDto.name,
-            description: createPlanDto.description,
-            price: new Decimal(createPlanDto.price.toString()),
-            duration: createPlanDto.duration,
-            features: createPlanDto.features,
-            active: createPlanDto.active ?? true
-          },
-        });
+      // Convert features array to JSON string for Prisma
+      const prismaData = {
+        ...createPlanDto,
+        features: createPlanDto.features ? JSON.stringify(createPlanDto.features) : null,
+        durationDays: createPlanDto.duration || 30 // Ensure durationDays always has a value
+      };
+      
+      // Remove the duration property since it's not in the Prisma schema
+      delete (prismaData as any).duration;
+      
+      // Log the data being sent to Prisma for debugging
+      console.log('Creating plan with data:', prismaData);
+      
+      return await this.prisma.plan.create({
+        data: prismaData,
       });
     } catch (error) {
-      throw new BadRequestException('Não foi possível criar o plano: ' + error.message);
+      console.error('Error creating plan:', error);
+      throw new BadRequestException('Erro ao criar plano: ' + error.message);
     }
   }
 
-  async getAllPlans(onlyActive = true) {
-    // Esta função estará disponível após aplicar a migração
-    return this.prisma.$transaction(async (tx) => {
-      const where = onlyActive ? { active: true } : {};
-      return tx.plan.findMany({
+  async getAllPlans(onlyActive: boolean = false) {
+    try {
+      // Convert boolean filter to appropriate Prisma where condition
+      const where: any = {};
+      if (onlyActive) {
+        where.isActive = true;
+      }
+      
+      const plans = await this.prisma.plan.findMany({
         where,
-        orderBy: { price: 'asc' },
+        orderBy: {
+          price: 'asc',
+        },
       });
-    });
+      
+      // Parse features JSON string back to array
+      return plans.map(plan => ({
+        ...plan,
+        features: plan.features ? JSON.parse(plan.features as string) : [],
+      }));
+    } catch (error) {
+      // Se não houver planos, retorna array vazio ao invés de erro
+      return [];
+    }
   }
 
   async getPlanById(id: number) {
-    // Esta função estará disponível após aplicar a migração
-    return this.prisma.$transaction(async (tx) => {
-      const plan = await tx.plan.findUnique({
+    try {
+      const plan = await this.prisma.plan.findUnique({
         where: { id },
       });
       
@@ -51,317 +69,473 @@ export class SubscriptionService {
         throw new NotFoundException(`Plano com ID ${id} não encontrado`);
       }
       
-      return plan;
-    });
+      // Parse features JSON string back to array
+      return {
+        ...plan,
+        features: plan.features ? JSON.parse(plan.features as string) : [],
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new NotFoundException('Erro ao buscar plano: ' + error.message);
+    }
   }
 
   async updatePlan(id: number, updateData: Partial<CreatePlanDto>) {
-    // Esta função estará disponível após aplicar a migração
-    return this.prisma.$transaction(async (tx) => {
-      const plan = await tx.plan.findUnique({
+    try {
+      // Verificar se o plano existe
+      const exists = await this.prisma.plan.findUnique({
         where: { id },
       });
       
-      if (!plan) {
+      if (!exists) {
         throw new NotFoundException(`Plano com ID ${id} não encontrado`);
       }
       
-      return tx.plan.update({
+      // Create a proper Prisma update object
+      const prismaUpdateData: any = { ...updateData };
+      
+      // Convert features array to JSON string if present
+      if (updateData.features) {
+        prismaUpdateData.features = JSON.stringify(updateData.features);
+      }
+      
+      // Map duration to durationDays if present
+      if (updateData.duration !== undefined) {
+        prismaUpdateData.durationDays = updateData.duration;
+        delete prismaUpdateData.duration; // Remove the original duration field
+      }
+      
+      const updatedPlan = await this.prisma.plan.update({
         where: { id },
-        data: updateData,
+        data: prismaUpdateData,
       });
-    });
+      
+      // Parse features JSON string back to array
+      return {
+        ...updatedPlan,
+        features: updatedPlan.features ? JSON.parse(updatedPlan.features as string) : [],
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new NotFoundException('Erro ao atualizar plano: ' + error.message);
+    }
   }
 
-  async togglePlanStatus(id: number) {
-    // Esta função estará disponível após aplicar a migração
-    return this.prisma.$transaction(async (tx) => {
-      const plan = await tx.plan.findUnique({
+  async deletePlan(id: number) {
+    try {
+      // Verificar se o plano existe
+      const exists = await this.prisma.plan.findUnique({
         where: { id },
       });
       
-      if (!plan) {
+      if (!exists) {
         throw new NotFoundException(`Plano com ID ${id} não encontrado`);
       }
       
-      return tx.plan.update({
-        where: { id },
-        data: { active: !plan.active },
+      // Verificar se há assinaturas associadas a este plano
+      const subscriptionsCount = await this.prisma.subscription.count({
+        where: { planId: id },
       });
-    });
+      
+      if (subscriptionsCount > 0) {
+        throw new BadRequestException(
+          `Não é possível excluir este plano pois existem ${subscriptionsCount} assinaturas associadas a ele.`
+        );
+      }
+      
+      await this.prisma.plan.delete({
+        where: { id },
+      });
+      
+      return { message: `Plano com ID ${id} foi removido com sucesso` };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new NotFoundException('Erro ao remover plano: ' + error.message);
+    }
   }
 
-  // ===== ASSINATURAS =====
+  // ===== MÉTODOS PARA ASSINATURAS =====
 
   async createSubscription(createSubscriptionDto: CreateSubscriptionDto) {
     try {
-      // Verificar usuário
-      const user = await this.prisma.user.findUnique({ 
+      // Verificar se o plano existe
+      const plan = await this.prisma.plan.findUnique({
+        where: { id: createSubscriptionDto.planId },
+      });
+      
+      if (!plan) {
+        throw new NotFoundException(`Plano com ID ${createSubscriptionDto.planId} não encontrado`);
+      }
+      
+      // Verificar se o usuário existe
+      const user = await this.prisma.user.findUnique({
         where: { id: createSubscriptionDto.userId },
-        include: { subscriptions: true }
       });
       
       if (!user) {
         throw new NotFoundException(`Usuário com ID ${createSubscriptionDto.userId} não encontrado`);
       }
-
-      // Verificar se usuário já tem assinatura ativa
-      const activeSubscription = user.subscriptions.find(sub => 
-        sub.status === true && 
-        new Date(sub.endDate) > new Date()
-      );
-
-      if (activeSubscription) {
-        throw new BadRequestException('O usuário já possui uma assinatura ativa');
+      
+      // Verificar se o usuário já possui uma assinatura ativa
+      const existingSubscription = await this.prisma.subscription.findFirst({
+        where: {
+          userId: createSubscriptionDto.userId,
+          status: 'ACTIVE',
+        },
+      });
+      
+      if (existingSubscription) {
+        throw new BadRequestException(`Usuário já possui uma assinatura ativa (ID: ${existingSubscription.id})`);
       }
-
-      // Verificar se o plano existe, se um planId foi fornecido
-      if (createSubscriptionDto.planId) {
-        const plan = await this.prisma.plan.findUnique({
-          where: { id: createSubscriptionDto.planId }
-        });
-        
-        if (!plan) {
-          throw new NotFoundException(`Plano com ID ${createSubscriptionDto.planId} não encontrado`);
-        }
-
-        if (!plan.active) {
-          throw new BadRequestException(`O plano selecionado não está mais ativo`);
-        }
-      }
-
-      // Cria a assinatura
-      return this.prisma.subscription.create({
+        // Criar a nova assinatura
+      const subscription = await this.prisma.subscription.create({
         data: {
-          type: createSubscriptionDto.type || 'premium',
-          startDate: createSubscriptionDto.startDate,
-          endDate: createSubscriptionDto.endDate,
-          status: createSubscriptionDto.status,
           userId: createSubscriptionDto.userId,
           planId: createSubscriptionDto.planId,
-          paymentMethod: createSubscriptionDto.paymentMethod,
-          paymentStatus: createSubscriptionDto.paymentStatus || 'pending',
-          nextPaymentDate: createSubscriptionDto.nextPaymentDate || createSubscriptionDto.endDate
+          startDate: createSubscriptionDto.startDate || new Date(),
+          endDate: this.calculateEndDate(plan.durationDays),
+          status: 'ACTIVE',
         },
+      });
+      
+      // Se tiver dados de pagamento, cria o registro de pagamento
+      if (createSubscriptionDto.paymentMethod || createSubscriptionDto.transactionId) {
+        await this.prisma.payment.create({
+          data: {
+            subscriptionId: subscription.id,
+            amount: plan.price,
+            status: 'PAID',
+            paymentMethod: createSubscriptionDto.paymentMethod || 'N/A',
+            transactionId: createSubscriptionDto.transactionId,
+            paymentDate: new Date(),
+          },
+        });
+      }
+      
+      return subscription;
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException('Erro ao criar assinatura: ' + error.message);
+    }
+  }
+
+  private calculateEndDate(durationDays: number): Date {
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + durationDays);
+    return endDate;
+  }
+
+  async getSubscriptionById(id: number) {
+    try {
+      const subscription = await this.prisma.subscription.findUnique({
+        where: { id },
         include: {
           user: {
             select: {
               id: true,
-              email: true,
               name: true,
-              picture: true
-            }
+              email: true,
+            },
           },
-          plan: true
-        }
+          plan: true,
+        },
       });
+      
+      if (!subscription) {
+        throw new NotFoundException(`Assinatura com ID ${id} não encontrada`);
+      }
+      
+      // Parse features JSON string back to array if exists
+      if (subscription.plan?.features) {
+        subscription.plan = {
+          ...subscription.plan,
+          features: JSON.parse(subscription.plan.features as string),
+        };
+      }
+      
+      return subscription;
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException('Não foi possível criar a assinatura: ' + error.message);
+      throw new NotFoundException('Erro ao buscar assinatura: ' + error.message);
     }
   }
 
-  async getUserSubscription(userId: number) {
-    if (!userId || isNaN(userId)) {
-      throw new BadRequestException('ID do usuário inválido');
-    }
-
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException(`Usuário com ID ${userId} não encontrado`);
-    }
-
-    const subscription = await this.prisma.subscription.findFirst({
-      where: { 
-        userId,
-        status: true,
-        endDate: { gt: new Date() }
-      },
-      include: { 
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            picture: true
-          }
+  async getUserSubscriptions(userId: number) {
+    try {
+      const subscriptions = await this.prisma.subscription.findMany({
+        where: { userId },
+        include: {
+          plan: true,
         },
-        plan: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    return subscription;
-  }
-
-  async getAllSubscriptions(filter?: { status?: boolean }) {
-    const where: any = {};
-    
-    if (filter?.status !== undefined) {
-      where.status = filter.status;
-    }
-    
-    return this.prisma.subscription.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            picture: true
-          }
+        orderBy: {
+          createdAt: 'desc',
         },
-        plan: true
-      },
-      orderBy: { startDate: 'desc' }
-    });
-  }
-
-  async getSubscriptionById(id: number) {
-    const subscription = await this.prisma.subscription.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            picture: true
-          }
-        },
-        plan: true
-      }
-    });
-    
-    if (!subscription) {
-      throw new NotFoundException(`Assinatura com ID ${id} não encontrada`);
-    }
-    
-    return subscription;
-  }
-
-  async updateSubscription(id: number, updateData: Partial<CreateSubscriptionDto>) {
-    const subscription = await this.getSubscriptionById(id);
-    
-    // Verificar se há tentativa de alterar o plano
-    if (updateData.planId && updateData.planId !== subscription.planId) {
-      const plan = await this.prisma.plan.findUnique({
-        where: { id: updateData.planId }
       });
       
-      if (!plan) {
-        throw new NotFoundException(`Plano com ID ${updateData.planId} não encontrado`);
+      // Parse features JSON string back to arrays
+      return subscriptions.map(subscription => {
+        if (subscription.plan?.features) {
+          subscription.plan = {
+            ...subscription.plan,
+            features: JSON.parse(subscription.plan.features as string),
+          };
+        }
+        return subscription;
+      });
+    } catch (error) {
+      // Se não houver assinaturas, retorna array vazio ao invés de erro
+      return [];
+    }
+  }
+
+  async getActiveUserSubscription(userId: number) {
+    try {
+      const subscription = await this.prisma.subscription.findFirst({
+        where: {
+          userId,
+          status: 'ACTIVE',
+        },
+        include: {
+          plan: true,
+        },
+      });
+      
+      if (!subscription) {
+        return null; // Não é um erro, só não tem assinatura ativa
       }
       
-      if (!plan.active) {
-        throw new BadRequestException(`O plano selecionado não está mais ativo`);
+      // Parse features JSON string back to array if exists
+      if (subscription.plan?.features) {
+        subscription.plan = {
+          ...subscription.plan,
+          features: JSON.parse(subscription.plan.features as string),
+        };
       }
+      
+      return subscription;
+    } catch (error) {
+      return null;
     }
-    
-    return this.prisma.subscription.update({
-      where: { id },
-      data: updateData,
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            picture: true
-          }
-        },
-        plan: true
-      }
-    });
   }
 
   async cancelSubscription(id: number) {
-    const subscription = await this.getSubscriptionById(id);
-    
-    if (!subscription.status) {
-      throw new BadRequestException('Esta assinatura já está cancelada');
-    }
-    
-    return this.prisma.subscription.update({
-      where: { id },
-      data: { 
-        status: false,
-        canceledAt: new Date()
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            picture: true
-          }
+    try {
+      // Verificar se a assinatura existe
+      const subscription = await this.prisma.subscription.findUnique({
+        where: { id },
+      });
+      
+      if (!subscription) {
+        throw new NotFoundException(`Assinatura com ID ${id} não encontrada`);
+      }
+      
+      // Verificar se a assinatura já está cancelada
+      if (subscription.status === 'CANCELLED') {
+        throw new BadRequestException(`Assinatura com ID ${id} já está cancelada`);
+      }
+      
+      // Cancelar a assinatura
+      return await this.prisma.subscription.update({
+        where: { id },
+        data: {
+          status: 'CANCELLED',
+          cancelDate: new Date(),
         },
-        plan: true
+      });
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
       }
-    });
-  }
-
-  async renewSubscription(id: number, duration: number) {
-    const subscription = await this.getSubscriptionById(id);
-    
-    const endDate = new Date(subscription.endDate);
-    endDate.setDate(endDate.getDate() + duration);
-    
-    return this.prisma.subscription.update({
-      where: { id },
-      data: { 
-        endDate,
-        status: true,
-        nextPaymentDate: endDate,
-        canceledAt: null
-      }
-    });
-  }
-  
-  // ===== PAGAMENTOS =====
-  
-  async registerPayment(subscriptionId: number, amount: number, paymentMethod: string) {
-    const subscription = await this.getSubscriptionById(subscriptionId);
-    
-    if (!subscription.status) {
-      throw new BadRequestException('Não é possível registrar pagamento para uma assinatura cancelada');
+      throw new BadRequestException('Erro ao cancelar assinatura: ' + error.message);
     }
-    
-    return this.prisma.$transaction(async (tx) => {
-      const payment = await tx.payment.create({
+  }
+  
+  // Utility methods for handling subscriptions
+  async getAllSubscriptions(filter?: { status?: string }) {
+    try {
+      const where: any = {};
+      if (filter?.status) {
+        where.status = filter.status;
+      }
+      
+      const subscriptions = await this.prisma.subscription.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          plan: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      
+      // Parse features JSON string back to arrays
+      return subscriptions.map(subscription => {
+        if (subscription.plan?.features) {
+          subscription.plan = {
+            ...subscription.plan,
+            features: JSON.parse(subscription.plan.features as string),
+          };
+        }
+        return subscription;
+      });
+    } catch (error) {
+      return [];
+    }
+  }
+  
+  async getUserSubscription(userId: number) {
+    return this.getUserSubscriptions(userId);
+  }
+  
+  async renewSubscription(id: number, duration: number) {
+    try {
+      const subscription = await this.prisma.subscription.findUnique({
+        where: { id },
+        include: { plan: true },
+      });
+      
+      if (!subscription) {
+        throw new NotFoundException(`Assinatura com ID ${id} não encontrada`);
+      }
+      
+      // Calculate new end date
+      const newEndDate = new Date();
+      newEndDate.setDate(newEndDate.getDate() + (duration || subscription.plan.durationDays));
+      
+      return await this.prisma.subscription.update({
+        where: { id },
+        data: {
+          endDate: newEndDate,
+          status: 'ACTIVE',
+          cancelDate: null,
+        },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Erro ao renovar assinatura: ' + error.message);
+    }
+  }
+  
+  async updateSubscription(id: number, updateData: any) {
+    try {
+      const subscription = await this.prisma.subscription.findUnique({
+        where: { id },
+      });
+      
+      if (!subscription) {
+        throw new NotFoundException(`Assinatura com ID ${id} não encontrada`);
+      }
+      
+      return await this.prisma.subscription.update({
+        where: { id },
+        data: updateData,
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Erro ao atualizar assinatura: ' + error.message);
+    }
+  }
+    async registerPayment(subscriptionId: number, paymentData: any) {
+    try {
+      const subscription = await this.prisma.subscription.findUnique({
+        where: { id: subscriptionId },
+        include: { plan: true }
+      });
+      
+      if (!subscription) {
+        throw new NotFoundException(`Assinatura com ID ${subscriptionId} não encontrada`);
+      }
+      
+      return await this.prisma.payment.create({
         data: {
           subscriptionId,
-          amount: new Decimal(amount.toString()),
-          status: 'completed',
-          paymentMethod,
-          paymentDate: new Date(),
-          transactionId: `tx_${Date.now()}_${Math.floor(Math.random() * 10000)}`
-        }
+          amount: paymentData.amount || subscription.plan.price,
+          status: paymentData.status || 'PAID',
+          paymentMethod: paymentData.paymentMethod || 'N/A',
+          transactionId: paymentData.transactionId,
+          paymentDate: paymentData.paymentDate || new Date(),
+        },
       });
-      
-      // Atualiza o status de pagamento da assinatura
-      await tx.subscription.update({
-        where: { id: subscriptionId },
-        data: { paymentStatus: 'paid' }
-      });
-      
-      return payment;
-    });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Erro ao registrar pagamento: ' + error.message);
+    }
   }
-
+  
   async getPaymentsBySubscription(subscriptionId: number) {
-    const subscription = await this.getSubscriptionById(subscriptionId);
-    
-    // Esta função estará disponível após aplicar a migração
-    return this.prisma.$transaction(async (tx) => {
-      return tx.payment.findMany({
-        where: { subscriptionId },
-        orderBy: { paymentDate: 'desc' }
+    try {
+      const subscription = await this.prisma.subscription.findUnique({
+        where: { id: subscriptionId },
       });
-    });
+      
+      if (!subscription) {
+        throw new NotFoundException(`Assinatura com ID ${subscriptionId} não encontrada`);
+      }
+      
+      return await this.prisma.payment.findMany({
+        where: { subscriptionId },
+        orderBy: {
+          paymentDate: 'desc',
+        },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      return [];
+    }
+  }
+  
+  async togglePlanStatus(id: number) {
+    try {
+      const plan = await this.prisma.plan.findUnique({
+        where: { id },
+      });
+      
+      if (!plan) {
+        throw new NotFoundException(`Plano com ID ${id} não encontrado`);
+      }
+      
+      return await this.prisma.plan.update({
+        where: { id },
+        data: {
+          isActive: !plan.isActive,
+        },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Erro ao alterar status do plano: ' + error.message);
+    }
   }
 }

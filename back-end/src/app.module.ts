@@ -1,29 +1,43 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { Module, MiddlewareConsumer, RequestMethod, NestModule } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
-import { ComponentsModule } from './components/components.module';
-import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { SubscriptionModule } from './subscription/subscription.module';
-import { SettingsModule } from './settings/settings.module';
 import { FavoritosModule } from './favoritos/favoritos.module';
+import { AuthModule } from './auth/auth.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { ComponentsModule } from './components/components.module'; // Added import
+import { UsersModule } from './users/users.module'; // Added UsersModule import
+import { CorsMiddleware } from './middleware/cors.middleware';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { ConfigModule } from '@nestjs/config';
+// Import other modules as needed
 
 @Module({  imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // Torna o ConfigModule acessível globalmente
-      envFilePath: '.env', // Especifica o caminho do arquivo .env
+      isGlobal: true,
     }),
     PrismaModule,
-    UsersModule,
-    ComponentsModule,
-    AuthModule,
-    SubscriptionModule,
-    SettingsModule,
     FavoritosModule,
+    AuthModule, // This imports JwtModule and JwtAuthGuard
+    SubscriptionModule,
+    ComponentsModule, // Added ComponentsModule
+    UsersModule, // Added UsersModule to enable users endpoints
+    // Other modules
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(CorsMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}

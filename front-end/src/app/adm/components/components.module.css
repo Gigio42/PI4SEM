@@ -692,7 +692,7 @@
   height: 100%;
   width: 300px;
   background: linear-gradient(to left, rgba(var(--primary-rgb), 0.08), transparent);
-  z-index: 0;
+  z-index: -1; /* Alterado de 0 para -1 para ficar abaixo dos elementos do contêiner */
 }
 
 .pageTitle {
@@ -701,7 +701,7 @@
   color: var(--text-primary);
   margin-bottom: var(--spacing-xs);
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -716,7 +716,7 @@
   color: var(--text-secondary);
   max-width: 80%;
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -728,6 +728,8 @@
   align-items: center;
   gap: var(--spacing-md);
   flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
 }
 
 /* Enhanced Search */

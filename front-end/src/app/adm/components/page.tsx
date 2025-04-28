@@ -28,6 +28,7 @@ export default function ManageComponents() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const componentsPerPage = 8; // Changed from 10 to 8 for better grid layout
+  const [favoriteRefreshCounter, setFavoriteRefreshCounter] = useState(0);
 
   useEffect(() => {
     setLoaded(true);
@@ -145,6 +146,12 @@ export default function ManageComponents() {
   const handleComponentClick = (component: Component) => {
     setSelectedComponent(component);
     setSidebarOpen(true);
+  };
+
+  // Add a handler for when a favorite is changed in the detail view
+  const handleFavoriteChanged = (componentId: number) => {
+    // Increment the counter to trigger a refresh of all favorite buttons
+    setFavoriteRefreshCounter(prev => prev + 1);
   };
 
   const closeSidebar = () => {
@@ -354,29 +361,19 @@ export default function ManageComponents() {
                     <path d="M4 5C4 4.44772 4.44772 4 5 4H19C19.5523 4 20 4.44772 20 5V7C20 7.55228 19.5523 8 19 8H5C4.44772 8 4 7.55228 4 7V5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M4 13C4 12.4477 4.44772 12 5 12H11C11.5523 12 12 12.4477 12 13V19C12 19.5523 11.5523 20 11 20H5C4.44772 20 4 19.5523 4 19V13Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M16 13C16 12.4477 16.4477 12 17 12H19C19.5523 12 20 12.4477 20 13V19C20 19.5523 19.5523 20 19 20H17C16.4477 20 16 19.5523 16 19V13Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <h3 className={styles.emptyTitle}>Nenhum componente encontrado</h3>
+                  </svg>                  <h3 className={styles.emptyTitle}>Nenhum componente encontrado</h3>
                   <p className={styles.emptyDescription}>
                     {searchTerm || filterCategory
                       ? "Nenhum componente corresponde aos filtros aplicados. Tente ajustar sua busca."
-                      : "Você ainda não tem componentes cadastrados. Clique no botão 'Adicionar Componente' para começar."}
+                      : "Você ainda não tem componentes cadastrados."}
                   </p>
-                  <button 
-                    className={`${adminStyles.addButton} ${styles.emptyAddButton}`}
-                    onClick={handleAddComponent}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Adicionar Componente
-                  </button>
                 </div>
               ) : (
                 <>
                   <div className={styles.componentsGrid}>
                     {currentComponents.map(component => (
                       <div 
-                        key={component.id} 
+                        key={component.id}
                         className={styles.componentCard}
                         onClick={() => handleComponentClick(component)}
                       >
@@ -549,12 +546,13 @@ export default function ManageComponents() {
           )}
 
           {/* Component detail sidebar */}
-          {sidebarOpen && (
+          {sidebarOpen && selectedComponent && (
             <>
               <div className={styles.backdropOverlay} onClick={closeSidebar}></div>
               <ComponentDetail 
-                component={selectedComponent} 
-                onClose={closeSidebar} 
+                component={selectedComponent}
+                onClose={closeSidebar}
+                onFavoriteRemoved={handleFavoriteChanged}
               />
             </>
           )}

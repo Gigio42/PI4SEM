@@ -4,12 +4,11 @@
 export interface Component {
   id: number;
   name: string;
-  cssContent: string;
-  htmlContent?: string;
   category?: string;
   color?: string;
-  downloads?: number;
-  status?: 'active' | 'inactive';
+  cssContent: string;
+  htmlContent?: string;
+  imageUrl?: string; // Add this property to fix the TypeScript error
   createdAt?: Date;
   updatedAt?: Date;
 }

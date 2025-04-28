@@ -76,13 +76,12 @@ export class SubscriptionController {
       throw new BadRequestException(error.message);
     }
   }
-
   @Get()
   async getAllSubscriptions(@Query('status') status: string) {
-    const filter: { status?: boolean } = {};
+    const filter: { status?: string } = {};
     
     if (status !== undefined) {
-      filter.status = status === 'true';
+      filter.status = status; // Pass the status string directly
     }
     
     return this.subscriptionService.getAllSubscriptions(filter);
@@ -153,8 +152,7 @@ export class SubscriptionController {
   }
 
   // ===== ENDPOINTS PARA PAGAMENTOS =====
-  
-  @Post(':id/payment')
+    @Post(':id/payment')
   async registerPayment(
     @Param('id') id: string,
     @Body() data: { amount: number; paymentMethod: string }
@@ -170,8 +168,11 @@ export class SubscriptionController {
     try {
       return await this.subscriptionService.registerPayment(
         Number(id),
-        data.amount,
-        data.paymentMethod
+        {
+          amount: data.amount,
+          paymentMethod: data.paymentMethod,
+          status: 'PAID'
+        }
       );
     } catch (error) {
       if (error instanceof NotFoundException) {

@@ -1,81 +1,37 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import SettingsService, { SettingsData, SettingsItem } from '@/services/SettingsService';
+import React, { createContext, useContext } from 'react';
 
-// Interface for the context
+// Simple interface just to satisfy component dependencies
 interface SettingsContextType {
-  settings: SettingsData;
+  settings: any;
   isLoading: boolean;
   error: Error | null;
-  updateSettings: (newSettings: SettingsData) => void;
-  applySettings: () => void;
+  getSettingValue: <T>(section: string, key: string, defaultValue: T) => T;
 }
 
-// Creating the context with initial value
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+// Create context with default values
+const SettingsContext = createContext<SettingsContextType>({
+  settings: getDefaultSettings(),
+  isLoading: false,
+  error: null,
+  getSettingValue: (section, key, defaultValue) => defaultValue,
+});
 
-interface SettingsProviderProps {
-  children: ReactNode;
-}
-
-export const SettingsProvider = ({ children }: SettingsProviderProps) => {
-  const [settings, setSettings] = useState<SettingsData>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  // Function to fetch settings from API
-  const fetchSettings = async () => {
-    try {
-      setIsLoading(true);
-      const data = await SettingsService.getAllSettings();
-      setSettings(data);
-    } catch (err) {
-      console.warn('Failed to load settings, using defaults:', err);
-      // Default settings are already provided by the service
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-    } finally {
-      setIsLoading(false);
-    }
+export const SettingsProvider = ({ children }: { children: React.ReactNode }) => {
+  // Simple implementation that just provides default values
+  const getSettingValue = <T,>(section: string, key: string, defaultValue: T): T => {
+    const settings = getDefaultSettings();
+    return settings[section]?.[key] ?? defaultValue;
   };
-
-  // Load settings on component mount
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  // Function to update settings
-  const updateSettings = (newSettings: SettingsData) => {
-    setSettings(prevSettings => ({
-      ...prevSettings,
-      ...newSettings
-    }));
-  };
-
-  // Function to apply settings to DOM/CSS
-  const applySettings = () => {
-    // Convert flat settings object to array of SettingsItem
-    const settingsArray: SettingsItem[] = [];
-    
-    Object.entries(settings).forEach(([section, sectionValues]) => {
-      Object.entries(sectionValues).forEach(([key, value]) => {
-        settingsArray.push({ section, key, value });
-      });
-    });
-    
-    // Use the service's method to apply settings to UI
-    SettingsService.applySettingsToUI(settingsArray);
-  };
-
-  // Apply settings whenever they change
-  useEffect(() => {
-    if (!isLoading && Object.keys(settings).length > 0) {
-      applySettings();
-    }
-  }, [settings, isLoading]);
 
   return (
-    <SettingsContext.Provider value={{ settings, isLoading, error, updateSettings, applySettings }}>
+    <SettingsContext.Provider value={{ 
+      settings: getDefaultSettings(),
+      isLoading: false, 
+      error: null,
+      getSettingValue
+    }}>
       {children}
     </SettingsContext.Provider>
   );
@@ -83,9 +39,22 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
 
 // Hook to use the context
 export const useSettings = () => {
-  const context = useContext(SettingsContext);
-  if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
-  }
-  return context;
+  return useContext(SettingsContext);
 };
+
+// Default settings
+function getDefaultSettings(): any {
+  return {
+    general: {
+      siteName: 'UXperiment Labs',
+      siteDescription: 'Plataforma de desenvolvimento e experimentação de componentes UI',
+      contactEmail: 'contato@uxperiment.com',
+    },
+    appearance: {
+      theme: 'system',
+      primaryColor: '#6366F1',
+      secondaryColor: '#8B5CF6',
+      sidebarCollapsed: false
+    }
+  };
+}

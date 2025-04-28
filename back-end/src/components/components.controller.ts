@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Delete, Param, BadRequestException, UsePipes, ValidationPipe, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, BadRequestException, UsePipes, ValidationPipe, HttpStatus, Logger, HttpException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { ComponentsService } from './components.service';
 import { CreateComponentDto } from './dto/create-component.dto';
@@ -19,6 +19,8 @@ import { UpdateComponentDto } from './dto/update-component.dto';
 @ApiTags('Components')
 @Controller('components')
 export class ComponentsController {
+  private readonly logger = new Logger(ComponentsController.name);
+  
   constructor(private readonly componentsService: ComponentsService) {}
   @ApiOperation({ summary: 'Cria um novo componente'})
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Componente criado com sucesso' })
@@ -50,9 +52,24 @@ export class ComponentsController {
 
   @ApiOperation({ summary: 'Retorna todos os componentes'})
   @ApiResponse({ status: HttpStatus.OK, description: 'Lista de componentes retornada com sucesso' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Erro ao buscar componentes' })
   @Get()
   async getAllComponents() {
-    return this.componentsService.getAllComponents();
+    try {
+      this.logger.log('GET request received for /components');
+      const result = await this.componentsService.getAllComponents();
+      this.logger.log(`Returning ${result.length} components`);
+      // Return just the array directly, not wrapped in an object
+      return result;
+    } catch (error) {
+      this.logger.error(`Error in GET /components: ${error.message}`);
+      // Return a properly formatted error in JSON format that won't break the client
+      throw new HttpException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        error: 'Failed to fetch components',
+        message: error.message
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
   @ApiOperation({ summary: 'Deleta um componente especifico, definido pelo ID da rota' })
   @ApiParam({

@@ -1,29 +1,28 @@
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { Logger } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  const config = new DocumentBuilder()
-  .setTitle('Components API')
-  .setDescription('API para gerenciar e disponibilizar componentes CSS')
-  .setVersion('1.0')
-  .addTag('Components')
-  .build();
-
-const document = SwaggerModule.createDocument(app, config);
-SwaggerModule.setup('api', app, document);
-
-  // Habilitar CORS para o frontend
+  const logger = new Logger('Bootstrap');
+  
+  // Add cookie parser middleware
+  app.use(cookieParser());
+  
+  // Configure CORS with comprehensive settings
   app.enableCors({
-    origin: 'http://localhost:3001', // Permitir apenas o frontend
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // Permitir envio de cookies e cabeçalhos de autenticação
+    origin: ['http://localhost:3001', 'http://192.168.0.74:3001'], // Allow local network access too
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 
+                    'Cache-Control', 'cache-control', 'Pragma', 'pragma', 'Expires', 'expires'],
+    exposedHeaders: ['Set-Cookie'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   });
-
+  
   await app.listen(3000);
+  logger.log(`Application listening on port 3000 with CORS enabled for frontend origins`);
 }
 bootstrap();
-
-

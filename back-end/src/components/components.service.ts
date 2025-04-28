@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 /**
  * @Author: Dev-Ricas & Luanplays11
@@ -8,11 +8,9 @@ import { PrismaClient } from '@prisma/client';
  */
 @Injectable()
 export class ComponentsService {
-  private prisma: PrismaClient;
+  private readonly logger = new Logger(ComponentsService.name);
 
-  constructor() {
-    this.prisma = new PrismaClient();
-  }
+  constructor(private prisma: PrismaService) {}
   /**
    * Cria um novo componente CSS no banco de dados.
    * @param name - O nome do componente.
@@ -65,7 +63,21 @@ export class ComponentsService {
    * @returns Um array de objetos representando os componentes.
    */
   async getAllComponents() {
-    return this.prisma.component.findMany();
+    try {
+      this.logger.log('Fetching all components from database');
+      const components = await this.prisma.component.findMany({
+        orderBy: {
+          id: 'asc'
+        }
+      });
+      this.logger.log(`Found ${components.length} components`);
+      return components;
+    } catch (error) {
+      this.logger.error(`Error fetching components: ${error.message}`);
+      this.logger.error(`Stack trace: ${error.stack}`);
+      // Throw a more specific exception for better error handling
+      throw new Error(`Failed to fetch components: ${error.message}`);
+    }
   }
   /**
    * Exclui um componente específico pelo ID.

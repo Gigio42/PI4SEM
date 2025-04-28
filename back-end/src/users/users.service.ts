@@ -1,87 +1,119 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { createHash } from 'crypto'; // Use crypto instead of bcrypt temporarily
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async findUserByEmailAndPassword(email: string, password: string) {
-    return this.prisma.user.findFirst({
-      where: { email, password },
-    });
-  }
+  constructor(private prisma: PrismaService) {}
 
   async createUser(email: string, password: string) {
-    // Verifica se o email já está em uso
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      throw new BadRequestException('O email já está em uso.');
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email,
+          password,
+          name: email.split('@')[0], // Default name from email
+          role: 'user', // Default role
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          // Remove createdAt if it's not in your Prisma schema
+          // If you need createdAt, make sure it's defined in your schema
+        },
+      });
+      return user;
+    } catch (error) {
+      if (error.code === 'P2002') {
+        throw new Error('Este email já está em uso.');
+      }
+      throw error;
     }
+  }
 
-    return this.prisma.user.create({
-      data: { email, password },
+  async findUserByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
     });
   }
 
-  async getAllUsers() {
-    return this.prisma.user.findMany();
+  async findUserById(id: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
+    }
+
+    return user;
   }
 
-  // Adiciona uma Subscription a um usuário
-  async addSubscriptionToUser(userId: number, subscriptionData: { type: string; startDate: Date; endDate: Date; status: boolean }) {
-    // Verifica se o ID do usuário é válido
-    if (!userId || isNaN(userId)) {
-      throw new Error('ID do usuário inválido.');
-    }
+  // This method will be deprecated in favor of more secure methods
+  async findUserByEmailAndPassword(email: string, password: string) {
+    const user = await this.findUserByEmail(email);
+    if (!user) return null;
 
-    // Verifica se o usuário existe
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    // Use the crypto-based password comparison instead of bcrypt
+    const hashedInput = createHash('sha256').update(password).digest('hex');
+    const isPasswordValid = hashedInput === user.password;
+    if (!isPasswordValid) return null;
+
+    return user;
+  }
+  // Method to update Google user information after authentication
+  async updateGoogleUser(
+    googleId: string, 
+    email: string, 
+    firstName: string, 
+    picture: string, 
+    lastName?: string, 
+    displayName?: string
+  ) {
+    let user = await this.prisma.user.findUnique({
+      where: { googleId },
+    });
+
+    // Use displayName for the name if provided, otherwise use firstName
+    const name = displayName || firstName;
+
     if (!user) {
-      throw new Error(`Usuário com ID ${userId} não encontrado.`);
+      // Look up by email as fallback
+      user = await this.findUserByEmail(email);
+      if (user) {
+        // Update existing user with Google ID
+        return this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleId,
+            name: name || user.name,
+            picture: picture || user.picture,
+          },
+        });
+      }
+
+      // Create new user
+      return this.prisma.user.create({
+        data: {
+          googleId,
+          email,
+          name,
+          picture,
+          role: 'user',
+        },
+      });
     }
 
-    // Valida os dados da assinatura
-    if (!subscriptionData.type || !subscriptionData.startDate || !subscriptionData.endDate) {
-      throw new Error('Dados da assinatura incompletos.');
-    }
-
-    if (new Date(subscriptionData.startDate) >= new Date(subscriptionData.endDate)) {
-      throw new Error('A data de início deve ser anterior à data de término.');
-    }
-
-    // Cria a assinatura
-    return this.prisma.subscription.create({
+    // Update existing Google user
+    return this.prisma.user.update({
+      where: { id: user.id },
       data: {
-        ...subscriptionData,
-        userId,
+        name,
+        picture,
+        email, // Update email in case it changed
       },
     });
-  }
-
-  // Verifica se um usuário já possui uma Subscription
-  async getUserSubscription(userId: number) {
-    // Verifica se o ID do usuário é válido
-    if (!userId || isNaN(userId)) {
-      throw new Error('ID do usuário inválido.');
-    }
-
-    // Verifica se o usuário existe
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new Error(`Usuário com ID ${userId} não encontrado.`);
-    }
-
-    // Busca a assinatura do usuário
-    const subscription = await this.prisma.subscription.findFirst({
-      where: { userId },
-      include: { user: true }, // Inclui os dados do usuário
-    });
-
-    // Retorna a assinatura ou uma mensagem indicando que não há assinatura
-    if (!subscription) {
-      throw new Error(`O usuário com ID ${userId} não possui uma assinatura.`);
-    }
-
-    return subscription;
   }
 }

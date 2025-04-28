@@ -416,15 +416,28 @@
   background-color: rgba(var(--primary-rgb), 0.1);
 }
 
-.logoutLink {
-  color: var(--google-red) !important;
-  border-top: 1px solid var(--border);
-  margin-top: 8px;
+.logoutButton {
+  background: none;
+  border: none;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  padding: 0.5rem 1rem;
+  transition: background-color 0.2s;
 }
 
-.logoutLink:hover {
-  background-color: rgba(239, 68, 68, 0.1) !important;
-  color: var(--google-red) !important;
+.logoutButton:hover {
+  background-color: var(--hover-bg);
+}
+
+.logoutLink {
+  color: var(--error);
+  font-weight: 500;
 }
 
 /* Mobile menu button */
