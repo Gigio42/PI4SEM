@@ -8,19 +8,19 @@ export default function FeaturedComponents() {
       id: 1,
       title: 'Botões Modernos',
       description: 'Conjunto de botões com estilos modernos e animações suaves.',
-      image: '/images/components/buttons.png',
+      image: '/images/components/buttons.svg',
     },
     {
       id: 2,
       title: 'Cards Interativos',
       description: 'Cards com efeitos de hover e transições elegantes.',
-      image: '/images/components/cards.png',
+      image: '/images/components/cards.svg',
     },
     {
       id: 3,
       title: 'Formulários Estilizados',
       description: 'Elementos de formulário com validação e estilo personalizado.',
-      image: '/images/components/forms.png',
+      image: '/images/components/forms.svg',
     }
   ];
 

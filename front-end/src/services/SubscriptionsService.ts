@@ -108,7 +108,6 @@ class SubscriptionsServiceClass {
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
   }
-
   // Enhanced fetch method with error handling and SSR safety
   private async safeFetch(url: string, options: RequestInit = {}) {
     // Skip API calls during SSR to avoid fetch errors
@@ -123,16 +122,48 @@ class SubscriptionsServiceClass {
     }
 
     try {
-      return await fetch(url, options);
+      console.log(`Making request to: ${url}`, { 
+        method: options.method || 'GET',
+        withCredentials: options.credentials === 'include'
+      });
+      
+      // For development environment, use the proxy if URL is absolute
+      const isProduction = process.env.NODE_ENV === 'production';
+      let effectiveUrl = url;
+      
+      if (!isProduction && url.startsWith('http')) {
+        // Convert absolute URL to relative for proxy
+        try {
+          const urlObj = new URL(url);
+          // Use the path portion for the proxy
+          effectiveUrl = `/api${urlObj.pathname}${urlObj.search}`;
+          console.log(`Using proxy URL instead: ${effectiveUrl}`);
+        } catch (e) {
+          console.warn('Failed to parse URL for proxy, using original:', url);
+        }
+      }
+      
+      return await fetch(effectiveUrl, {
+        ...options,
+        // Always include these options for CORS
+        credentials: 'include',
+        headers: {
+          ...options.headers,
+          'Accept': 'application/json'
+        }
+      });
     } catch (error) {
       console.error(`Network error fetching ${url}:`, error);
+      // Provide more helpful error message for CORS issues
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.error('This appears to be a CORS or network connectivity issue.');
+      }
       throw error;
     }
   }
 
   // === Plans API ===
-  
-  // Enhanced getPlans method to handle missing tokens gracefully
+    // Enhanced getPlans method to handle missing tokens gracefully
   async getPlans(onlyActive = true) {
     try {
       const url = `${apiBaseUrl}/subscriptions/plans?onlyActive=${onlyActive}`;
@@ -179,6 +210,7 @@ class SubscriptionsServiceClass {
       if (error instanceof TypeError || 
           (error instanceof Error && 
            (error.message.includes('Failed to fetch') || 
+            error.message.includes('Network Error') ||
             error.message.includes('No token provided')))) {
         console.warn('Network or token error when fetching plans. Returning empty array.');
         return [];

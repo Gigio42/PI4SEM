@@ -9,10 +9,9 @@ async function bootstrap() {
   
   // Add cookie parser middleware
   app.use(cookieParser());
-  
-  // Configure CORS with comprehensive settings
+    // Configure CORS with comprehensive settings
   app.enableCors({
-    origin: ['http://localhost:3001', 'http://192.168.0.74:3001'], // Allow local network access too
+    origin: ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://192.168.0.74:3001'], // Added 127.0.0.1 variant
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 
