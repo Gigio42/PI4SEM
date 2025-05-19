@@ -48,18 +48,8 @@ export class FavoritosController {
   @ApiResponse({ status: 404, description: 'Favorito não encontrado' })
   findOne(@Param('id') id: string) {
     return this.favoritosService.findOne(id);
-  }
-  @Delete(':id')
+  }  @Delete('user/:userId/component/:componentId')
   @Public()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Remover um favorito pelo ID' })
-  @ApiResponse({ status: 204, description: 'Favorito removido com sucesso' })
-  @ApiResponse({ status: 404, description: 'Favorito não encontrado' })
-  remove(@Param('id') id: string) {
-    return this.favoritosService.remove(id);
-  }
-
-  @Delete('user/:userId/component/:componentId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remover um favorito pelo ID do usuário e do componente' })
   @ApiResponse({ status: 204, description: 'Favorito removido com sucesso' })
@@ -69,5 +59,15 @@ export class FavoritosController {
     @Param('componentId') componentId: string,
   ) {
     return this.favoritosService.removeByUserAndComponent(+userId, +componentId);
+  }
+
+  @Delete(':id')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remover um favorito pelo ID' })
+  @ApiResponse({ status: 204, description: 'Favorito removido com sucesso' })
+  @ApiResponse({ status: 404, description: 'Favorito não encontrado' })
+  remove(@Param('id') id: string) {
+    return this.favoritosService.remove(id);
   }
 }

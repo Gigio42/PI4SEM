@@ -11,13 +11,13 @@ export class CorsMiddleware implements NestMiddleware {
     
     // Log the request origin and path for debugging
     this.logger.log(`${req.method} request from origin: ${origin || '<no origin>'} to ${path}`);
-    
-    // Allow requests from the frontend origins
+      // Allow requests from the frontend origins
     const allowedOrigins = [
       'http://localhost:3001', 
       'http://localhost:3000', 
       'http://127.0.0.1:3001', 
-      'http://192.168.0.74:3001'
+      'http://192.168.0.74:3001',
+      process.env.FRONTEND_URL
     ];
     
     if (origin && allowedOrigins.includes(origin)) {

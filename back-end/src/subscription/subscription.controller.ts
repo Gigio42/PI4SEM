@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query, NotFoundException, BadRequestException } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
-import { CreatePlanDto } from './dto/create-plan.dto';
+import { CreatePlanDto, UpdatePlanDto } from '../plans/dto/plan.dto';
 import { Public } from '../auth/public.decorator';
 
 @Controller('subscriptions')
@@ -39,10 +39,9 @@ export class SubscriptionController {
       }
       throw new NotFoundException(error.message);
     }
-  }
-  @Patch('plans/:id')
+  }  @Patch('plans/:id')
   @Public()
-  async updatePlan(@Param('id') id: string, @Body() updateData: Partial<CreatePlanDto>) {
+  async updatePlan(@Param('id') id: string, @Body() updateData: UpdatePlanDto) {
     try {
       return await this.subscriptionService.updatePlan(Number(id), updateData);
     } catch (error) {

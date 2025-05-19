@@ -11,9 +11,8 @@ export class ComponentsService {
     try {
       // Log the API request for debugging
       console.log('Fetching components from API...');
-      
-      // Ensure the endpoint doesn't have a leading slash as api.ts adds it
-      const endpoint = 'components';
+        // Ensure the endpoint doesn't have a leading slash as api.ts adds it
+      const endpoint = '/components';
       console.log(`Requesting from endpoint: ${endpoint}`);
       
       // Try to fetch from the backend API
@@ -69,10 +68,9 @@ export class ComponentsService {
    * Obtém um componente específico pelo ID
    * @param id ID do componente
    * @returns Detalhes do componente
-   */
-  static async getComponentById(id: number): Promise<Component> {
+   */  static async getComponentById(id: number): Promise<Component> {
     try {
-      const response = await api.get(`components/${id}`);
+      const response = await api.get(`/components/${id}`);
       return response.data;
     } catch (error: unknown) {
       console.error(`Error fetching component ${id}:`, error);
@@ -91,10 +89,9 @@ export class ComponentsService {
    * Cria um novo componente
    * @param componentData Dados do componente a ser criado
    * @returns Componente criado
-   */
-  static async createComponent(componentData: Partial<Component>): Promise<Component> {
+   */  static async createComponent(componentData: Partial<Component>): Promise<Component> {
     try {
-      const response = await api.post('components', componentData);
+      const response = await api.post('/components', componentData);
       return response.data;
     } catch (error: unknown) {
       console.error('Error creating component:', error);
@@ -107,10 +104,9 @@ export class ComponentsService {
    * @param id ID do componente
    * @param componentData Dados do componente a serem atualizados
    * @returns Componente atualizado
-   */
-  static async updateComponent(id: number, componentData: Partial<Component>): Promise<Component> {
+   */  static async updateComponent(id: number, componentData: Partial<Component>): Promise<Component> {
     try {
-      const response = await api.put(`components/${id}`, componentData);
+      const response = await api.put(`/components/${id}`, componentData);
       return response.data;
     } catch (error: unknown) {
       console.error(`Error updating component ${id}:`, error);
@@ -122,10 +118,9 @@ export class ComponentsService {
    * Remove um componente
    * @param id ID do componente
    * @returns Void
-   */
-  static async deleteComponent(id: number): Promise<void> {
+   */  static async deleteComponent(id: number): Promise<void> {
     try {
-      await api.delete(`components/${id}`);
+      await api.delete(`/components/${id}`);
     } catch (error: unknown) {
       console.error(`Error deleting component ${id}:`, error);
       throw error;

@@ -7,6 +7,7 @@ import Header from "@/app/components/Header/Header";
 import Sidebar from "@/app/components/Sidebar/Sidebar";
 import ComponentDetail from "@/app/adm/components/components/ComponentDetail";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useAuth } from "@/contexts/AuthContext"; // Import the auth context
 import styles from "../components/components.module.css"; // Reuse the components page styling
 import favStyles from "./favorites.module.css";
 
@@ -17,20 +18,29 @@ export default function FavoritesPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const userId = 1; // In a real app, this would come from auth context
+  // Get the user ID from the authentication context
+  const { user } = useAuth();
+  const userId = user?.id;
   const { showToast } = useNotification();
-
   useEffect(() => {
     setLoaded(true);
-    fetchFavorites();
-  }, []);
-
+    if (userId) {
+      fetchFavorites();
+    } else {
+      setLoading(false);
+    }
+  }, [userId]);
   const fetchFavorites = async () => {
     try {
       setLoading(true);
-      const data = await FavoritosService.getFavoritosByUser(userId);
-      setFavorites(data);
-      setError(null);
+      // Ensure userId is defined before making the API call
+      if (userId) {
+        const data = await FavoritosService.getFavoritosByUser(userId);
+        setFavorites(data);
+        setError(null);
+      } else {
+        setFavorites([]);
+      }
     } catch (err) {
       setError("Falha ao carregar favoritos. Tente novamente mais tarde.");
       console.error("Erro ao buscar favoritos:", err);
@@ -68,10 +78,20 @@ export default function FavoritesPage() {
             </p>
           </div>
 
-          {loading ? (
-            <div className={styles.loadingContainer}>
+          {loading ? (            <div className={styles.loadingContainer}>
               <div className={styles.loadingSpinner}></div>
               <p>Carregando seus favoritos...</p>
+            </div>
+          ) : !userId ? (
+            <div className={styles.emptyState}>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" 
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 12H12.01M12 16H12.01M11 8H13C13.5523 8 14 7.55228 14 7V5C14 4.44772 13.5523 4 13 4H11C10.4477 4 10 4.44772 10 5V7C10 7.55228 10.4477 8 11 8Z" 
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <h3>Login necessário</h3>
+              <p>Você precisa estar logado para ver seus favoritos. Faça login para acessar esta funcionalidade.</p>
             </div>
           ) : error ? (
             <div className={styles.errorMessage}>

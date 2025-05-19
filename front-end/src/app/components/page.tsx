@@ -8,6 +8,7 @@ import Sidebar from "@/app/components/Sidebar/Sidebar";
 import ComponentDetail from "@/app/adm/components/components/ComponentDetail";
 import { useNotification } from "@/contexts/NotificationContext";
 import FavoriteButton from "@/app/components/FavoriteButton"; // Add import for the FavoriteButton component
+import { useAuth } from "@/contexts/AuthContext"; // Import the auth context
 import styles from "./components.module.css";
 
 export default function ComponentsPage() {  
@@ -21,8 +22,9 @@ export default function ComponentsPage() {
   const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const componentsPerPage = 8;
-  // ID do usuário atual (normalmente viria de um contexto de autenticação)
-  const userId = 1; // Substitua pelo ID real do usuário logado
+  // Get the user ID from the authentication context
+  const { user } = useAuth();
+  const userId = user?.id;
   const { showToast } = useNotification();
 
   useEffect(() => {
@@ -141,8 +143,7 @@ export default function ComponentsPage() {
                   >
                     <div className={styles.componentHeader}>
                       <h3 className={styles.componentName}>{component.name}</h3>
-                      
-                      {component.category && (
+                        {component.category && (
                         <span 
                           className={styles.componentCategory}
                           data-category={component.category} // Add data attribute for category-specific styling
@@ -151,12 +152,14 @@ export default function ComponentsPage() {
                         </span>
                       )}
                       
-                      <FavoriteButton 
-                        userId={userId}
-                        componentId={component.id}
-                        position="product"
-                        size="small"
-                      />
+                      {userId && ( // Only render if userId is available
+                        <FavoriteButton 
+                          userId={userId}
+                          componentId={component.id}
+                          position="product"
+                          size="small"
+                        />
+                      )}
                     </div>
                     
                     <div 
