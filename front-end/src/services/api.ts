@@ -1,17 +1,24 @@
 import axios from 'axios';
 
 // Define the correct backend API URL
-// Change this to match your actual backend server address and port
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// In development, use Next.js API route to proxy requests and avoid CORS issues
+const isProduction = process.env.NODE_ENV === 'production';
+const API_BASE_URL = isProduction 
+  ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000')
+  : '/api'; // This will use Next.js rewrites to proxy to the backend
+
+console.log('Using API URL:', API_BASE_URL, '(Environment:', process.env.NODE_ENV, ')');
 
 // Create an Axios instance with the correct base URL
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    // Add explicit CORS headers
+    'Accept': 'application/json, text/plain, */*',
   },
-  withCredentials: true,
-  timeout: 10000, // 10 second timeout
+  withCredentials: true, // Important for CORS with credentials
+  timeout: 15000, // Increased timeout to 15 seconds
 });
 
 // Add request interceptor for debugging
@@ -54,6 +61,12 @@ api.interceptors.response.use(
     } else if (error.request) {
       console.error('No response received from server. The server might be down or unreachable.');
       console.error(`Attempted to connect to: ${error.config?.baseURL}${error.config?.url}`);
+      
+      // Add CORS-specific error detection
+      if (error.message.includes('Network Error') || error.message.includes('CORS')) {
+        console.error('This appears to be a CORS error. Check that the backend server has CORS properly configured.');
+        console.error('Backend should allow origin:', window.location.origin);
+      }
     }
     return Promise.reject(error);
   }

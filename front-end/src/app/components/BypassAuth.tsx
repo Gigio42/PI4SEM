@@ -79,14 +79,14 @@ export default function BypassAuth() {
                 
                 console.log(`Using backend role: "${backendUserData.role}"`);
                 login(backendUserData);
-                console.log('Using authenticated user from backend:', backendUserData);
-              } else {
+                console.log('Using authenticated user from backend:', backendUserData);              } else {
                 // Session not valid, but still use localStorage data for limited functionality
                 console.log('Backend session not valid, using localStorage with caution');
                 login(userData);
                 
                 // If not on login page, redirect
-                if (!pathname?.includes('/login') && !pathname?.includes('/signup')) {
+                if (!pathname?.includes('/login') && !pathname?.includes('/signup') && 
+                    !pathname?.includes('/home') && pathname !== '/') {
                   router.push('/login');
                 }
               }
@@ -96,18 +96,18 @@ export default function BypassAuth() {
               login(userData);
             }
           } catch (e) {
-            console.error('Failed to parse user data from localStorage:', e);
-            localStorage.removeItem('user');
+            console.error('Failed to parse user data from localStorage:', e);            localStorage.removeItem('user');
             
             // If not on login page, redirect
-            if (!pathname?.includes('/login') && !pathname?.includes('/signup')) {
+            if (!pathname?.includes('/login') && !pathname?.includes('/signup') && 
+                !pathname?.includes('/home') && pathname !== '/') {
               router.push('/login');
             }
           }
-        } else {
-          console.log('No authenticated user found');
+        } else {          console.log('No authenticated user found');
           // If not on login page, redirect
-          if (!pathname?.includes('/login') && !pathname?.includes('/signup')) {
+          if (!pathname?.includes('/login') && !pathname?.includes('/signup') && 
+              !pathname?.includes('/home') && pathname !== '/') {
             router.push('/login');
           }
         }

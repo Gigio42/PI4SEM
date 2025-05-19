@@ -4,21 +4,31 @@ import { Request, Response, NextFunction } from 'express';
 @Injectable()
 export class CorsMiddleware implements NestMiddleware {
   private readonly logger = new Logger(CorsMiddleware.name);
-  
-  use(req: Request, res: Response, next: NextFunction) {    // Get the origin from the request
+    use(req: Request, res: Response, next: NextFunction) {    
+    // Get the origin from the request
     const origin = req.headers.origin;
+    const path = req.url || req.path || '<no path>';
     
-    // Allow requests from the frontend origins
-    const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000', 'http://127.0.0.1:3001', 'http://192.168.0.74:3001'];
+    // Log the request origin and path for debugging
+    this.logger.log(`${req.method} request from origin: ${origin || '<no origin>'} to ${path}`);
+      // Allow requests from the frontend origins
+    const allowedOrigins = [
+      'http://localhost:3001', 
+      'http://localhost:3000', 
+      'http://127.0.0.1:3001', 
+      'http://192.168.0.74:3001',
+      process.env.FRONTEND_URL
+    ];
     
     if (origin && allowedOrigins.includes(origin)) {
+      this.logger.debug(`Origin ${origin} is whitelisted`);
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else if (origin) {
+      // For development, we'll log the non-whitelisted origin but still allow it
+      this.logger.warn(`Allowing request from non-whitelisted origin: ${origin}`);
       res.setHeader('Access-Control-Allow-Origin', origin);
     } else {
-      // For development, we'll be permissive and allow any origin with credentials
-      if (origin) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        this.logger.warn(`Allowing request from non-whitelisted origin: ${origin}`);
-      }
+      this.logger.debug('No origin specified in request');
     }
     
     // Allow all common methods

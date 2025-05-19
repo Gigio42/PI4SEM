@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -13,13 +13,11 @@
     "@emotion/styled": "^11.14.0",
     "@google/generative-ai": "^0.24.0",
     "@headlessui/react": "^2.2.1",
-    "@mui/icons-material": "^7.0.2",
-    "@mui/material": "^7.0.2",
+    "@mui/icons-material": "^7.0.2",    "@mui/material": "^7.0.2",
     "@mui/x-date-pickers": "^8.1.0",
     "axios": "^1.8.4",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.6.3",
-    "front-end": "file:",
     "next": "15.2.3",
     "react": "^18.3.1",
     "react-aria": "^3.38.1",

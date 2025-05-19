@@ -581,6 +581,28 @@
   width: 48px;
 }
 
+/* Login button styling */
+.loginButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+}
+
+.loginButton:hover {
+  background-color: var(--primary-dark);
+  text-decoration: none;
+}
+
 .toggleTrack {
   position: relative;
   width: 100%;

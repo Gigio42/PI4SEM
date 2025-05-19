@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query, NotFoundException, BadRequestException } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
-import { CreatePlanDto } from './dto/create-plan.dto';
+import { CreatePlanDto, UpdatePlanDto } from '../plans/dto/plan.dto';
+import { Public } from '../auth/public.decorator';
 
 @Controller('subscriptions')
 export class SubscriptionController {
@@ -18,15 +19,16 @@ export class SubscriptionController {
         throw error;
       }
       throw new BadRequestException(error.message);
-    }
-  }
+    }  }
 
+  @Public()
   @Get('plans')
   async getAllPlans(@Query('onlyActive') onlyActive: string) {
     const showOnlyActive = onlyActive === 'true';
     return this.subscriptionService.getAllPlans(showOnlyActive);
   }
 
+  @Public()
   @Get('plans/:id')
   async getPlanById(@Param('id') id: string) {
     try {
@@ -37,10 +39,9 @@ export class SubscriptionController {
       }
       throw new NotFoundException(error.message);
     }
-  }
-
-  @Patch('plans/:id')
-  async updatePlan(@Param('id') id: string, @Body() updateData: Partial<CreatePlanDto>) {
+  }  @Patch('plans/:id')
+  @Public()
+  async updatePlan(@Param('id') id: string, @Body() updateData: UpdatePlanDto) {
     try {
       return await this.subscriptionService.updatePlan(Number(id), updateData);
     } catch (error) {
@@ -52,6 +53,7 @@ export class SubscriptionController {
   }
 
   @Patch('plans/:id/toggle')
+  @Public()
   async togglePlanStatus(@Param('id') id: string) {
     try {
       return await this.subscriptionService.togglePlanStatus(Number(id));
@@ -75,8 +77,8 @@ export class SubscriptionController {
       }
       throw new BadRequestException(error.message);
     }
-  }
-  @Get()
+  }  @Get()
+  @Public()
   async getAllSubscriptions(@Query('status') status: string) {
     const filter: { status?: string } = {};
     

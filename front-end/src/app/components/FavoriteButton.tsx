@@ -7,7 +7,7 @@ import { useNotification } from '@/contexts/NotificationContext';
 import { useFavorite } from '@/contexts/FavoriteContext';
 
 interface FavoriteButtonProps {
-  userId: number;
+  userId: number | undefined;
   componentId: number;
   size?: 'small' | 'medium' | 'large';
   position?: 'card' | 'detail' | 'standalone' | 'product';
@@ -39,9 +39,8 @@ export default function FavoriteButton({
   useEffect(() => {
     isFavoriteRef.current = isFavorite;
   }, [isFavorite]);
-
   // Generate a unique key for this component-user combination
-  const favoriteStateKey = `${userId}_${componentId}`;
+  const favoriteStateKey = userId ? `${userId}_${componentId}` : `guest_${componentId}`;
 
   // Check favorite status whenever props change or forceRefresh changes
   useEffect(() => {
@@ -73,9 +72,8 @@ export default function FavoriteButton({
     // Cleanup subscription on unmount
     return unsubscribe;
   }, [favoriteStates, favoriteStateKey, subscribeToFavoriteChanges]); // Removed isFavorite dependency
-
   const checkFavoriteStatus = async () => {
-    if (!userId || !componentId) return;
+    if (userId === undefined || !componentId) return;
     
     try {
       setIsLoading(true);
@@ -99,12 +97,11 @@ export default function FavoriteButton({
       setIsLoading(false);
     }
   };
-
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!userId || !componentId) {
+    if (userId === undefined || !componentId) {
       showToast('Você precisa estar logado para favoritar componentes', 'warning');
       return;
     }
