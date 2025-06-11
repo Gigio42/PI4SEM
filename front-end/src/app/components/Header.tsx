@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTheme } from "../../src/contexts/ThemeContext";
-import LoginForm from "../../src/app/login/form";
+import { useTheme } from "../../contexts/ThemeContext";
+import LoginForm from "../login/form";
 import styles from "./login.module.css";
 
 export default function LoginPage() {

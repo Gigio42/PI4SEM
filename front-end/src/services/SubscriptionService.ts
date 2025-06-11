@@ -3,41 +3,115 @@ import { Plan, Subscription } from '@/types/subscription';
 
 // Helper to ensure API calls have the authorization token
 const getAuthHeader = () => {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+  
   const token = localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export class SubscriptionService {  static async getPlans(): Promise<Plan[]> {
+export class SubscriptionService {
+  static async getPlans(): Promise<Plan[]> {
     try {
+      console.log('SubscriptionService: Fetching plans...');
+      
       // Include auth headers in the request
       const response = await api.get('/subscriptions/plans?onlyActive=true', {
-        headers: getAuthHeader()
+        headers: getAuthHeader(),
+        timeout: 10000 // 10 second timeout
       });
       
-      // Garante que cada plano tenha a propriedade features como um array
-      const plans = response.data.map((plan: any) => ({
-        ...plan,
-        features: Array.isArray(plan.features) ? plan.features : 
-                 (typeof plan.features === 'string' ? plan.features.split(',').map((f: string) => f.trim()) : [])
-      }));
+      console.log('SubscriptionService: Plans response received:', response.status, response.data);
       
+      if (!response.data) {
+        console.warn('SubscriptionService: No data in response');
+        return [];
+      }
+      
+      // Handle both array and object responses
+      let plansData = response.data;
+      if (!Array.isArray(plansData)) {
+        console.warn('SubscriptionService: Response is not an array:', plansData);
+        // If it's an object with a plans property, use that
+        if (plansData.plans && Array.isArray(plansData.plans)) {
+          plansData = plansData.plans;
+        } else {
+          return [];
+        }
+      }
+      
+      // Ensure each plan has the features property as an array
+      const plans = plansData.map((plan: any) => {
+        console.log('Processing plan:', plan);
+        return {
+          ...plan,
+          // Handle different feature formats
+          features: this.normalizeFeatures(plan.features),
+          // Map backend field to frontend field for consistency
+          duration: plan.durationDays || plan.duration || 30,
+          active: plan.isActive !== undefined ? plan.isActive : (plan.active !== undefined ? plan.active : true)
+        };
+      });
+      
+      console.log('SubscriptionService: Processed plans:', plans);
       return plans;
     } catch (error: unknown) {
-      console.error('Error fetching plans:', error);
+      console.error('SubscriptionService: Error fetching plans:', error);
+      
+      // Log the full error for debugging
+      if (error && typeof error === 'object') {
+        const axiosError = error as any;
+        console.error('SubscriptionService: Full error details:', {
+          message: axiosError.message,
+          status: axiosError.response?.status,
+          data: axiosError.response?.data,
+          config: axiosError.config
+        });
+      }
       
       // Instead of throwing the error, return an empty array to prevent UI errors
       return [];
     }
   }
 
+  private static normalizeFeatures(features: any): string[] {
+    if (Array.isArray(features)) {
+      return features;
+    }
+    
+    if (typeof features === 'string') {
+      try {
+        // Try to parse as JSON first
+        const parsed = JSON.parse(features);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch {
+        // If JSON parsing fails, split by comma
+        return features.split(',').map((f: string) => f.trim()).filter(Boolean);
+      }
+    }
+    
+    return [];
+  }
+
   static async getPlanById(planId: number): Promise<Plan> {
     try {
       const response = await api.get(`/subscriptions/plans/${planId}`, {
-        headers: getAuthHeader()
+        headers: getAuthHeader(),
+        timeout: 10000
       });
-      return response.data;
+      
+      const plan = response.data;
+      return {
+        ...plan,
+        features: this.normalizeFeatures(plan.features),
+        duration: plan.durationDays || plan.duration || 30,
+        active: plan.isActive !== undefined ? plan.isActive : plan.active !== undefined ? plan.active : true
+      };
     } catch (error: unknown) {
-      console.error(`Error fetching plan ${planId}:`, error);
+      console.error(`SubscriptionService: Error fetching plan ${planId}:`, error);
       throw error;
     }
   }
@@ -45,9 +119,20 @@ export class SubscriptionService {  static async getPlans(): Promise<Plan[]> {
   static async getCurrentSubscription(userId: number): Promise<Subscription | null> {
     try {
       const response = await api.get(`/subscriptions/user/${userId}`, {
-        headers: getAuthHeader()
+        headers: getAuthHeader(),
+        timeout: 10000
       });
-      return response.data;
+      
+      const subscriptions = response.data;
+      
+      // If response is an array, find the active subscription
+      if (Array.isArray(subscriptions)) {
+        const activeSubscription = subscriptions.find(sub => sub.status === 'ACTIVE');
+        return activeSubscription || null;
+      }
+      
+      // If response is a single subscription
+      return subscriptions || null;
     } catch (error: unknown) {
       // Type guard for response error
       const axiosError = error as { response?: { status?: number } };
@@ -56,11 +141,12 @@ export class SubscriptionService {  static async getPlans(): Promise<Plan[]> {
       if (axiosError.response && axiosError.response.status === 404) {
         return null;
       }
-      console.error('Error fetching user subscription:', error);
+      console.error('SubscriptionService: Error fetching user subscription:', error);
       // Return null instead of throwing to prevent UI errors
       return null;
     }
   }
+
   static async createSubscription(subscriptionData: {
     userId: number;
     planId: number;

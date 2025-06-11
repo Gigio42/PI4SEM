@@ -1,119 +1,338 @@
 .featuredSection {
-  padding: 3rem 2rem;
-  background-color: var(--background);
+  padding: 4rem 0;
+  background: var(--background);
+  position: relative;
+}
+
+.featuredSection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  opacity: 0.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
 }
 
 .sectionHeader {
   text-align: center;
-  max-width: 700px;
-  margin: 0 auto 3rem auto;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.sectionHeader::after {
+  content: '';
+  position: absolute;
+  bottom: -1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-light), var(--primary), var(--primary-dark));
+  border-radius: var(--radius-full);
 }
 
 .sectionTitle {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.2;
 }
 
 .sectionDescription {
   font-size: var(--font-size-lg);
   color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
   line-height: 1.6;
 }
 
 .componentsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
 }
 
 .componentCard {
-  background-color: var(--surface);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition);
+  background: var(--surface);
   border: 1px solid var(--border);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  border-radius: var(--radius);
+  padding: var(--spacing-xl);
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
 }
 
 .componentCard:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-md);
-  border-color: var(--primary-light);
+  border-color: rgba(var(--primary-rgb), 0.3);
 }
 
-.componentImageContainer {
-  width: 100%;
-  padding-top: 56.25%; /* 16:9 aspect ratio */
-  position: relative;
-  background-color: var(--surface-secondary);
-  overflow: hidden;
-}
-
-.componentImage {
+.componentCard::before {
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
   transition: transform 0.3s ease;
 }
 
-.componentCard:hover .componentImage {
-  transform: scale(1.05);
+.componentCard:hover::before {
+  transform: scaleX(1);
 }
 
-.componentImagePlaceholder {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--surface-secondary);
-  color: var(--text-tertiary);
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.componentInfo {
-  padding: 1.5rem;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
+.componentIcon {
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-md);
+  display: block;
+  text-align: center;
+  color: var(--primary);
+  transition: var(--transition);
 }
 
 .componentTitle {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+  transition: var(--transition);
 }
 
 .componentDescription {
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
-  flex-grow: 1;
+  line-height: 1.6;
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
 }
 
+.componentActions {
+  display: flex;
+  justify-content: center;
+}
+
+.previewButton {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--font-size-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.previewButton::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  padding-bottom: 100%;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.6s ease;
+}
+
+.previewButton:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.previewButton:hover::before {
+  transform: translate(-50%, -50%) scale(1.5);
+}
+
+.previewButton:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--surface-secondary);
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--spacing-md);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.errorIcon {
+  font-size: 3rem;
+  color: var(--google-red);
+  margin-bottom: var(--spacing-md);
+}
+
+.errorMessage {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.retryButton {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.retryButton:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* Animation for cards on scroll */
+.componentCard {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.componentCard:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.componentCard:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.componentCard:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effects */
+.componentCard:hover .componentIcon {
+  transform: scale(1.1);
+}
+
+.componentCard:hover .componentTitle {
+  color: var(--primary);
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .featuredSection {
-    padding: 2rem 1rem;
+    padding: 3rem var(--spacing-md);
   }
-
+  
+  .sectionTitle {
+    font-size: 2rem;
+  }
+  
   .componentsGrid {
-    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .componentCard {
+    padding: var(--spacing-lg);
   }
 }
+
+@media (max-width: 480px) {
+  .featuredSection {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+  
+  .sectionTitle {
+    font-size: 1.75rem;
+  }
+  
+  .componentCard {
+    padding: var(--spacing-md);
+  }
+  
+  .componentActions {
+    flex-direction: column;
+  }
+  
+  .previewButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .componentCard, .previewButton::before, .loadingSpinner {
+    animation: none;
+    transition: none;
+  }
+  
+  .componentCard {
+    opacity: 1;
+    transform: none;
+  }
+  
+  .previewButton:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .componentCard {
+    border: 2px solid var(--text-primary);
+  }
+  
+  .previewButton {
+    background: var(--text-primary);
+    border: 2px solid var(--text-primary);
+  }
+}
+  
+.previewButton {
+  background: #000;
+  border: 2px solid #000;
+}
+
+.previewButton:hover {
+  background: #333;
+}
+

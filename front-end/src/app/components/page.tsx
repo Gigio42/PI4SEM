@@ -4,14 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { Component } from "@/types/component";
 import { ComponentsService } from "@/services/ComponentsService";
 import Header from "@/app/components/Header/Header";
-import Sidebar from "@/app/components/Sidebar/Sidebar";
-import ComponentDetail from "@/app/adm/components/components/ComponentDetail";
-import { useNotification } from "@/contexts/NotificationContext";
-import FavoriteButton from "@/app/components/FavoriteButton"; // Add import for the FavoriteButton component
-import { useAuth } from "@/contexts/AuthContext"; // Import the auth context
-import styles from "./components.module.css";
+import  Sidebar  from "@/app/components/Sidebar/Sidebar";
+import ComponentCard from "@/app/components/ComponentCard/ComponentCard";
+import ComponentPreview from "@/app/components/ComponentPreview/ComponentPreview";
+import ComponentPreviewModal from "@/app/components/ComponentPreviewModal/ComponentPreviewModal";
+import styles from "./ComponentsPage.module.css";
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function ComponentsPage() {  
+export default function ComponentsPage() {
   const [loaded, setLoaded] = useState(false);
   const [components, setComponents] = useState<Component[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,39 +20,77 @@ export default function ComponentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const componentsPerPage = 8;
-  // Get the user ID from the authentication context
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const componentsPerPage = 12;
   const { user } = useAuth();
-  const userId = user?.id;
-  const { showToast } = useNotification();
 
   useEffect(() => {
     setLoaded(true);
     fetchComponents();
   }, []);
+
   const fetchComponents = async () => {
     try {
       setLoading(true);
+      setError(null);
+      console.log('🔄 Fetching components...');
+      
       const data = await ComponentsService.getAllComponents();
+      console.log('✅ Components received:', data);
+      
       setComponents(data);
       setError(null);
-    } catch (err) {
-      setError("Falha ao carregar componentes. Tente novamente mais tarde.");
-      console.error("Erro ao buscar componentes:", err);
+    } catch (err: any) {
+      console.error("❌ Erro ao buscar componentes:", err);
+      
+      let errorMessage = "Falha ao carregar componentes. Tente novamente mais tarde.";
+      
+      if (err.message?.includes('Timeout')) {
+        errorMessage = "Timeout na conexão. O servidor está demorando para responder.";
+      } else if (err.message?.includes('Erro de conexão')) {
+        errorMessage = "Erro de conexão. Verifique se o servidor está rodando.";
+      } else if (err.message?.includes('interno do servidor')) {
+        errorMessage = "Erro interno do servidor. Tente novamente em alguns minutos.";
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleComponentClick = (component: Component) => {
+  const handleComponentPreview = (component: Component) => {
     setSelectedComponent(component);
-    setSidebarOpen(true);
+    setPreviewOpen(true);
   };
 
-  const closeSidebar = () => {
-    setSidebarOpen(false);
-    setSelectedComponent(null);
+  const closePreview = () => {
+    setPreviewOpen(false);
+    setTimeout(() => setSelectedComponent(null), 300);
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleFavoriteChange = async (componentId: number, isFavorite: boolean) => {
+    // Update the local state immediately for better UX
+    setComponents(prev => prev.map(component => 
+      component.id === componentId 
+        ? { ...component, isFavorited: isFavorite }
+        : component
+    ));
+  };
+
+  const handleSidebarCollapse = (collapsed: boolean) => {
+    setSidebarCollapsed(collapsed);
   };
 
   // Filtragem e paginação
@@ -68,159 +106,74 @@ export default function ComponentsPage() {
   const currentComponents = filteredComponents.slice(indexOfFirstComponent, indexOfLastComponent);
 
   // Lista única de categorias para o filtro
-  const categories = Array.from(new Set(components.map(comp => comp.category))).filter(Boolean);
+  const categories = Array.from(new Set(components.map(comp => comp.category).filter(Boolean)));
 
   return (
     <div className={styles.pageWrapper}>
       <Header />
       <div className={styles.layoutContainer}>
-        <Sidebar />
-        <main className={`${styles.mainContent} ${loaded ? styles.loaded : ""}`}>
+        <Sidebar onCollapseChange={handleSidebarCollapse} />
+        <main className={`${styles.mainContent} ${loaded ? styles.loaded : ""} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}>
           <div className={styles.contentHeader}>
-            <h1 className={styles.pageTitle}>Componentes CSS</h1>
+            <h1 className={styles.pageTitle}>Biblioteca de Componentes</h1>
             <p className={styles.pageDescription}>
-              Explore nossa coleção de componentes CSS para seus projetos de UX/UI
+              Explore nossa coleção de componentes CSS prontos para uso em seus projetos.
             </p>
           </div>
 
           <div className={styles.filterContainer}>
-            <div className={styles.searchBox}>
-              <input 
-                type="text" 
-                placeholder="Buscar componentes..." 
+            <div className={styles.searchWrapper}>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Buscar componentes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={styles.searchInput}
               />
-              <svg className={styles.searchIcon} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
             </div>
-            
-            {categories.length > 0 && (
-              <div className={styles.filterSelect}>
-                <select 
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className={styles.categorySelect}
-                >
-                  <option value="">Todas as categorias</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))} 
-                </select>
-              </div>
-            )}
+
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className={styles.categoryFilter}
+            >
+              <option value="">Todas as categorias</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
           </div>
 
           {loading ? (
             <div className={styles.loadingContainer}>
               <div className={styles.loadingSpinner}></div>
-              <p>Carregando componentes...</p>
+              <p className={styles.loadingText}>Carregando componentes...</p>
             </div>
           ) : error ? (
-            <div className={styles.errorMessage}>              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <div className={styles.errorMessage}>
               <p>{error}</p>
-            </div>
-          ) : currentComponents.length === 0 ? (
-            <div className={styles.emptyState}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 5C4 4.44772 4.44772 4 5 4H19C19.5523 4 20 4.44772 20 5V7C20 7.55228 19.5523 8 19 8H5C4.44772 8 4 7.55228 4 7V5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M4 13C4 12.4477 4.44772 12 5 12H11C11.5523 12 12 12.4477 12 13V19C12 19.5523 11.5523 20 11 20H5C4.44772 20 4 19.5523 4 19V13Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 13C16 12.4477 16.4477 12 17 12H19C19.5523 12 20 12.4477 20 13V19C20 19.5523 19.5523 20 19 20H17C16.4477 20 16 19.5523 16 19V13Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <h3>Nenhum componente encontrado</h3>
-              <p>Não encontramos componentes com os filtros atuais. Tente ajustar sua busca.</p>
+              <button onClick={fetchComponents} className={styles.retryButton}>
+                Tentar novamente
+              </button>
             </div>
           ) : (
-            <>              <div className={styles.componentsGrid}>
-                {currentComponents.map((component) => (
-                  <div key={component.id} 
-                    className={styles.componentCard}
-                    onClick={() => handleComponentClick(component)}
-                  >
-                    <div className={styles.componentHeader}>
-                      <h3 className={styles.componentName}>{component.name}</h3>
-                        {component.category && (
-                        <span 
-                          className={styles.componentCategory}
-                          data-category={component.category} // Add data attribute for category-specific styling
-                        >
-                          {component.category}
-                        </span>
-                      )}
-                      
-                      {userId && ( // Only render if userId is available
-                        <FavoriteButton 
-                          userId={userId}
-                          componentId={component.id}
-                          position="product"
-                          size="small"
-                        />
-                      )}
-                    </div>
-                    
-                    <div 
-                      className={styles.componentPreview}
-                      style={{ 
-                        backgroundColor: component.htmlContent ? 'white' : component.color || "#6366F1",
-                        overflow: 'hidden'
-                      }}
-                    >
-                      {component.htmlContent ? (
-                        <div 
-                          className={styles.componentPreviewFrame}
-                          dangerouslySetInnerHTML={{ 
-                            __html: `<style>${component.cssContent}</style>${component.htmlContent}` 
-                          }}
-                        />
-                      ) : (
-                        <div style={{ 
-                          color: "white", 
-                          fontWeight: "bold",
-                          textShadow: "0 1px 3px rgba(0,0,0,0.3)" 
-                        }}>
-                          {component.name}
-                        </div>
-                      )}
-                      <div className={styles.previewOverlay}>
-                        <span>Clique para visualizar detalhes</span>
-                      </div>
-                    </div>
-                    
-                    <div className={styles.componentCode}>
-                      {component.cssContent.length > 150 
-                        ? `${component.cssContent.substring(0, 150)}...` 
-                        : component.cssContent}
-                    </div>
-                    
-                    <div className={styles.componentActions}>
-                      <button 
-                        className={styles.viewButton}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleComponentClick(component);
-                        }}
-                      >
-                        Ver detalhes
-                      </button>
-                      <button 
-                        className={styles.copyButton}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigator.clipboard.writeText(component.cssContent);
-                          // Poderia mostrar uma notificação de sucesso
-                        }}
-                      >
-                        Copiar CSS
-                      </button>
-                    </div>
-                  </div>
-                ))} 
+            <>
+              <div className={styles.componentsGrid}>
+                {currentComponents.map(component => (
+                  <ComponentCard
+                    key={component.id}
+                    component={component}
+                    userId={user?.id}
+                    onPreview={handleComponentPreview}
+                    showAdminActions={false}
+                    showFavorite={true}
+                    showDetailsLink={true}
+                    variant="user"
+                  />
+                ))}
               </div>
-              
+
               {totalPages > 1 && (
                 <div className={styles.pagination}>
                   <button 
@@ -249,20 +202,56 @@ export default function ComponentsPage() {
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   >
                     Próximo
-                  </button>                </div>
+                  </button>
+                </div>
               )}
             </>
           )}
 
-          {/* Component detail sidebar */}
-          {sidebarOpen && (
+          {/* ComponentPreview Sidebar */}
+          {previewOpen && selectedComponent && (
             <>
-              <div className={styles.backdropOverlay} onClick={closeSidebar}></div>
-              <ComponentDetail 
-                component={selectedComponent} 
-                onClose={closeSidebar} 
+              <div className={styles.previewSidebar}>
+                <div className={styles.previewSidebarHeader}>
+                  <h2 className={styles.previewSidebarTitle}>{selectedComponent.name}</h2>
+                  <button 
+                    className={styles.closeSidebarButton}
+                    onClick={closePreview}
+                    aria-label="Fechar preview"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className={styles.previewSidebarContent}>
+                  <ComponentPreview
+                    htmlContent={selectedComponent.htmlContent || ''}
+                    cssContent={selectedComponent.cssContent}
+                    initialMode="system"
+                    initialDevice="desktop"
+                    showCode={true}
+                    showControls={true}
+                  />
+                </div>
+              </div>
+              <div 
+                className={styles.sidebarBackdrop}
+                onClick={closePreview}
               />
             </>
+          )}
+
+          {/* Preview Modal */}
+          {selectedComponent && (
+            <ComponentPreviewModal
+              component={selectedComponent}
+              isOpen={isModalOpen}
+              onClose={closeModal}
+              userId={user?.id}
+              onFavoriteChange={() => handleFavoriteChange(selectedComponent.id, !selectedComponent.isFavorited)}
+            />
           )}
         </main>
       </div>

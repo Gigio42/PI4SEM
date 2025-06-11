@@ -1,68 +1,83 @@
-import { Controller, Get, Post, Delete, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, ParseIntPipe, Logger, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FavoritosService } from './favoritos.service';
-import { CreateFavoritoDto } from './dto/create-favorito.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Public } from '../auth/public.decorator';
 
-@ApiTags('favoritos')
+interface CreateFavoritoDto {
+  userId: number;
+  componentId: number;
+}
+
 @Controller('favoritos')
 export class FavoritosController {
+  private readonly logger = new Logger(FavoritosController.name);
+
   constructor(private readonly favoritosService: FavoritosService) {}
+
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Adicionar um componente aos favoritos' })
-  @ApiResponse({ status: 201, description: 'O favorito foi adicionado com sucesso' })
-  @ApiResponse({ status: 404, description: 'Usuário ou componente não encontrado' })
-  create(@Body() createFavoritoDto: CreateFavoritoDto) {
+  @ApiResponse({ status: 201, description: 'Favorito adicionado com sucesso' })
+  async create(@Body() createFavoritoDto: CreateFavoritoDto) {
+    this.logger.log(`Adding favorite: user ${createFavoritoDto.userId}, component ${createFavoritoDto.componentId}`);
     return this.favoritosService.create(createFavoritoDto);
   }
+
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Obter todos os favoritos' })
   @ApiResponse({ status: 200, description: 'Lista de todos os favoritos' })
   findAll() {
     return this.favoritosService.findAll();
   }
-  @Get('user/:userId')
-  @Public()
-  @ApiOperation({ summary: 'Obter todos os favoritos de um usuário' })
-  @ApiResponse({ status: 200, description: 'Lista de favoritos do usuário' })
-  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
-  findByUser(@Param('userId') userId: string) {
-    return this.favoritosService.findByUser(+userId);
-  }
-  @Get('check/:userId/:componentId')
-  @Public()
-  @ApiOperation({ summary: 'Verificar se um componente é favorito de um usuário' })
-  @ApiResponse({ status: 200, description: 'Status do favorito' })
-  checkIsFavorite(
-    @Param('userId') userId: string,
-    @Param('componentId') componentId: string,
-  ) {
-    return this.favoritosService.checkIsFavorite(+userId, +componentId);
-  }
+
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Obter um favorito pelo ID' })
   @ApiResponse({ status: 200, description: 'Detalhes do favorito' })
   @ApiResponse({ status: 404, description: 'Favorito não encontrado' })
   findOne(@Param('id') id: string) {
     return this.favoritosService.findOne(id);
-  }  @Delete('user/:userId/component/:componentId')
-  @Public()
+  }
+
+  @Get('user/:userId')
+  @ApiOperation({ summary: 'Obter favoritos de um usuário' })
+  @ApiResponse({ status: 200, description: 'Lista de favoritos do usuário' })
+  async findByUser(@Param('userId', ParseIntPipe) userId: number) {
+    this.logger.log(`Getting favorites for user ${userId}`);
+    return this.favoritosService.findByUser(userId);
+  }
+
+  @Get('user/:userId/components')
+  @ApiOperation({ summary: 'Obter favoritos de um usuário com detalhes dos componentes' })
+  @ApiResponse({ status: 200, description: 'Lista de favoritos com componentes' })
+  async getUserFavoritesWithComponents(@Param('userId', ParseIntPipe) userId: number) {
+    this.logger.log(`Getting favorites with components for user ${userId}`);
+    return this.favoritosService.getUserFavoritesWithComponents(userId);
+  }
+
+  @Get('check/:componentId/:userId')
+  @ApiOperation({ summary: 'Verificar se um componente é favorito de um usuário' })
+  @ApiResponse({ status: 200, description: 'Status do favorito' })
+  async checkIsFavorite(
+    @Param('componentId', ParseIntPipe) componentId: number,
+    @Param('userId', ParseIntPipe) userId: number
+  ) {
+    this.logger.log(`Checking favorite: user ${userId}, component ${componentId}`);
+    const isFavorite = await this.favoritosService.checkIsFavorite(userId, componentId);
+    return { isFavorite };
+  }
+
+  @Delete(':componentId/:userId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Remover um favorito pelo ID do usuário e do componente' })
+  @ApiOperation({ summary: 'Remover um favorito pelo ID do componente e usuário' })
   @ApiResponse({ status: 204, description: 'Favorito removido com sucesso' })
   @ApiResponse({ status: 404, description: 'Favorito não encontrado' })
-  removeByUserAndComponent(
-    @Param('userId') userId: string,
-    @Param('componentId') componentId: string,
+  async removeByUserAndComponent(
+    @Param('componentId', ParseIntPipe) componentId: number,
+    @Param('userId', ParseIntPipe) userId: number
   ) {
-    return this.favoritosService.removeByUserAndComponent(+userId, +componentId);
+    this.logger.log(`Removing favorite: user ${userId}, component ${componentId}`);
+    return this.favoritosService.removeByUserAndComponent(userId, componentId);
   }
 
   @Delete(':id')
-  @Public()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remover um favorito pelo ID' })
   @ApiResponse({ status: 204, description: 'Favorito removido com sucesso' })

@@ -19,7 +19,15 @@ class ComponentsService {
   async getAllComponents(): Promise<Component[]> {
     try {
       const response = await axios.get(`${this.apiUrl}/components`);
-      return response.data;
+      
+      // Garantir que todos os componentes tenham campos obrigatórios
+      const components = Array.isArray(response.data) ? response.data : [];
+      return components.map(component => ({
+        ...component,
+        htmlContent: component.htmlContent || '',
+        category: component.category || 'Outros',
+        color: component.color || '#6366F1'
+      }));
     } catch (error) {
       console.error('Error fetching components:', error);
       throw error;
@@ -34,7 +42,14 @@ class ComponentsService {
       // Registrar visualização do componente
       this.trackComponentView(id);
       
-      return response.data;
+      // Garantir que o componente tenha todos os campos necessários
+      const component = response.data;
+      return {
+        ...component,
+        htmlContent: component.htmlContent || '',
+        category: component.category || 'Outros',
+        color: component.color || '#6366F1'
+      };
     } catch (error) {
       console.error(`Error fetching component ${id}:`, error);
       throw error;
@@ -45,7 +60,15 @@ class ComponentsService {
   async getComponentsByCategory(category: string): Promise<Component[]> {
     try {
       const response = await axios.get(`${this.apiUrl}/components/category/${category}`);
-      return response.data;
+      
+      // Garantir que todos os componentes tenham campos obrigatórios
+      const components = Array.isArray(response.data) ? response.data : [];
+      return components.map(component => ({
+        ...component,
+        htmlContent: component.htmlContent || '',
+        category: component.category || 'Outros',
+        color: component.color || '#6366F1'
+      }));
     } catch (error) {
       console.error(`Error fetching components by category ${category}:`, error);
       throw error;

@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/s
 import { ComponentsService } from './components.service';
 import { CreateComponentDto } from './dto/create-component.dto';
 import { UpdateComponentDto } from './dto/update-component.dto';
+import { Public } from '../auth/public.decorator';
 
 /**
  * @Author: Dev-Ricas & Luanplays11
@@ -36,7 +37,6 @@ export class ComponentsController {
       createComponentDto.htmlContent
     );
   }
-
   @ApiOperation({ summary: 'Retorna um componente especifico, definido pelo ID da rota'})
   @ApiParam({
    name: 'id',
@@ -45,14 +45,15 @@ export class ComponentsController {
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Componente encontrado' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Componente não encontrado' })
+  @Public()
   @Get(':id')
   async getComponentById(@Param('id') id: string){
     return this.componentsService.getComponentById(id);
   }
-
   @ApiOperation({ summary: 'Retorna todos os componentes'})
   @ApiResponse({ status: HttpStatus.OK, description: 'Lista de componentes retornada com sucesso' })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Erro ao buscar componentes' })
+  @Public()
   @Get()
   async getAllComponents() {
     try {

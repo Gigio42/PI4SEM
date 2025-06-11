@@ -157,4 +157,107 @@ export class UsersService {
       newUsersThisMonth
     };
   }
+
+  async getAllUsers() {
+    try {
+      const users = await this.prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          picture: true,
+          googleId: true,
+          createdAt: true,
+          lastLogin: true,
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      // Transform the data to match frontend expectations
+      return users.map(user => ({
+        id: user.id.toString(),
+        name: user.name || user.email.split('@')[0],
+        email: user.email,
+        role: user.role as 'user' | 'admin',
+        status: 'active', // You might want to add a status field to your schema
+        signupDate: user.createdAt.toISOString(),
+        lastLogin: user.lastLogin?.toISOString(),
+        picture: user.picture,
+        initials: this.generateInitials(user.name || user.email.split('@')[0])
+      }));
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+  }
+
+  async updateUserRole(id: number, role: 'user' | 'admin') {
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: { role },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          picture: true,
+          createdAt: true,
+          lastLogin: true,
+        }
+      });
+
+      return {
+        id: updatedUser.id.toString(),
+        name: updatedUser.name || updatedUser.email.split('@')[0],
+        email: updatedUser.email,
+        role: updatedUser.role as 'user' | 'admin',
+        status: 'active',
+        signupDate: updatedUser.createdAt.toISOString(),
+        lastLogin: updatedUser.lastLogin?.toISOString(),
+        initials: this.generateInitials(updatedUser.name || updatedUser.email.split('@')[0])
+      };
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
+      }
+      throw error;
+    }
+  }
+
+  async updateUserStatus(id: number, status: 'active' | 'inactive') {
+    try {
+      // Since we don't have a status field in the schema yet, we'll simulate this
+      // You might want to add a status field to your User model in Prisma
+      const user = await this.findUserById(id);
+      
+      // For now, we'll just return the user data with the requested status
+      // In a real implementation, you'd update the status field in the database
+      return {
+        id: user.id.toString(),
+        name: user.name || user.email.split('@')[0],
+        email: user.email,
+        role: user.role as 'user' | 'admin',
+        status: status,
+        signupDate: user.createdAt?.toISOString() || new Date().toISOString(),
+        lastLogin: user.lastLogin?.toISOString(),
+        initials: this.generateInitials(user.name || user.email.split('@')[0])
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private generateInitials(name: string): string {
+    if (!name) return '??';
+    
+    const nameParts = name.split(' ').filter(part => part.length > 0);
+    if (nameParts.length === 0) return '?';
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    
+    return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+  }
 }

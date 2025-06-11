@@ -4,8 +4,8 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { useRouter } from 'next/navigation';
 import { apiBaseUrl } from '../services/config';
 
-// Define the User type
-type User = {
+// Define the User type and export it
+export type User = {
   id: number;
   name: string;
   email: string;

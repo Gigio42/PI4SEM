@@ -17,7 +17,7 @@ const api = axios.create({
     // Add explicit CORS headers
     'Accept': 'application/json, text/plain, */*',
   },
-  withCredentials: true, // Important for CORS with credentials
+  withCredentials: false, // Set to false when using proxy
   timeout: 15000, // Increased timeout to 15 seconds
 });
 
@@ -50,14 +50,29 @@ api.interceptors.response.use(
   },
   error => {
     console.error('API Error:', error.message);
-    // Add more detailed error handling
-    if (error.response) {
+    
+    // Enhanced error handling for specific error types
+    if (error.code === 'ECONNABORTED') {
+      console.error('Request timeout - server took too long to respond');
+      error.message = 'Request timeout. The server is taking too long to respond.';
+    } else if (error.response) {
       const contentType = error.response.headers['content-type'];
       if (contentType && contentType.includes('text/html')) {
         console.error('Received HTML error response instead of JSON. Check if API URL is pointing to the backend server.');
       }
       
       console.error(`Error Response: Status ${error.response.status}`, error.response.data);
+      
+      // Don't modify error messages for 500 errors to preserve debugging info
+      if (error.response.status === 500) {
+        console.error('Internal server error. This might indicate missing API endpoints.');
+      } else if (error.response.status === 404) {
+        console.error('Resource not found. API endpoint might not be implemented yet.');
+      } else if (error.response.status === 403) {
+        error.message = 'Access denied. Please check your permissions.';
+      } else if (error.response.status === 401) {
+        error.message = 'Authentication required. Please log in.';
+      }
     } else if (error.request) {
       console.error('No response received from server. The server might be down or unreachable.');
       console.error(`Attempted to connect to: ${error.config?.baseURL}${error.config?.url}`);
@@ -65,9 +80,11 @@ api.interceptors.response.use(
       // Add CORS-specific error detection
       if (error.message.includes('Network Error') || error.message.includes('CORS')) {
         console.error('This appears to be a CORS error. Check that the backend server has CORS properly configured.');
-        console.error('Backend should allow origin:', window.location.origin);
+        console.error('Backend should allow origin:', window?.location?.origin || 'unknown');
+        error.message = 'Network error. Please check your connection and try again.';
       }
     }
+    
     return Promise.reject(error);
   }
 );

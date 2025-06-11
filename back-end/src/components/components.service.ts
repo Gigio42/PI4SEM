@@ -25,7 +25,7 @@ export class ComponentsService {
       data: {
         name,
         cssContent,
-        htmlContent,
+        htmlContent: htmlContent || '', // Garantir que htmlContent nunca seja null
         category: category || 'Outros',
         color: color || '#6366F1', // Cor padrão se não for fornecida
       },
@@ -70,8 +70,17 @@ export class ComponentsService {
           id: 'asc'
         }
       });
-      this.logger.log(`Found ${components.length} components`);
-      return components;
+      
+      // Garantir que todos os componentes tenham campos obrigatórios
+      const normalizedComponents = components.map(component => ({
+        ...component,
+        htmlContent: component.htmlContent || '',
+        category: component.category || 'Outros',
+        color: component.color || '#6366F1'
+      }));
+      
+      this.logger.log(`Found ${normalizedComponents.length} components`);
+      return normalizedComponents;
     } catch (error) {
       this.logger.error(`Error fetching components: ${error.message}`);
       this.logger.error(`Stack trace: ${error.stack}`);

@@ -21,11 +21,18 @@ export default function Home() {
     const fetchPlans = async () => {
       try {
         setLoading(true);
+        console.log("🏠 Home: Starting to fetch plans...");
+        
         const plansData = await SubscriptionService.getPlans();
         
+        console.log("🏠 Home: Plans received:", plansData);
+        console.log("🏠 Home: Plans count:", plansData?.length || 0);
+        
         // Add UI highlight to middle/recommended plan
-        if (plansData?.length > 0) {
-          const sortedPlans = [...plansData].sort((a, b) => a.price - b.price);
+        if (plansData && Array.isArray(plansData) && plansData.length > 0) {
+          console.log("🏠 Home: Processing plans...");
+          
+          const sortedPlans = [...plansData].sort((a, b) => (a.price || 0) - (b.price || 0));
           const highlightIndex = sortedPlans.length === 2 ? 1 : Math.floor(sortedPlans.length / 2);
           
           const enhancedPlans = sortedPlans.map((plan, index) => ({
@@ -33,10 +40,16 @@ export default function Home() {
             highlighted: index === highlightIndex
           }));
           
+          console.log("🏠 Home: Enhanced plans:", enhancedPlans);
           setPlans(enhancedPlans);
+          console.log("🏠 Home: Plans set successfully");
+        } else {
+          console.log("🏠 Home: No valid plans data received");
+          setPlans([]);
         }
       } catch (error) {
-        console.error('Error fetching plans:', error);
+        console.error('🏠 Home: Error fetching plans:', error);
+        setPlans([]); // Set empty array to prevent UI breakage
       } finally {
         setLoading(false);
       }
@@ -46,10 +59,13 @@ export default function Home() {
     const checkSubscription = async () => {
       if (isAuthenticated && user?.id) {
         try {
+          console.log("🏠 Home: Checking user subscription...");
           const subscription = await SubscriptionService.getCurrentSubscription(user.id);
           setHasActiveSubscription(!!subscription);
+          console.log("🏠 Home: Subscription check complete:", !!subscription);
         } catch (error) {
-          console.error('Error checking subscription:', error);
+          console.error('🏠 Home: Error checking subscription:', error);
+          setHasActiveSubscription(false);
         }
       }
     };
@@ -139,52 +155,58 @@ export default function Home() {
               </div>
             ) : plans.length > 0 ? (
               <div className={styles.plansGrid}>
-                {plans.map(plan => (
-                  <div 
-                    key={plan.id}
-                    className={`${styles.planCard} ${plan.highlighted ? styles.highlightedPlan : ''}`}
-                  >
-                    {plan.highlighted && (
-                      <div className={styles.recommendedBadge}>Recomendado</div>
-                    )}
-                    
-                    <h3 className={styles.planName}>{plan.name}</h3>
-                    
-                    <div className={styles.planPrice}>
-                      <span>{plan.price.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}</span>
-                      <span className={styles.planPeriod}>
-                        /{plan.duration === 30 ? 'mês' : 
-                          plan.duration === 365 ? 'ano' : 
-                          `${plan.duration} dias`}
-                      </span>
-                    </div>
-                    
-                    <ul className={styles.featuresList}>
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className={styles.featureItem}>
-                          <svg className={styles.checkIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    
-                    <button 
-                      className={styles.selectPlanButton}
-                      onClick={() => handleSelectPlan(plan.id)}
+                {plans.map(plan => {
+                  console.log("🏠 Rendering plan:", plan);
+                  return (
+                    <div 
+                      key={plan.id}
+                      className={`${styles.planCard} ${plan.highlighted ? styles.highlightedPlan : ''}`}
                     >
-                      Assinar Agora
-                    </button>
-                  </div>
-                ))}
+                      {plan.highlighted && (
+                        <div className={styles.recommendedBadge}>Recomendado</div>
+                      )}
+                      
+                      <h3 className={styles.planName}>{plan.name}</h3>
+                      
+                      <div className={styles.planPrice}>
+                        <span>{(plan.price || 0).toLocaleString('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        })}</span>
+                        <span className={styles.planPeriod}>
+                          /{plan.duration === 30 ? 'mês' : 
+                            plan.duration === 365 ? 'ano' : 
+                            `${plan.duration} dias`}
+                        </span>
+                      </div>
+                      
+                      <ul className={styles.featuresList}>
+                        {(plan.features || []).map((feature, index) => (
+                          <li key={index} className={styles.featureItem}>
+                            <svg className={styles.checkIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      
+                      <button 
+                        className={styles.selectPlanButton}
+                        onClick={() => handleSelectPlan(plan.id)}
+                      >
+                        Assinar Agora
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className={styles.emptyState}>
                 <p>Nenhum plano disponível no momento.</p>
+                <button onClick={() => window.location.reload()} style={{marginTop: '10px'}}>
+                  Tentar Novamente
+                </button>
               </div>
             )}
           </div>

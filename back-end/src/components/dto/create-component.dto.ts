@@ -24,6 +24,7 @@ export class CreateComponentDto {
     description: 'Conteúdo HTML do componente',
     example: '<button class="btn">Click me</button>',
     required: false,
+    default: '',
   })
   @IsString({ message: 'O conteúdo HTML deve ser uma string' })
   htmlContent?: string;
@@ -32,6 +33,7 @@ export class CreateComponentDto {
     description: 'Categoria do componente',
     example: 'Buttons',
     required: false,
+    default: 'Outros',
   })
   @IsString({ message: 'A categoria deve ser uma string' })
   category?: string;
@@ -40,6 +42,7 @@ export class CreateComponentDto {
     description: 'Cor representativa do componente (código hexadecimal)',
     example: '#6366F1',
     required: false,
+    default: '#6366F1',
   })
   @IsString({ message: 'A cor deve ser uma string' })
   color?: string;

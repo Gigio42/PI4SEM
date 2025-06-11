@@ -35,6 +35,11 @@
   overflow: hidden;
 }
 
+/* Add smooth transition for main content adjustment */
+.sidebar.collapsed ~ .mainContent {
+  margin-left: 64px;
+}
+
 /* Estilo para mobile */
 @media (max-width: 768px) {
   .sidebar {

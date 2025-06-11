@@ -242,22 +242,24 @@
 
 /* Enhance the active state colors for better visibility */
 .favoriteActive {
-  background-color: rgba(var(--primary-rgb, 99, 102, 241), 0.08);
-  border-color: rgba(var(--primary-rgb, 99, 102, 241), 0.3);
+  background-color: rgba(139, 92, 246, 0.1) !important; /* Purple background */
+  border-color: rgba(139, 92, 246, 0.3) !important; /* Purple border */
 }
 
 .favoriteActive svg {
-  color: var(--primary);
-  filter: drop-shadow(0 1px 2px rgba(var(--primary-rgb, 99, 102, 241), 0.3));
+  color: #8B5CF6 !important; /* Purple star color */
+  fill: #8B5CF6 !important; /* Ensure fill is also purple */
+  filter: drop-shadow(0 1px 2px rgba(139, 92, 246, 0.3));
 }
 
 .favoriteActive:hover {
-  background-color: rgba(var(--primary-rgb, 99, 102, 241), 0.12);
+  background-color: rgba(139, 92, 246, 0.15) !important;
 }
 
 /* Detail favorite button specific styles */
 .detailFavoriteButton svg {
   color: var(--text-tertiary); /* Default color when not favorited */
+  fill: currentColor; /* Use currentColor for fill */
   transition: color 0.2s ease;
 }
 
@@ -266,7 +268,8 @@
 }
 
 .detailFavoriteButton.favoriteActive svg {
-  color: var(--primary); /* Primary color when favorited */
+  color: #8B5CF6 !important; /* Purple color when favorited */
+  fill: #8B5CF6 !important; /* Purple fill when favorited */
 }
 
 /* For absolute positioning when needed */
@@ -318,6 +321,7 @@
 .productCardFavorite svg,
 .favoriteIcon svg {
   color: var(--text-tertiary, #9ca3af);
+  fill: currentColor; /* Ensure fill follows color */
   transition: all 0.2s ease;
 }
 
@@ -327,13 +331,14 @@
 }
 
 .productCardFavorite.favoriteActive {
-  background-color: rgba(var(--primary-rgb, 99, 102, 241), 0.08);
-  border: 1px solid rgba(var(--primary-rgb, 99, 102, 241), 0.2);
+  background-color: rgba(139, 92, 246, 0.1) !important;
+  border: 1px solid rgba(139, 92, 246, 0.2) !important;
 }
 
 .productCardFavorite.favoriteActive svg {
-  color: var(--primary, #6366f1);
-  filter: drop-shadow(0 1px 2px rgba(var(--primary-rgb, 99, 102, 241), 0.3));
+  color: #8B5CF6 !important;
+  fill: #8B5CF6 !important;
+  filter: drop-shadow(0 1px 2px rgba(139, 92, 246, 0.3));
 }
 
 /* Enhanced star animation */

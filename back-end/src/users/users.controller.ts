@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, NotFoundException, BadRequestException, Res, UseGuards, Request, UnauthorizedException, Logger } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, NotFoundException, BadRequestException, Res, UseGuards, Request, UnauthorizedException, Logger, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Response } from 'express';
 import { createHash } from 'crypto'; // Node.js built-in module  // This import will work after installing the packages
@@ -63,6 +63,55 @@ export class UsersController {
 
     // Create the user with hashed password
     return this.usersService.createUser(email, hashedPassword);
+  }
+
+  @Get()
+  async getAllUsers() {
+    try {
+      const users = await this.usersService.getAllUsers();
+      return users;
+    } catch (error) {
+      this.logger.error(`Error fetching all users: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  @Patch(':id/role')
+  async updateUserRole(@Param('id') id: string, @Body() body: { role: 'user' | 'admin' }) {
+    try {
+      const { role } = body;
+      
+      if (!role || !['user', 'admin'].includes(role)) {
+        throw new BadRequestException('Role deve ser "user" ou "admin"');
+      }
+
+      const updatedUser = await this.usersService.updateUserRole(parseInt(id), role);
+      this.logger.log(`User ${id} role updated to ${role}`);
+      
+      return updatedUser;
+    } catch (error) {
+      this.logger.error(`Error updating user role: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  @Patch(':id/status')
+  async updateUserStatus(@Param('id') id: string, @Body() body: { status: 'active' | 'inactive' }) {
+    try {
+      const { status } = body;
+      
+      if (!status || !['active', 'inactive'].includes(status)) {
+        throw new BadRequestException('Status deve ser "active" ou "inactive"');
+      }
+
+      const updatedUser = await this.usersService.updateUserStatus(parseInt(id), status);
+      this.logger.log(`User ${id} status updated to ${status}`);
+      
+      return updatedUser;
+    } catch (error) {
+      this.logger.error(`Error updating user status: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Get('stats')
