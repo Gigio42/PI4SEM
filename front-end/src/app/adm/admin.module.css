@@ -1,13 +1,12 @@
 /* Admin Layout Styles */
 .pageWrapper {
-  min-height: 100vh;
   background-color: var(--background);
 }
 
 .layoutContainer {
   display: flex;
   min-height: calc(100vh - 64px);
-  margin-top: 64px;
+
 }
 
 .mainContent {
@@ -40,7 +39,6 @@
 
 .content {
   flex: 1;
-  padding: 2rem;
   overflow-y: auto;
   transition: all 0.3s ease;
   width: calc(100% - 250px); /* Adjust width based on sidebar width */
