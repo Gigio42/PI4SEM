@@ -53,9 +53,10 @@ export class AIComponentService {
         cyan: "#06b6d4",
         gray: "#64748b",
       };
-      
-      const prompt = `
+        const prompt = `
 Você é um especialista em desenvolvimento frontend moderno. Crie um componente ${componentType} baseado nesta descrição: "${description}".
+
+IMPORTANTE: Responda EXATAMENTE no formato especificado abaixo, sem texto adicional.
 
 REQUISITOS OBRIGATÓRIOS:
 1. HTML semântico e acessível (ARIA, roles, labels)
@@ -76,7 +77,8 @@ PADRÕES DE DESIGN:
 - Espaçamentos consistentes: 8px, 16px, 24px, 32px
 - Transições: 0.2s ease-in-out
 
-ESTRUTURA DE RESPOSTA OBRIGATÓRIA:
+FORMATO DE RESPOSTA OBRIGATÓRIO (copie exatamente):
+
 COMPONENT_NAME: [Nome descritivo do componente]
 CATEGORY: [Categoria: Buttons, Cards, Forms, Navigation, Alerts, Modals, Tables, Loaders, ou Typography]
 COLOR: [Código de cor hexadecimal para o componente ex: #6366f1]
@@ -91,40 +93,128 @@ CSS:
 [Código CSS moderno com animações e responsividade]
 \`\`\`
 
-EXEMPLO DE ESTRUTURA:
-- Use classes descritivas como .btn-primary, .card-container, .form-group
-- Inclua estados como .btn:hover, .card:focus-within
-- Use CSS custom properties para cores e espaçamentos
-- Adicione animações suaves com transform e opacity
+EXEMPLO MÍNIMO:
+COMPONENT_NAME: Botão Primário
+CATEGORY: Buttons
+COLOR: #6366f1
 
-Crie um componente profissional e moderno!
+HTML:
+\`\`\`html
+<button class="btn-primary">Clique aqui</button>
+\`\`\`
+
+CSS:
+\`\`\`css
+.btn-primary {
+  background: #6366f1;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+\`\`\`
+
+Agora crie o componente seguindo EXATAMENTE este formato:
       `;
+        console.log('Gerando componente com Gemini 2.5 Flash...');
+      console.log('Prompt enviado:', prompt.substring(0, 200) + '...');
       
-      console.log('Gerando componente com Gemini 2.5 Flash...');
       const result = await model.generateContent(prompt);
       const text = result.response.text();
       
       console.log('Resposta recebida do Gemini 2.5 Flash');
+      console.log('Tamanho da resposta:', text.length);
+      console.log('Primeiros 500 caracteres:', text.substring(0, 500));
+      console.log('Últimos 200 caracteres:', text.substring(Math.max(0, text.length - 200)));
       
       // Extract component name, category and color
       const nameMatch = text.match(/COMPONENT_NAME:\s*(.*?)(?:\n|$)/i);
       const categoryMatch = text.match(/CATEGORY:\s*(.*?)(?:\n|$)/i);
       const colorMatch = text.match(/COLOR:\s*(.*?)(?:\n|$)/i);
       
-      // Extract HTML and CSS
+      // More flexible HTML and CSS extraction patterns
       const htmlMatch = text.match(/HTML:\s*```html\s*([\s\S]*?)\s*```/i) || 
-                       text.match(/```html\s*([\s\S]*?)\s*```/i);
+                       text.match(/```html\s*([\s\S]*?)\s*```/i) ||
+                       text.match(/HTML:\s*```\s*([\s\S]*?)\s*```/i) ||
+                       text.match(/<[^>]+>[\s\S]*?<\/[^>]+>/i); // Fallback: match any HTML tags
+      
       const cssMatch = text.match(/CSS:\s*```css\s*([\s\S]*?)\s*```/i) || 
-                      text.match(/```css\s*([\s\S]*?)\s*```/i);
+                      text.match(/```css\s*([\s\S]*?)\s*```/i) ||
+                      text.match(/CSS:\s*```\s*([\s\S]*?)\s*```/i) ||
+                      text.match(/\{[\s\S]*?\}/); // Fallback: match CSS blocks
       
       const name = nameMatch ? nameMatch[1].trim() : `AI ${componentType}`;
       const category = categoryMatch ? categoryMatch[1].trim() : 'AI Generated';
       const color = colorMatch ? colorMatch[1].trim() : colorMapping[colorScheme as keyof typeof colorMapping] || '#6366f1';
-      const html = htmlMatch ? htmlMatch[1].trim() : "";
-      const css = cssMatch ? cssMatch[1].trim() : "";
+      let html = htmlMatch ? htmlMatch[1].trim() : "";
+      let css = cssMatch ? cssMatch[1].trim() : "";
       
-      if (!html || !css) {
-        throw new Error("Gemini não retornou HTML e CSS válidos. Tente reformular sua descrição.");
+      // If still no HTML/CSS found, try to extract from the entire response
+      if (!html && text.includes('<')) {
+        const htmlStart = text.indexOf('<');
+        const htmlEnd = text.lastIndexOf('>') + 1;
+        if (htmlStart !== -1 && htmlEnd > htmlStart) {
+          html = text.substring(htmlStart, htmlEnd).trim();
+        }
+      }
+      
+      if (!css && (text.includes('{') || text.includes('.'))) {
+        // Try to find CSS-like content
+        const lines = text.split('\n');
+        let cssLines = [];
+        let inCSS = false;
+        
+        for (const line of lines) {
+          if (line.includes('{') || line.match(/^\s*\.[a-zA-Z]/) || line.match(/^\s*#[a-zA-Z]/)) {
+            inCSS = true;
+          }
+          if (inCSS) {
+            cssLines.push(line);
+          }
+          if (line.includes('}') && cssLines.length > 0) {
+            // Keep collecting CSS until we have a substantial amount
+            if (cssLines.join('\n').length > 50) {
+              css = cssLines.join('\n').trim();
+              break;
+            }
+          }
+        }
+      }
+        if (!html || !css) {
+        console.error('Parsing falhou, tentando fallback...');
+        console.error('HTML encontrado:', !!html, html ? html.substring(0, 100) + '...' : 'none');
+        console.error('CSS encontrado:', !!css, css ? css.substring(0, 100) + '...' : 'none');
+        
+        // Fallback: Gerar componente simples baseado na descrição
+        if (!html) {
+          html = `<div class="ai-component">
+            <h3>${name}</h3>
+            <p>Componente gerado por IA: ${description}</p>
+          </div>`;
+        }
+        
+        if (!css) {
+          css = `.ai-component {
+            padding: 20px;
+            border: 2px solid ${color};
+            border-radius: 8px;
+            background: linear-gradient(135deg, ${color}10, ${color}05);
+            color: #333;
+            font-family: Inter, system-ui, sans-serif;
+          }
+          .ai-component h3 {
+            margin: 0 0 10px 0;
+            color: ${color};
+          }
+          .ai-component p {
+            margin: 0;
+            opacity: 0.8;
+          }`;
+        }
+        
+        console.log('Usando fallback - HTML:', html.substring(0, 100));
+        console.log('Usando fallback - CSS:', css.substring(0, 100));
       }
       
       // Enhance CSS with system variables
@@ -137,21 +227,27 @@ Crie um componente profissional e moderno!
         category,
         color
       };
-      
-    } catch (error: unknown) {
+        } catch (error: unknown) {
       console.error("AI generation failed:", error);
+      console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
       
       let errorMessage = "Erro na geração com IA.";
       
       if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        
         if (error.message?.includes('429')) {
           errorMessage = "Muitas requisições. Aguarde alguns segundos e tente novamente.";
-        } else if (error.message?.includes('quota')) {
+        } else if (error.message?.includes('quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
           errorMessage = "Limite de uso da IA atingido. Tente novamente mais tarde.";
-        } else if (error.message?.includes('API key')) {
+        } else if (error.message?.includes('API key') || error.message?.includes('INVALID_ARGUMENT')) {
           errorMessage = "Erro de autenticação da IA. Contate o administrador.";
-        } else if (error.message?.includes('blocked') || error.message?.includes('safety')) {
+        } else if (error.message?.includes('blocked') || error.message?.includes('safety') || error.message?.includes('SAFETY')) {
           errorMessage = "Descrição rejeitada pela IA. Tente ser mais específico e técnico.";
+        } else if (error.message?.includes('CANCELLED')) {
+          errorMessage = "Geração cancelada. Tente novamente.";
+        } else if (error.message?.includes('DEADLINE_EXCEEDED')) {
+          errorMessage = "Tempo limite excedido. Tente uma descrição mais simples.";
         } else {
           errorMessage = `Erro na IA: ${error.message}`;
         }

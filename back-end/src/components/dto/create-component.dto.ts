@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 /**
  * DTO para criação de novos componentes
@@ -19,31 +19,31 @@ export class CreateComponentDto {
   @IsNotEmpty({ message: 'O conteúdo CSS é obrigatório' })
   @IsString({ message: 'O conteúdo CSS deve ser uma string' })
   cssContent: string;
-  
-  @ApiProperty({
+    @ApiProperty({
     description: 'Conteúdo HTML do componente',
     example: '<button class="btn">Click me</button>',
     required: false,
     default: '',
   })
+  @IsOptional()
   @IsString({ message: 'O conteúdo HTML deve ser uma string' })
   htmlContent?: string;
-
   @ApiProperty({
     description: 'Categoria do componente',
     example: 'Buttons',
     required: false,
     default: 'Outros',
   })
+  @IsOptional()
   @IsString({ message: 'A categoria deve ser uma string' })
   category?: string;
-
   @ApiProperty({
     description: 'Cor representativa do componente (código hexadecimal)',
     example: '#6366F1',
     required: false,
     default: '#6366F1',
   })
+  @IsOptional()
   @IsString({ message: 'A cor deve ser uma string' })
   color?: string;
 }

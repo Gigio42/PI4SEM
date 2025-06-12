@@ -1,6 +1,7 @@
 import api from '@/services/api';
 import { Component } from '@/types/component';
 import { mockComponents } from './mockData';
+import { getEndpointFallbacks } from './config';
 import axios from 'axios';
 
 interface CreateComponentDto {
@@ -11,10 +12,10 @@ interface CreateComponentDto {
   color?: string;
 }
 
-class ComponentsServiceClass {
-  private api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+class ComponentsServiceClass {  private api = axios.create({
+    baseURL: '/api',
     timeout: 30000,
+    withCredentials: true,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -54,14 +55,8 @@ class ComponentsServiceClass {
    */
   async getAllComponents(): Promise<Component[]> {
     try {
-      console.log('🔍 ComponentsService: Fetching all components...');
-      
-      // Try endpoints in order of preference (most likely to work first)
-      const possibleEndpoints = [
-        '/components',        // Direct backend endpoint (should work with proxy)
-        '/api/components',    // Proxied endpoint
-        '/api/v1/components'  // Alternative proxied endpoint
-      ];
+      console.log('🔍 ComponentsService: Fetching all components...');      // Try endpoints in order of preference (most likely to work first)
+      const possibleEndpoints = getEndpointFallbacks('components');
       
       let response;
       let lastError;
@@ -69,11 +64,30 @@ class ComponentsServiceClass {
       for (const endpoint of possibleEndpoints) {
         try {
           console.log(`🔍 Trying endpoint: ${endpoint}`);
-          response = await this.api.get(endpoint, { timeout: 30000 });
+          
+          // Use fetch for direct backend URLs, axios for proxied
+          if (endpoint.startsWith('http://')) {
+            const fetchResponse = await fetch(endpoint, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            
+            if (!fetchResponse.ok) {
+              throw new Error(`HTTP ${fetchResponse.status}`);
+            }
+            
+            const responseData = await fetchResponse.json();
+            response = { data: responseData };
+          } else {
+            response = await this.api.get(endpoint, { timeout: 30000 });
+          }
+          
           console.log(`✅ Success with endpoint: ${endpoint}`);
           break;
         } catch (error: any) {
-          console.log(`❌ Failed with endpoint ${endpoint}:`, error.response?.status || 'Network Error');
+          console.log(`❌ Failed with endpoint ${endpoint}:`, error.response?.status || error.message || 'Network Error');
           lastError = error;
           continue;
         }
@@ -178,24 +192,39 @@ class ComponentsServiceClass {
    */  async createComponent(data: CreateComponentDto): Promise<Component> {
     try {
       console.log('🔍 ComponentsService: Creating component...', data);
-      
-      const possibleEndpoints = [
-        '/api/components',
-        '/components',
-        '/api/v1/components'
-      ];
+        // Try direct backend first, then proxied endpoints
+      const possibleEndpoints = getEndpointFallbacks('components');
       
       let response;
       let lastError;
       
       for (const endpoint of possibleEndpoints) {
         try {
-          response = await this.api.post(endpoint, data, { timeout: 25000 });
-          break;
-        } catch (error: any) {
-          if (error.response?.status !== 404) {
-            throw error; // Se não for 404, é outro erro
+          console.log(`🔍 Trying to create component with endpoint: ${endpoint}`);
+          
+          // Use fetch for direct backend URLs, axios for proxied
+          if (endpoint.startsWith('http://')) {
+            const fetchResponse = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data),
+            });
+            
+            if (!fetchResponse.ok) {
+              throw new Error(`HTTP ${fetchResponse.status}`);
+            }
+            
+            const responseData = await fetchResponse.json();
+            response = { data: responseData };
+          } else {
+            response = await this.api.post(endpoint, data, { timeout: 25000 });
           }
+          
+          console.log(`✅ Success creating component with endpoint: ${endpoint}`);
+          break;
+        } catch (error: any) {          console.log(`❌ Failed to create component with endpoint ${endpoint}:`, error.response?.status || error.message || 'Network Error');
           lastError = error;
           continue;
         }

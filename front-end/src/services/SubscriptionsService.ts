@@ -83,12 +83,17 @@ export interface SubscriptionStats {
 
 class SubscriptionsService {
   private baseUrl = `${apiBaseUrl}/subscriptions`;
-
   // Subscription methods
-  async getAllSubscriptions(): Promise<SubscriptionType[]> {
+  async getAllSubscriptions(status?: string): Promise<SubscriptionType[]> {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(this.baseUrl, {
+      let url = this.baseUrl;
+      
+      if (status) {
+        url += `?status=${encodeURIComponent(status)}`;
+      }
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -215,6 +220,27 @@ class SubscriptionsService {
     }
   }
 
+  async getPlans(activeOnly: boolean = true): Promise<PlanType[]> {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${apiBaseUrl}/plans?activeOnly=${activeOnly}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch plans');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      throw error;
+    }
+  }
+
   async getPlanById(id: number): Promise<PlanType> {
     try {
       const token = localStorage.getItem('token');
@@ -302,6 +328,28 @@ class SubscriptionsService {
     }
   }
 
+  async togglePlanStatus(id: number): Promise<PlanType> {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${apiBaseUrl}/plans/${id}/toggle-status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle plan status');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error toggling plan status:', error);
+      throw error;
+    }
+  }
+
   // Payment methods
   async getSubscriptionPayments(subscriptionId: number): Promise<PaymentType[]> {
     try {
@@ -322,6 +370,11 @@ class SubscriptionsService {
       console.error('Error fetching payments:', error);
       throw error;
     }
+  }
+
+  // Alias method for compatibility
+  async getPaymentsBySubscription(subscriptionId: number): Promise<PaymentType[]> {
+    return this.getSubscriptionPayments(subscriptionId);
   }
 
   async getAllPayments(): Promise<PaymentType[]> {
@@ -366,17 +419,19 @@ class SubscriptionsService {
       throw error;
     }
   }
-
   // Utility methods
-  async renewSubscription(id: number): Promise<SubscriptionType> {
+  async renewSubscription(id: number, durationInDays?: number): Promise<SubscriptionType> {
     try {
       const token = localStorage.getItem('token');
+      const body = durationInDays ? JSON.stringify({ duration: durationInDays }) : undefined;
+      
       const response = await fetch(`${this.baseUrl}/${id}/renew`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: body,
       });
 
       if (!response.ok) {

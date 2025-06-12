@@ -1,0 +1,134 @@
+.skeleton {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.header {
+  padding: 20px;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-secondary) 100%);
+  border-bottom: 1px solid var(--border);
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.titleSkeleton {
+  height: 24px;
+  background: linear-gradient(90deg, var(--surface-secondary) 25%, var(--surface-hover) 50%, var(--surface-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+  width: 70%;
+}
+
+.categorySkeletonContainer {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.categorySkeleton {
+  height: 20px;
+  width: 80px;
+  background: linear-gradient(90deg, var(--surface-secondary) 25%, var(--surface-hover) 50%, var(--surface-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 9999px;
+}
+
+.preview {
+  flex: 1;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewSkeleton {
+  width: 80%;
+  height: 120px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.8) 25%, rgba(255, 255, 255, 0.9) 50%, rgba(255, 255, 255, 0.8) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 12px;
+}
+
+.body {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+}
+
+.metaSkeleton {
+  height: 16px;
+  width: 120px;
+  background: linear-gradient(90deg, var(--surface-secondary) 25%, var(--surface-hover) 50%, var(--surface-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.footer {
+  padding: 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: auto;
+}
+
+.buttonSkeleton {
+  height: 40px;
+  flex: 1;
+  background: linear-gradient(90deg, var(--surface-secondary) 25%, var(--surface-hover) 50%, var(--surface-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 12px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .previewSkeleton {
+    background: linear-gradient(90deg, rgba(40, 40, 40, 0.8) 25%, rgba(60, 60, 60, 0.9) 50%, rgba(40, 40, 40, 0.8) 75%);
+    background-size: 200% 100%;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .titleSkeleton,
+  .categorySkeleton,
+  .previewSkeleton,
+  .metaSkeleton,
+  .buttonSkeleton {
+    animation: none;
+  }
+}

@@ -22,10 +22,10 @@ import { Public } from '../auth/public.decorator';
 export class ComponentsController {
   private readonly logger = new Logger(ComponentsController.name);
   
-  constructor(private readonly componentsService: ComponentsService) {}
-  @ApiOperation({ summary: 'Cria um novo componente'})
+  constructor(private readonly componentsService: ComponentsService) {}  @ApiOperation({ summary: 'Cria um novo componente'})
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Componente criado com sucesso' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos fornecidos' })
+  @Public()
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
   async createComponent(@Body() createComponentDto: CreateComponentDto) {
@@ -71,8 +71,7 @@ export class ComponentsController {
         message: error.message
       }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-  @ApiOperation({ summary: 'Deleta um componente especifico, definido pelo ID da rota' })
+  }  @ApiOperation({ summary: 'Deleta um componente especifico, definido pelo ID da rota' })
   @ApiParam({
     name: 'id',
     description: 'ID do component',
@@ -80,11 +79,11 @@ export class ComponentsController {
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Componente excluído com sucesso' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Componente não encontrado' })
+  @Public()
   @Delete(':id')
   async deleteComponent(@Param('id') id: string ){
     return this.componentsService.deleteComponent(id);
   }
-
   @ApiOperation({ summary: 'Atualiza um componente específico, definido pelo ID da rota' })
   @ApiParam({
     name: 'id',
@@ -94,6 +93,7 @@ export class ComponentsController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Componente atualizado com sucesso' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Componente não encontrado' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos fornecidos' })
+  @Public()
   @Put(':id')
   @UsePipes(new ValidationPipe({ transform: true }))
   async updateComponent(

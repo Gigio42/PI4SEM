@@ -114,8 +114,12 @@
 }
 
 .nav {
-  flex: 1;
-  padding: 8px;
+     display: flex
+;
+    flex: 1;
+    padding: 8px;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .navList {
@@ -306,10 +310,161 @@
   background: var(--primary);
   color: white;
   border-radius: 50%;
-  min-width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   font-size: 0.7rem;
-  padding: 0 2px;
+  font-weight: 600;
+  margin-left: 5px;
+}
+
+/* Estilos da seção de planos */
+.planSection {
+
+}
+
+.planTitle, .promoTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--foreground);
+  opacity: 0.8;
+}
+
+.promoTitle {
+  color: var(--primary);
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.currentPlan {
+  display: flex;
+  flex-direction: column;
+}
+
+.planName {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--foreground);
+  margin-bottom: 4px;
+}
+
+.planExpiry {
+  font-size: 0.8rem;
+  color: var(--foreground-secondary);
+  margin-top: 4px;
+}
+
+.planPromo {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(var(--primary-rgb), 0.1), rgba(var(--primary-rgb), 0.05));
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);
+  overflow: hidden;
+}
+
+.promoBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--primary);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 0 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.promoPlan {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.planPriceContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0 10px 0;
+}
+
+.planPrice {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.discountTag {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  padding: 2px 0;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.discountValue {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+}
+
+.planFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.planFeature {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.planFeature svg {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.upgradeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border-radius: 6px;
+  padding: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-top: 4px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.3);
+}
+
+.upgradeButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
+}
+
+.upgradeButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.3);
 }
 
 /* Efeito ripple ao clicar nos itens - melhorado */

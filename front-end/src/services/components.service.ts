@@ -13,12 +13,11 @@ export interface Component {
 
 // Classe do serviço
 class ComponentsService {
-  private apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
+  private apiUrl = '/api';
   // Obtém todos os componentes
   async getAllComponents(): Promise<Component[]> {
     try {
-      const response = await axios.get(`${this.apiUrl}/components`);
+      const response = await axios.get(`${this.apiUrl}/components`, { withCredentials: true });
       
       // Garantir que todos os componentes tenham campos obrigatórios
       const components = Array.isArray(response.data) ? response.data : [];
@@ -33,11 +32,10 @@ class ComponentsService {
       throw error;
     }
   }
-
   // Obtém um componente por ID
   async getComponentById(id: number): Promise<Component> {
     try {
-      const response = await axios.get(`${this.apiUrl}/components/${id}`);
+      const response = await axios.get(`${this.apiUrl}/components/${id}`, { withCredentials: true });
       
       // Registrar visualização do componente
       this.trackComponentView(id);
@@ -55,11 +53,10 @@ class ComponentsService {
       throw error;
     }
   }
-
   // Obtém componentes por categoria
   async getComponentsByCategory(category: string): Promise<Component[]> {
     try {
-      const response = await axios.get(`${this.apiUrl}/components/category/${category}`);
+      const response = await axios.get(`${this.apiUrl}/components/category/${category}`, { withCredentials: true });
       
       // Garantir que todos os componentes tenham campos obrigatórios
       const components = Array.isArray(response.data) ? response.data : [];

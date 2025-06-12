@@ -18,9 +18,7 @@ export default function ComponentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [filterCategory, setFilterCategory] = useState("");  const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -61,23 +59,14 @@ export default function ComponentsPage() {
       setLoading(false);
     }
   };
-
   const handleComponentPreview = (component: Component) => {
     setSelectedComponent(component);
-    setPreviewOpen(true);
-  };
-
-  const closePreview = () => {
-    setPreviewOpen(false);
-    setTimeout(() => setSelectedComponent(null), 300);
-  };
-
-  const openModal = () => {
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setTimeout(() => setSelectedComponent(null), 300);
   };
 
   const handleFavoriteChange = async (componentId: number, isFavorite: boolean) => {
@@ -205,43 +194,7 @@ export default function ComponentsPage() {
                   </button>
                 </div>
               )}
-            </>
-          )}
-
-          {/* ComponentPreview Sidebar */}
-          {previewOpen && selectedComponent && (
-            <>
-              <div className={styles.previewSidebar}>
-                <div className={styles.previewSidebarHeader}>
-                  <h2 className={styles.previewSidebarTitle}>{selectedComponent.name}</h2>
-                  <button 
-                    className={styles.closeSidebarButton}
-                    onClick={closePreview}
-                    aria-label="Fechar preview"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                </div>
-                
-                <div className={styles.previewSidebarContent}>
-                  <ComponentPreview
-                    htmlContent={selectedComponent.htmlContent || ''}
-                    cssContent={selectedComponent.cssContent}
-                    initialMode="system"
-                    initialDevice="desktop"
-                    showCode={true}
-                    showControls={true}
-                  />
-                </div>
-              </div>
-              <div 
-                className={styles.sidebarBackdrop}
-                onClick={closePreview}
-              />
-            </>
-          )}
+            </>          )}
 
           {/* Preview Modal */}
           {selectedComponent && (

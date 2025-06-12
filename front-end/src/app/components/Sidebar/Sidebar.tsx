@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./Sidebar.module.css";
 import { useState, useEffect, ReactNode } from "react";
+import { useAuth } from '@/contexts/AuthContext';
+import { Plan, Subscription } from '@/types/subscription';
+import { SubscriptionService } from '@/services/SubscriptionService';
 
 // Defining the navigation item type
 export interface NavItem {
@@ -146,10 +149,44 @@ export default function Sidebar({ items, isAdmin = false, onCollapseChange }: Si
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [userSubscription, setUserSubscription] = useState<Subscription | null>(null);
+  const [bestPlan, setBestPlan] = useState<Plan | null>(null);
   const pathname = usePathname();
+  const { user } = useAuth();
   
   // Determine which navigation items to use
   const navItemsToUse = items || (isAdmin ? adminNavItems : userNavItems);
+  
+  // Fetch subscription and best plan
+  useEffect(() => {
+    async function loadData() {
+      if (user?.id) {
+        try {
+          // Load user subscription
+          const subscription = await SubscriptionService.getCurrentSubscription(user.id);
+          setUserSubscription(subscription);
+          
+          // Load best plan if user doesn't have a subscription
+          if (!subscription) {
+            const plans = await SubscriptionService.getPlans();
+            // Find the highlighted plan or the most expensive plan if none is highlighted
+            const highlighted = plans.find(plan => plan.highlighted);
+            if (highlighted) {
+              setBestPlan(highlighted);
+            } else if (plans.length > 0) {
+              // Sort by price descending and take the most expensive one
+              const sortedPlans = [...plans].sort((a, b) => b.price - a.price);
+              setBestPlan(sortedPlans[0]);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading subscription data:', error);
+        }
+      }
+    }
+    
+    loadData();
+  }, [user]);
   
   // Check if an item is active based on the current route
   const isActive = (href: string, alwaysActive?: boolean, index?: number) => {
@@ -273,7 +310,66 @@ export default function Sidebar({ items, isAdmin = false, onCollapseChange }: Si
               );
             })}
           </ul>
-        </nav>
+          
+          {/* Plan information section */}
+          {!isAdmin && !collapsed && (
+            <div className={styles.planSection}>
+              {userSubscription && userSubscription.plan ? (
+                <div className={styles.currentPlan}>
+                  <h4 className={styles.planTitle}>Seu Plano Atual</h4>
+                  <div className={styles.planName}>{userSubscription.plan.name}</div>
+                  <div className={styles.planExpiry}>
+                    Expira em: {new Date(userSubscription.endDate).toLocaleDateString()}
+                  </div>
+                </div>
+              ) : bestPlan && (                <div className={styles.planPromo}>
+                  <div className={styles.promoBadge}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" strokeWidth="0"/>
+                    </svg>
+                    <span>Recomendado</span>
+                  </div>
+                  <h4 className={styles.promoTitle}>Atualize seu Plano!</h4>
+                  <div className={styles.promoPlan}>
+                    <span className={styles.planName}>{bestPlan.name}</span>
+                    <div className={styles.planPriceContainer}>
+                      <div className={styles.planPrice}>
+                        R$ {typeof bestPlan.price === 'number' ? bestPlan.price.toFixed(2) : Number(bestPlan.price).toFixed(2)}
+                      </div>
+                      {bestPlan.discount && (
+                        <div className={styles.discountTag}>
+                          <span className={styles.discountValue}>-{bestPlan.discount}%</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className={styles.planFeatures}>
+                    <div className={styles.planFeature}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span>Acesso ilimitado</span>
+                    </div>
+                    <div className={styles.planFeature}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span>Suporte premium</span>
+                    </div>
+                  </div>
+                  <Link href="/subscription">
+                    <span className={styles.upgradeButton}>
+                      <span>Ver Plano</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}        </nav>
       </aside>
     </>
   );

@@ -17,7 +17,7 @@ const api = axios.create({
     // Add explicit CORS headers
     'Accept': 'application/json, text/plain, */*',
   },
-  withCredentials: false, // Set to false when using proxy
+  withCredentials: true, // Set to true for cookie authentication
   timeout: 15000, // Increased timeout to 15 seconds
 });
 
