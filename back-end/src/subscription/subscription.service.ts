@@ -69,6 +69,11 @@ export class SubscriptionService {
       if (!user) {
         throw new NotFoundException(`Usuário com ID ${createSubscriptionDto.userId} não encontrado`);
       }
+
+      // Verificar se o usuário é um administrador
+      if (user.role === 'admin') {
+        throw new BadRequestException(`Administradores não podem ter assinaturas de planos.`);
+      }
       
       // Verificar se o usuário já possui uma assinatura ativa
       const existingSubscription = await this.prisma.subscription.findFirst({
@@ -191,6 +196,18 @@ export class SubscriptionService {
 
   async getUserSubscriptions(userId: number) {
     try {
+      // Verificar se o usuário é um administrador
+      const user = await this.prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { role: true }
+      });
+      
+      // Se o usuário for um administrador, retorna array vazio
+      if (user && user.role === 'admin') {
+        console.log(`Usuário ${userId} é um administrador e não pode ter assinaturas.`);
+        return [];
+      }
+      
       const subscriptions = await this.prisma.subscription.findMany({
         where: { userId },
         include: {
@@ -217,6 +234,18 @@ export class SubscriptionService {
 
   async getActiveUserSubscription(userId: number) {
     try {
+      // Verificar se o usuário é um administrador
+      const user = await this.prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { role: true }
+      });
+      
+      // Se o usuário for um administrador, retorna null
+      if (user && user.role === 'admin') {
+        console.log(`Usuário ${userId} é um administrador e não pode ter assinaturas.`);
+        return null;
+      }
+      
       const subscription = await this.prisma.subscription.findFirst({
         where: {
           userId,
@@ -311,6 +340,7 @@ export class SubscriptionService {
               id: true,
               name: true,
               email: true,
+              role: true,
             },
           },
           plan: true, // Prisma vai buscar o plano associado
@@ -320,13 +350,15 @@ export class SubscriptionService {
         },
       });
       
-      // Parse features JSON string back to arrays
-      return subscriptions.map(subscription => {
-        if (subscription.plan && typeof subscription.plan.features === 'string') {
-          subscription.plan.features = JSON.parse(subscription.plan.features);
-        }
-        return subscription;
-      });
+      // Parse features JSON string back to arrays e filtra administradores
+      return subscriptions
+        .filter(subscription => subscription.user && subscription.user.role !== 'admin')
+        .map(subscription => {
+          if (subscription.plan && typeof subscription.plan.features === 'string') {
+            subscription.plan.features = JSON.parse(subscription.plan.features);
+          }
+          return subscription;
+        });
     } catch (error) {
       console.error('Erro ao buscar todas as assinaturas:', error);
       return []; // Retorna array vazio em caso de erro
@@ -520,6 +552,18 @@ export class SubscriptionService {
       
       if (!userId || isNaN(Number(userId))) {
         console.log(`ID de usuário inválido: ${userId}`);
+        return false;
+      }
+      
+      // Verificar se o usuário é um administrador
+      const user = await this.prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { role: true }
+      });
+      
+      // Se o usuário for um administrador, retorna false pois administradores não podem ter assinaturas
+      if (user && user.role === 'admin') {
+        console.log(`Usuário ${userId} é um administrador e não pode ter assinatura`);
         return false;
       }
       
