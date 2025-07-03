@@ -1,217 +1,207 @@
 # UXperiment-Labs
 
-A comprehensive platform for UI component development, experimentation, and sharing. UXperiment-Labs allows users to explore, customize, and implement modern UI components with ease.
+Uma plataforma abrangente para desenvolvimento, experimentação e compartilhamento de componentes de UI. O UXperiment-Labs permite que os usuários explorem, personalizem e implementem componentes modernos de interface de usuário com facilidade.
 
-## Project Overview
+## Visão Geral do Projeto
 
-UXperiment-Labs is a full-stack application that provides developers and designers with a library of ready-to-use UI components, styles, and templates. The platform offers different subscription plans that grant access to premium features.
+UXperiment-Labs é uma aplicação full-stack que oferece aos desenvolvedores e designers uma biblioteca de componentes de UI prontos para uso, estilos e templates. A plataforma oferece diferentes planos de assinatura que garantem acesso a recursos premium.
 
-The system is built with a modern tech stack:
-- **Frontend**: Next.js with React and TypeScript
-- **Backend**: NestJS with TypeScript
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: JWT and Google OAuth
+O sistema é construído com uma stack tecnológica moderna:
+- **Frontend**: Next.js com React e TypeScript
+- **Backend**: NestJS com TypeScript
+- **Banco de Dados**: PostgreSQL com Prisma ORM
+- **Autenticação**: JWT e Google OAuth
 
-## System Architecture
+## Arquitetura do Sistema
 
-The application follows a client-server architecture:
+A aplicação segue uma arquitetura cliente-servidor:
 
 ### Frontend (Next.js)
-- Implements App Router structure
-- Uses React context for state management
-- Provides responsive UI with modern design principles
-- Implements role-based access control (user vs admin)
+- Implementa estrutura App Router
+- Usa contexto React para gerenciamento de estado
+- Fornece UI responsiva com princípios modernos de design
+- Implementa controle de acesso baseado em papéis (usuário vs administrador)
 
 ### Backend (NestJS)
-- RESTful API with modular architecture
-- Integration with Prisma ORM for database operations
-- Authentication with JWT and Google OAuth strategies
-- Role-based authorization for protected resources
+- API RESTful com arquitetura modular
+- Integração com Prisma ORM para operações de banco de dados
+- Autenticação com estratégias JWT e Google OAuth
+- Autorização baseada em papéis para recursos protegidos
 
-### Database (PostgreSQL)
-- Relational database with robust schema
-- Models for users, components, subscriptions, plans, and analytics
+### Banco de Dados (PostgreSQL)
+- Banco de dados relacional com esquema robusto
+- Modelos para usuários, componentes, assinaturas, planos e análises
 
-## Key Features
+## Principais Funcionalidades
 
-### Component Library
-- Browse and search UI components by category
-- Preview components with interactive demos
-- Copy HTML and CSS code for direct implementation
-- Favorite components for quick access
+### Biblioteca de Componentes
+- Navegue e pesquise componentes de UI por categoria
+- Visualize componentes com demonstrações interativas
+- Copie código HTML e CSS para implementação direta
+- Adicione componentes aos favoritos para acesso rápido
 
-### Subscription System
-- Multiple plan tiers (free, basic, premium)
-- Subscription management with renewal and cancellation
-- Payment processing integration
-- Access control for premium content
+### Sistema de Assinatura
+- Múltiplos níveis de planos (gratuito, básico, premium)
+- Gerenciamento de assinaturas com renovação e cancelamento
+- Integração de processamento de pagamento
+- Controle de acesso para conteúdo premium
 
-### User Authentication
-- Email/password login
-- Google OAuth integration
-- Session management with JWT
-- Role-based permissions (admin vs regular users)
+### Autenticação de Usuário
+- Login por email/senha
+- Integração com Google OAuth
+- Gerenciamento de sessão com JWT
+- Permissões baseadas em papéis (administrador vs usuários comuns)
 
-### Admin Dashboard
-- User management
-- Component management
-- Subscription management
-- Analytics and statistics
+### Painel de Administração
+- Gerenciamento de usuários
+- Gerenciamento de componentes
+- Gerenciamento de assinaturas
+- Análises e estatísticas
 
-## Data Models
+## Modelos de Dados
 
-The application includes the following primary data models:
+A aplicação inclui os seguintes modelos de dados principais:
 
-### User
-- Authentication details (email, password, Google ID)
-- Profile information (name, picture)
-- Role (user or admin)
-- Relationship with subscriptions and favorites
+### Usuário
+- Detalhes de autenticação (email, senha, ID do Google)
+- Informações de perfil (nome, imagem)
+- Papel (usuário ou administrador)
+- Relacionamento com assinaturas e favoritos
 
-### Component
-- UI component details (name, CSS content, HTML content)
-- Categorization and styling
-- View statistics
+### Componente
+- Detalhes do componente UI (nome, conteúdo CSS, conteúdo HTML)
+- Categorização e estilização
+- Estatísticas de visualização
 
-### Subscription
-- User-plan relationship
-- Start and end dates
-- Status (active, cancelled, expired, pending)
-- Payment information
+### Assinatura
+- Relacionamento usuário-plano
+- Datas de início e fim
+- Status (ativo, cancelado, expirado, pendente)
+- Informações de pagamento
 
-### Plan
-- Pricing tier details (name, description, price)
-- Duration and features
-- Discount information
+### Plano
+- Detalhes do nível de preço (nome, descrição, preço)
+- Duração e recursos
+- Informações de desconto
 
-### Statistics
-- Analytics for component views
-- User activity metrics
-- Subscription and revenue tracking
+### Estatísticas
+- Análises de visualizações de componentes
+- Métricas de atividade do usuário
+- Acompanhamento de assinaturas e receita
 
-## Setup and Installation
+## Configuração e Instalação
 
-### Prerequisites
+### Pré-requisitos
 - Node.js (v16+)
 - PostgreSQL
-- npm or pnpm
+- npm ou pnpm
 
-### Development Environment Setup
+### Configuração do Ambiente de Desenvolvimento
 
-1. Clone the repository:
+1. Clone o repositório:
    ```
    git clone https://github.com/yourusername/UXperiment-Labs.git
    cd UXperiment-Labs
    ```
 
-2. Install dependencies:
+2. Instale as dependências:
    ```
    npm run install-all
    ```
    
-3. Configure environment variables:
-   - Create `.env` file in the `back-end` directory with database connection string and JWT secret
+3. Configure as variáveis de ambiente:
+   - Crie um arquivo `.env` no diretório `back-end` com a string de conexão do banco de dados e o segredo JWT
 
-4. Start development servers:
+4. Inicie os servidores de desenvolvimento:
    ```
    npm run dev
    ```
-   This will start both frontend and backend servers in development mode.
+   Isso iniciará os servidores frontend e backend no modo de desenvolvimento.
 
-## Project Structure
+## Estrutura do Projeto
 
 ```
 UXperiment-Labs/
-├── back-end/                # NestJS backend
-│   ├── prisma/              # Database schema and migrations
-│   │   ├── schema.prisma    # Prisma schema definition
-│   │   └── migrations/      # Database migrations
-│   └── src/                 # Source code
-│       ├── auth/            # Authentication module
-│       ├── components/      # Components module
-│       ├── favoritos/       # Favorites module
-│       ├── plans/           # Subscription plans module
-│       ├── statistics/      # Analytics module
-│       ├── subscription/    # Subscription module
-│       └── users/           # Users module
+├── back-end/                # Backend NestJS
+│   ├── prisma/              # Esquema de banco de dados e migrações
+│   │   ├── schema.prisma    # Definição do esquema Prisma
+│   │   └── migrations/      # Migrações de banco de dados
+│   └── src/                 # Código fonte
+│       ├── auth/            # Módulo de autenticação
+│       ├── components/      # Módulo de componentes
+│       ├── favoritos/       # Módulo de favoritos
+│       ├── plans/           # Módulo de planos de assinatura
+│       ├── statistics/      # Módulo de análise
+│       ├── subscription/    # Módulo de assinatura
+│       └── users/           # Módulo de usuários
 │
-├── front-end/               # Next.js frontend
-│   ├── public/              # Static assets
-│   └── src/                 # Source code
+├── front-end/               # Frontend Next.js
+│   ├── public/              # Ativos estáticos
+│   └── src/                 # Código fonte
 │       ├── app/             # Next.js App Router
-│       │   ├── components/  # UI components
-│       │   ├── styles/      # CSS styles page
-│       │   ├── adm/         # Admin dashboard
-│       │   └── subscription/# Subscription management
-│       ├── contexts/        # React contexts
-│       ├── hooks/           # Custom React hooks
-│       ├── services/        # API services
-│       └── types/           # TypeScript type definitions
+│       │   ├── components/  # Componentes UI
+│       │   ├── styles/      # Página de estilos CSS
+│       │   ├── adm/         # Painel de administração
+│       │   └── subscription/# Gerenciamento de assinatura
+│       ├── contexts/        # Contextos React
+│       ├── hooks/           # Hooks React personalizados
+│       ├── services/        # Serviços de API
+│       └── types/           # Definições de tipos TypeScript
 ```
 
-## Role-Based Features
+## Funcionalidades Baseadas em Papéis
 
-### Regular User Features
-- Browse and search for components
-- View component details and code
-- Save components as favorites
-- Subscribe to premium plans
-- Access styles and templates
-- Manage subscription
+### Funcionalidades de Usuário Regular
+- Navegar e pesquisar componentes
+- Visualizar detalhes e código dos componentes
+- Salvar componentes como favoritos
+- Assinar planos premium
+- Acessar estilos e templates
+- Gerenciar assinatura
 
-### Admin Features
-- Manage components (create, edit, delete)
-- Manage users (view, edit roles)
-- Manage subscription plans
-- View platform statistics
-- Access to all components without requiring a subscription
+### Funcionalidades de Administrador
+- Gerenciar componentes (criar, editar, excluir)
+- Gerenciar usuários (visualizar, editar papéis)
+- Gerenciar planos de assinatura
+- Visualizar estatísticas da plataforma
+- Acesso a todos os componentes sem necessidade de assinatura
 
-## Business Rules
+## Regras de Negócio
 
-1. Administrators cannot have subscriptions in the system.
-2. Components can be marked as premium and only accessible to users with active subscriptions.
-3. Subscriptions have specific durations and expiration dates.
-4. Users can cancel subscriptions at any time but will retain access until the end of their current billing period.
-5. The system tracks component views and other statistics for analytics purposes.
+1. Administradores não podem ter assinaturas no sistema.
+2. Componentes podem ser marcados como premium e acessíveis apenas para usuários com assinaturas ativas.
+3. Assinaturas têm durações específicas e datas de expiração.
+4. Usuários podem cancelar assinaturas a qualquer momento, mas manterão o acesso até o final do período de cobrança atual.
+5. O sistema rastreia visualizações de componentes e outras estatísticas para fins analíticos.
 
-## API Documentation
+## Documentação da API
 
-The API provides endpoints for all major features:
+A API fornece endpoints para todas as principais funcionalidades:
 
-### Authentication
-- `POST /auth/login` - Authenticate user
-- `GET /auth/google` - Initiate Google OAuth flow
-- `GET /auth/google/redirect` - Handle Google OAuth callback
+### Autenticação
+- `POST /auth/login` - Autenticar usuário
+- `GET /auth/google` - Iniciar fluxo OAuth do Google
+- `GET /auth/google/redirect` - Tratar retorno OAuth do Google
 
-### Users
-- `POST /users` - Create a new user
-- `GET /users/login` - User login
-- `GET /users/:userId` - Get user details
+### Usuários
+- `POST /users` - Criar um novo usuário
+- `GET /users/login` - Login do usuário
+- `GET /users/:userId` - Obter detalhes do usuário
 
-### Components
-- `GET /components` - List all components
-- `GET /components/:id` - Get component details
-- `POST /components` - Create a component (admin only)
-- `PUT /components/:id` - Update a component (admin only)
-- `DELETE /components/:id` - Delete a component (admin only)
+### Componentes
+- `GET /components` - Listar todos os componentes
+- `GET /components/:id` - Obter detalhes do componente
+- `POST /components` - Criar um componente (somente administrador)
+- `PUT /components/:id` - Atualizar um componente (somente administrador)
+- `DELETE /components/:id` - Excluir um componente (somente administrador)
 
-### Subscriptions
-- `GET /subscriptions/plans` - List available plans
-- `GET /subscriptions/user/:userId` - Get user subscriptions
-- `POST /subscriptions` - Create a subscription
-- `PATCH /subscriptions/:id/cancel` - Cancel a subscription
+### Assinaturas
+- `GET /subscriptions/plans` - Listar planos disponíveis
+- `GET /subscriptions/user/:userId` - Obter assinaturas do usuário
+- `POST /subscriptions` - Criar uma assinatura
+- `PATCH /subscriptions/:id/cancel` - Cancelar uma assinatura
 
-### Favorites
-- `GET /favoritos/user/:userId` - Get user favorites
-- `POST /favoritos` - Add component to favorites
-- `DELETE /favoritos/:id` - Remove component from favorites
-
-## License
-
-This project is proprietary and confidential. © 2025 UXperiment-Labs.
-
-## Contributors
-
-- Development Team
-- UI/UX Design Team
-- Product Management Team
+### Favoritos
+- `GET /favoritos/user/:userId` - Obter favoritos do usuário
+- `POST /favoritos` - Adicionar componente aos favoritos
+- `DELETE /favoritos/:id` - Remover componente dos favoritos
