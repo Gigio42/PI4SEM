@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
-import formStyles from '../component-form.module.css';
+import formStyles from "../../components/ComponentForm/component-form.module.css";
 
 interface ColorPickerProps {
   value: string;

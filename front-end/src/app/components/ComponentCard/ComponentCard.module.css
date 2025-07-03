@@ -1,0 +1,540 @@
+/* Modern ComponentCard styles with enhanced UI/UX */
+.componentCard {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+
+.componentCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+.componentCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.componentCard:hover::before {
+  opacity: 1;
+}
+
+.componentCard.admin {
+  min-height: 440px;
+  max-height: 480px;
+}
+
+.componentCard.user {
+  min-height: 400px;
+  cursor: pointer;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-secondary) 100%);
+  border-bottom: 1px solid var(--border);
+  min-height: 88px;
+  position: relative;
+  z-index: 2;
+}
+
+.cardHeaderContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.componentName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+  word-wrap: break-word;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.componentCategory {
+  font-size: 0.75rem;
+  color: var(--primary);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1) 0%, rgba(var(--primary-rgb), 0.05) 100%);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-weight: 600;
+  display: inline-block;
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cardPreview {
+  flex: 1;
+  position: relative;
+  min-height: 220px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.previewContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.previewOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.9) 0%, rgba(var(--primary-rgb), 0.7) 100%);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.componentCard:hover .previewOverlay {
+  opacity: 1;
+}
+
+.previewOverlay span {
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  transform: translateY(10px);
+  transition: transform 0.3s ease;
+}
+
+.componentCard:hover .previewOverlay span {
+  transform: translateY(0);
+}
+
+.cardBody {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+}
+
+.componentMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.componentColor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  background: var(--surface-secondary);
+  padding: 8px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.componentColor:hover {
+  background: rgba(var(--primary-rgb), 0.05);
+  border-color: rgba(var(--primary-rgb), 0.2);
+  color: var(--primary);
+}
+
+.colorPreview {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.componentColor:hover .colorPreview {
+  transform: scale(1.1);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cardFooter {
+  padding: 20px;
+  background: var(--surface);
+  margin-top: auto;
+}
+
+.adminActions,
+.userActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.adminActions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.userActions {
+  justify-content: space-between;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.actionButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.actionButton:hover::before {
+  left: 100%;
+}
+
+.actionButton:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.15);
+}
+
+.actionButton:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.2);
+}
+
+.previewButton {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
+}
+
+.previewButton:hover {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  border-color: var(--primary-dark);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(var(--primary-rgb), 0.4);
+}
+
+.editButton {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.editButton:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-color: #3b82f6;
+  color: #2563eb;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.deleteButton {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.deleteButton:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.1) 100%);
+  border-color: #ef4444;
+  color: #dc2626;
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.2);
+}
+
+.detailsButton {
+  flex: 1;
+  background: linear-gradient(135deg, var(--surface-secondary) 0%, var(--surface) 100%);
+  border: 1px solid var(--border);
+}
+
+.requiresSubscriptionBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 5;
+}
+
+.previewOverlayLocked {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  color: white;
+  opacity: 1;
+  transition: all 0.3s ease;
+  cursor: not-allowed;
+  z-index: 4;
+}
+
+.previewOverlayLocked svg {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.previewOverlayLocked span {
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.lockedComponent {
+  position: relative;
+  pointer-events: auto !important;
+}
+
+.lockedComponent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Layout styles */
+.componentsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 32px;
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .componentsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .componentsGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .componentCard {
+    min-height: 380px;
+  }
+
+  .componentCard.admin {
+    min-height: 420px;
+    max-height: 460px;
+  }
+
+  .cardHeader {
+    padding: 16px;
+    min-height: 80px;
+  }
+
+  .componentName {
+    font-size: 1.125rem;
+  }
+
+  .cardPreview {
+    min-height: 200px;
+  }
+
+  .cardBody {
+    padding: 16px;
+    min-height: 64px;
+  }
+
+  .cardFooter {
+    padding: 16px;
+  }
+
+  .adminActions {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .userActions {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .actionButton {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 16px;
+  }
+}
+
+/* Enhanced hover states for mobile */
+@media (hover: none) {
+  .componentCard:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .componentCard:hover .previewOverlay {
+    opacity: 0;
+  }
+
+  .actionButton:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .componentCard {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+
+  .previewOverlay {
+    display: none;
+  }
+
+  .cardFooter {
+    display: none;
+  }
+}
+
+/* Focus states for accessibility */
+.actionButton:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Loading animation */
+.componentCard.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.componentCard.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
+  }
+}
+
+.subscriptionLink {
+  margin-top: 12px;
+  background: var(--primary, #6366F1);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.subscriptionLink:hover {
+  background: var(--primary-dark, #4F46E5);
+  transform: translateY(-1px);
+}

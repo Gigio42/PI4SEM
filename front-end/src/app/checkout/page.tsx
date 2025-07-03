@@ -83,13 +83,52 @@ export default function CheckoutPage() {
       setCardDetails(prev => ({ ...prev, [name]: value }));
     }
   };
-
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user?.id || !selectedPlan) {
       showToast("Informações de usuário ou plano não disponíveis");
       return;
+    }
+    
+    // Validar dados do cartão se o método de pagamento for cartão de crédito
+    if (paymentMethod === 'credit_card') {
+      // Validar número do cartão (remover espaços e verificar se tem 16 dígitos)
+      const cardNumber = cardDetails.number.replace(/\s/g, '');
+      if (cardNumber.length !== 16 || !/^\d+$/.test(cardNumber)) {
+        showToast("Número de cartão inválido. Insira os 16 dígitos do seu cartão.");
+        return;
+      }
+      
+      // Validar nome no cartão
+      if (cardDetails.name.trim().length < 3) {
+        showToast("Nome no cartão inválido.");
+        return;
+      }
+      
+      // Validar data de expiração
+      const expiryMatch = cardDetails.expiry.match(/^(\d{2})\/(\d{2})$/);
+      if (!expiryMatch) {
+        showToast("Data de expiração deve estar no formato MM/YY.");
+        return;
+      }
+      
+      const expiryMonth = parseInt(expiryMatch[1]);
+      const expiryYear = parseInt(expiryMatch[2]) + 2000; // Assumindo 20XX
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // getMonth é 0-indexed
+      const currentYear = now.getFullYear();
+      
+      if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
+        showToast("Cartão expirado.");
+        return;
+      }
+      
+      // Validar CVC
+      if (cardDetails.cvc.length < 3 || !/^\d+$/.test(cardDetails.cvc)) {
+        showToast("Código de segurança inválido.");
+        return;
+      }
     }
     
     try {
@@ -102,7 +141,15 @@ export default function CheckoutPage() {
         return;
       }
       
-      // Process credit card or boleto payment
+      // Verificar se o usuário já possui uma assinatura ativa
+      const hasActiveSubscription = await SubscriptionService.checkUserHasActiveSubscription(user.id);
+      if (hasActiveSubscription) {
+        showToast("Você já possui uma assinatura ativa. Verifique na página de assinaturas.");
+        router.push('/subscription');
+        return;
+      }
+      
+      // Process credit card payment
       const subscription = await SubscriptionService.createSubscription({
         userId: user.id,
         planId: selectedPlan.id,
@@ -112,9 +159,17 @@ export default function CheckoutPage() {
       setPaymentStatus('success');
       showToast("Assinatura realizada com sucesso!");
       
-      // Redirect after payment success
+      // Definir flags para forçar recarregamento dos dados
+      localStorage.setItem('forceRefreshSubscription', 'true');
+      localStorage.setItem('forceRefreshComponents', 'true');
+      
+      // Forçar atualização do estado de assinatura no localStorage para reflexão imediata
+      localStorage.setItem('userHasActiveSubscription', 'true');
+      localStorage.setItem('subscriptionStatusTime', Date.now().toString());
+      
+      // Redireciona para a página de componentes após o sucesso para mostrar os componentes desbloqueados
       setTimeout(() => {
-        router.push('/subscription');
+        router.push('/components');
       }, 2000);
     } catch (error) {
       console.error("Erro ao processar pagamento:", error);
@@ -124,12 +179,19 @@ export default function CheckoutPage() {
       setProcessing(false);
     }
   };
-
   const handleConfirmPixPayment = async () => {
     if (!user?.id || !selectedPlan) return;
     
     try {
       setProcessing(true);
+      
+      // Verificar se o usuário já possui uma assinatura ativa
+      const hasActiveSubscription = await SubscriptionService.checkUserHasActiveSubscription(user.id);
+      if (hasActiveSubscription) {
+        showToast("Você já possui uma assinatura ativa. Verifique na página de assinaturas.");
+        router.push('/subscription');
+        return;
+      }
       
       // Process the subscription after PIX payment
       const subscription = await SubscriptionService.createSubscription({
@@ -138,12 +200,19 @@ export default function CheckoutPage() {
         paymentMethod: 'pix'
       });
       
-      setPaymentStatus('success');
-      showToast("Assinatura realizada com sucesso!");
+      // Definir flags para forçar recarregamento dos dados
+      localStorage.setItem('forceRefreshSubscription', 'true');
+      localStorage.setItem('forceRefreshComponents', 'true');
       
-      // Redirect after payment success
+      // Forçar atualização do estado de assinatura no localStorage para reflexão imediata
+      localStorage.setItem('userHasActiveSubscription', 'true');
+      localStorage.setItem('subscriptionStatusTime', Date.now().toString());
+      
+      setPaymentStatus('success');
+      showToast("Pagamento confirmado! Sua assinatura está ativa.");
+      
       setTimeout(() => {
-        router.push('/subscription');
+        router.push('/components');
       }, 2000);
     } catch (error) {
       console.error("Erro ao confirmar pagamento:", error);

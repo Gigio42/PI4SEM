@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateFavoritoDto } from './dto/create-favorito.dto';
+
+interface CreateFavoritoDto {
+  userId: number;
+  componentId: number;
+}
 
 @Injectable()
 export class FavoritosService {
+  private readonly logger = new Logger(FavoritosService.name);
+
   constructor(private prisma: PrismaService) {}
 
   /**
@@ -37,13 +43,58 @@ export class FavoritosService {
 
     // Se já existir, retorna o favorito existente
     if (existingFavorito) {
+      this.logger.warn(`Favorito já existe: usuário ${createFavoritoDto.userId}, componente ${createFavoritoDto.componentId}`);
       return existingFavorito;
     }
 
     // Caso contrário, cria um novo favorito
-    return this.prisma.favorito.create({
+    const favorito = await this.prisma.favorito.create({
       data: createFavoritoDto
     });
+
+    this.logger.log(`Favorito criado: usuário ${createFavoritoDto.userId}, componente ${createFavoritoDto.componentId}`);
+    return favorito;
+  }
+
+  /**
+   * Remove um favorito pelo ID
+   */
+  async remove(id: string) {
+    const favorito = await this.prisma.favorito.findUnique({
+      where: { id }
+    });
+
+    if (!favorito) {
+      throw new NotFoundException(`Favorito #${id} não encontrado`);
+    }
+
+    return this.prisma.favorito.delete({
+      where: { id }
+    });
+  }
+
+  /**
+   * Remove um favorito pelo ID do usuário e componente
+   */
+  async removeByUserAndComponent(userId: number, componentId: number) {
+    const favorito = await this.prisma.favorito.findFirst({
+      where: {
+        userId,
+        componentId
+      }
+    });
+
+    if (!favorito) {
+      throw new NotFoundException(`Favorito não encontrado para o usuário #${userId} e componente #${componentId}`);
+    }
+
+    await this.prisma.favorito.delete({
+      where: { id: favorito.id }
+    });
+
+    this.logger.log(`Favorito removido: usuário ${userId}, componente ${componentId}`);
+    // Retornar uma resposta de sucesso
+    return { message: 'Favorito removido com sucesso' };
   }
 
   /**
@@ -83,22 +134,28 @@ export class FavoritosService {
       }
     });
   }
-
   /**
    * Verifica se um componente é favorito de um usuário
    */
   async checkIsFavorite(userId: number, componentId: number) {
-    const favorito = await this.prisma.favorito.findFirst({
-      where: {
-        userId,
-        componentId
-      }
-    });
+    try {
+      this.logger.log(`Iniciando verificação de favorito: usuário ${userId}, componente ${componentId}`);
+      
+      const favorito = await this.prisma.favorito.findFirst({
+        where: {
+          userId,
+          componentId
+        }
+      });
 
-    return {
-      isFavorite: !!favorito,
-      favorito
-    };
+      const isFavorite = !!favorito;
+      this.logger.log(`Verificação de favorito: usuário ${userId}, componente ${componentId}, resultado: ${isFavorite}`);
+      return isFavorite;
+    } catch (error) {
+      this.logger.error(`Erro ao verificar favorito para usuário ${userId}, componente ${componentId}: ${error.message}`);
+      // Return false instead of throwing to avoid breaking the frontend
+      return false;
+    }
   }
 
   /**
@@ -127,39 +184,34 @@ export class FavoritosService {
   }
 
   /**
-   * Remove um favorito pelo ID
+   * Busca favoritos de um usuário com os componentes incluídos
    */
-  async remove(id: string) {
-    const favorito = await this.prisma.favorito.findUnique({
-      where: { id }
-    });
+  async getUserFavoritesWithComponents(userId: number) {
+    try {
+      const favoritesWithComponents = await this.prisma.favorito.findMany({
+        where: {
+          userId,
+        },
+        include: {
+          component: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
 
-    if (!favorito) {
-      throw new NotFoundException(`Favorito #${id} não encontrado`);
+      const result = favoritesWithComponents.map(fav => ({
+        ...fav.component,
+        isFavorited: true,
+        favoriteId: fav.id,
+        favoritedAt: fav.createdAt,
+      }));
+
+      this.logger.log(`Encontrados ${result.length} componentes favoritos para o usuário ${userId}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Erro ao obter favoritos com componentes: ${error.message}`);
+      throw error;
     }
-
-    return this.prisma.favorito.delete({
-      where: { id }
-    });
-  }
-
-  /**
-   * Remove um favorito pelo ID do usuário e componente
-   */
-  async removeByUserAndComponent(userId: number, componentId: number) {
-    const favorito = await this.prisma.favorito.findFirst({
-      where: {
-        userId,
-        componentId
-      }
-    });
-
-    if (!favorito) {
-      throw new NotFoundException(`Favorito não encontrado para o usuário #${userId} e componente #${componentId}`);
-    }
-
-    return this.prisma.favorito.delete({
-      where: { id: favorito.id }
-    });
   }
 }

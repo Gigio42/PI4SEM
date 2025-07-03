@@ -30,17 +30,22 @@ export default function SubscriptionPage() {
   const [localUser, setLocalUser] = useState<any>(null);
   const [authDebug, setAuthDebug] = useState<Record<string, unknown>>({});
 
-  // Enhanced loadPlansOnly function with better error handling but without timeout parameter
+  // Enhanced loadPlansOnly function with better error handling
   const loadPlansOnly = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Get plans without passing timeout parameter
+      console.log("🔄 Starting to load plans...");
+      
+      // Get plans with enhanced error handling
       const plansResult = await SubscriptionService.getPlans();
       
-      if (plansResult?.length > 0) {
-        const sortedPlans = [...plansResult].sort((a, b) => a.price - b.price);
+      console.log("📋 Plans loaded:", plansResult);
+      console.log("📋 Plans count:", plansResult?.length || 0);
+      
+      if (plansResult && Array.isArray(plansResult) && plansResult.length > 0) {
+        const sortedPlans = [...plansResult].sort((a, b) => (a.price || 0) - (b.price || 0));
         const highlightIndex = sortedPlans.length === 2 ? 1 : Math.floor(sortedPlans.length / 2);
         
         const enhancedPlans = sortedPlans.map((plan, index) => ({
@@ -48,22 +53,36 @@ export default function SubscriptionPage() {
           highlighted: index === highlightIndex
         }));
         
+        console.log("📋 Enhanced plans:", enhancedPlans);
         setAvailablePlans(enhancedPlans);
+        console.log("✅ Plans successfully processed and set");
       } else {
+        console.log("⚠️ No plans available or invalid data format");
         setAvailablePlans([]);
       }
     } catch (err) {
-      console.error('Error fetching plans data:', err);
+      console.error('❌ Error fetching plans data:', err);
       
       // More specific error message based on error type
-      if (axios.isAxiosError(err) && err.code === 'ECONNABORTED') {
-        setError('O servidor está demorando para responder. Por favor, verifique sua conexão e tente novamente.');
-      } else if (axios.isAxiosError(err) && err.response?.status === 500) {
-        setError('Ocorreu um erro no servidor. Por favor, tente novamente mais tarde ou entre em contato com o suporte.');
-      } else {
-        setError('Ocorreu um erro ao carregar os planos disponíveis. Por favor, tente novamente mais tarde.');
+      let errorMessage = 'Ocorreu um erro ao carregar os planos disponíveis.';
+      
+      if (err && typeof err === 'object') {
+        const error = err as any;
+        
+        if (error.code === 'ECONNABORTED') {
+          errorMessage = 'O servidor está demorando para responder. Por favor, verifique sua conexão e tente novamente.';
+        } else if (error.response?.status === 500) {
+          errorMessage = 'Ocorreu um erro no servidor. Por favor, tente novamente mais tarde ou entre em contato com o suporte.';
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Serviço de planos não encontrado. Verifique se o servidor backend está em execução.';
+        } else if (error.message?.includes('Network Error')) {
+          errorMessage = 'Erro de rede. Verifique sua conexão com a internet e se o servidor está acessível.';
+        } else if (error.message?.includes('timeout')) {
+          errorMessage = 'Tempo limite esgotado. O servidor está demorando para responder.';
+        }
       }
       
+      setError(errorMessage);
       setAuthDebug(prev => ({ ...prev, fetchPlansError: err }));
     } finally {
       setLoading(false);
@@ -406,7 +425,7 @@ export default function SubscriptionPage() {
                         currentPlanId={currentPlan?.planId}
                         onSelectPlan={handleSelectPlan}
                       />
-                    ) : (
+                    ) : !loading && (
                       <div className={styles.noPlansContainer}>
                         <div className={styles.noPlansIcon}>
                           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -424,6 +443,16 @@ export default function SubscriptionPage() {
                         >
                           Tentar novamente
                         </button>
+                        
+                        {/* Debug info for development */}
+                        {process.env.NODE_ENV === 'development' && (
+                          <div style={{marginTop: '20px', padding: '10px', background: '#f5f5f5', borderRadius: '5px'}}>
+                            <p><strong>Debug Info:</strong></p>
+                            <p>Available plans: {JSON.stringify(availablePlans)}</p>
+                            <p>Loading: {loading.toString()}</p>
+                            <p>Error: {error}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </>

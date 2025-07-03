@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { FavoritosService } from '@/services/FavoritosService';
+import { FavoritesService } from '@/services/FavoritosService';
 import styles from './favorite-styles.module.css';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useFavorite } from '@/contexts/FavoriteContext';
@@ -46,60 +46,37 @@ export default function FavoriteButton({
   useEffect(() => {
     checkFavoriteStatus();
   }, [userId, componentId, forceRefresh]);
-  
-  // Update internal state if initialFavoriteState changes
-  useEffect(() => {
-    if (initialFavoriteState !== undefined) {
-      setIsFavorite(initialFavoriteState);
-    }
-  }, [initialFavoriteState]);
 
-  // Subscribe to favorite state changes from the context
-  useEffect(() => {
-    // Check if there's a state for this component in the context
-    if (favoriteStates[favoriteStateKey] !== undefined) {
-      setIsFavorite(favoriteStates[favoriteStateKey]);
-    }
-    
-    // Subscribe to changes
-    const unsubscribe = subscribeToFavoriteChanges(() => {
-      const contextState = favoriteStates[favoriteStateKey];
-      if (contextState !== undefined && contextState !== isFavoriteRef.current) {
-        setIsFavorite(contextState);
-      }
-    });
-    
-    // Cleanup subscription on unmount
-    return unsubscribe;
-  }, [favoriteStates, favoriteStateKey, subscribeToFavoriteChanges]); // Removed isFavorite dependency
   const checkFavoriteStatus = async () => {
     if (userId === undefined || !componentId) return;
     
     try {
-      setIsLoading(true);
-      const { isFavorito, favoritoData } = await FavoritosService.checkIsFavorito(userId, componentId);
+      console.log(`FavoriteButton: Checking favorite status for component ${componentId}, user ${userId}`);
+      
+      const isFavorited = await FavoritesService.checkIsFavorito(componentId, userId);
+      
+      console.log(`FavoriteButton: Component ${componentId} is favorited: ${isFavorited}`);
       
       // Only update state if the status has changed
-      if (isFavorito !== isFavoriteRef.current) {
-        setIsFavorite(isFavorito);
+      if (isFavorited !== isFavoriteRef.current) {
+        setIsFavorite(isFavorited);
         // Update global context
-        updateFavoriteState(componentId, userId, isFavorito);
+        updateFavoriteState(componentId, userId, isFavorited);
         // Notify parent of change if state was different
         if (onFavoriteChange) {
-          onFavoriteChange(isFavorito);
+          onFavoriteChange(isFavorited);
         }
       }
-      
-      setFavoriteId(favoritoData?.id || null);
     } catch (error) {
       console.error('Erro ao verificar status de favorito:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
+
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    console.log('FavoriteButton - Toggle called:', { userId, componentId, position, currentState: isFavorite });
     
     if (userId === undefined || !componentId) {
       showToast('Você precisa estar logado para favoritar componentes', 'warning');
@@ -109,33 +86,50 @@ export default function FavoriteButton({
     try {
       setIsLoading(true);
       
-      if (isFavorite && favoriteId) {
-        // Remover dos favoritos
-        await FavoritosService.removeFavorito(favoriteId);
-        setIsFavorite(false);
-        setFavoriteId(null);
-        // Update global context
-        updateFavoriteState(componentId, userId, false);
-        showToast('Componente removido dos favoritos', 'success');
+      if (isFavorite) {
+        // Remove from favorites
+        const success = await FavoritesService.removeFavorito(componentId, userId);
+        if (success) {
+          setIsFavorite(false);
+          updateFavoriteState(componentId, userId, false);
+          showToast('Componente removido dos favoritos', 'success');
+          
+          if (onFavoriteChange) {
+            onFavoriteChange(false);
+          }
+        } else {
+          showToast('Erro ao remover dos favoritos', 'error');
+        }
       } else {
-        // Adicionar aos favoritos
-        const response = await FavoritosService.addFavorito(userId, componentId);
-        setIsFavorite(true);
-        setFavoriteId(response.id);
-        // Update global context
-        updateFavoriteState(componentId, userId, true);
-        setAnimating(true);
-        showToast('Componente adicionado aos favoritos', 'success');
-        
-        // Reset animation after it completes
-        setTimeout(() => setAnimating(false), 700);
+        // Add to favorites
+        const result = await FavoritesService.addFavorito(componentId, userId);
+        if (result) {
+          setIsFavorite(true);
+          updateFavoriteState(componentId, userId, true);
+          setAnimating(true);
+          showToast('Componente adicionado aos favoritos', 'success');
+          
+          setTimeout(() => setAnimating(false), 700);
+          
+          if (onFavoriteChange) {
+            onFavoriteChange(true);
+          }
+        } else {
+          showToast('Erro ao adicionar aos favoritos', 'error');
+        }
       }
-      
-      // Notify parent component if callback provided - always do this
-      if (onFavoriteChange) {
-        onFavoriteChange(!isFavorite);
-      }
-    } catch (error) {
+
+      // Force refresh the favorite status after a short delay to ensure consistency
+      setTimeout(async () => {
+        const refreshedStatus = await FavoritesService.checkIsFavorito(componentId, userId);
+        if (refreshedStatus !== isFavorite) {
+          console.log(`Correcting favorite status for component ${componentId}: ${refreshedStatus}`);
+          setIsFavorite(refreshedStatus);
+          updateFavoriteState(componentId, userId, refreshedStatus);
+        }
+      }, 1000);
+
+    } catch (error: any) {
       console.error('Erro ao atualizar favorito:', error);
       showToast('Erro ao atualizar favoritos', 'error');
     } finally {

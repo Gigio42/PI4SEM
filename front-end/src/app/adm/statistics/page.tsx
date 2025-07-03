@@ -8,9 +8,9 @@ import adminStyles from "../admin.module.css";
 import { formatCurrency } from '@/utils/formatters';
 import { useStatistics } from '@/hooks/useStatistics';
 import { TopComponent, MostFavoritedComponent } from '@/services/statistics.service';
-import StatCard from '@/components/statistics/StatCard';
-import TopComponentsChart from '@/components/statistics/TopComponentsChart';
-import TimeChart from '@/components/statistics/TimeChart';
+import StatCard from '@/app/components/statistics/StatCard';
+import TopComponentsChart from '@/app/components/statistics/TopComponentsChart';
+import TimeChart from '@/app/components/statistics/TimeChart';
 
 export default function StatisticsPage() {
   const {

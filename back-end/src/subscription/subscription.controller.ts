@@ -20,12 +20,16 @@ export class SubscriptionController {
       }
       throw new BadRequestException(error.message);
     }  }
-
   @Public()
   @Get('plans')
   async getAllPlans(@Query('onlyActive') onlyActive: string) {
-    const showOnlyActive = onlyActive === 'true';
-    return this.subscriptionService.getAllPlans(showOnlyActive);
+    try {
+      const showOnlyActive = onlyActive === 'true';
+      return await this.subscriptionService.getAllPlans(showOnlyActive);
+    } catch (error) {
+      console.error('Error getting plans:', error);
+      throw new BadRequestException('Erro ao buscar planos: ' + error.message);
+    }
   }
 
   @Public()
@@ -98,6 +102,24 @@ export class SubscriptionController {
         throw error;
       }
       throw new NotFoundException(error.message);
+    }
+  }
+  @Public() // Tornar esse endpoint público para que possa ser acessado sem autenticação
+  @Get('user/:userId/has-active')
+  async userHasActiveSubscription(@Param('userId') userId: string) {
+    try {
+      // Verificar se o userId é válido
+      const parsedUserId = Number(userId);
+      if (isNaN(parsedUserId)) {
+        return { hasActiveSubscription: false };
+      }
+      
+      const hasActive = await this.subscriptionService.getUserHasActiveSubscription(parsedUserId);
+      return { hasActiveSubscription: hasActive };
+    } catch (error) {
+      console.error(`Erro ao verificar assinatura do usuário ${userId}:`, error);
+      // Não lançar erro, apenas retornar falso para não quebrar o fluxo do frontend
+      return { hasActiveSubscription: false };
     }
   }
 

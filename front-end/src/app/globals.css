@@ -24,6 +24,11 @@
   --action-withdraw: #10B981; /* Verde - Saque */
   --action-packages: #F59E0B; /* Laranja - Pacotes */
   
+  /* Favorite purple colors */
+  --favorite-purple: #8B5CF6;
+  --favorite-purple-light: #A78BFA;
+  --favorite-purple-dark: #7C3AED;
+  
   /* Cores do Google */
   --google-red: #ef4444;
   --google-red-dark: #dc2626;
@@ -60,6 +65,26 @@
   --gray-400: #9CA3AF;
   --gray-600: #4B5563;
   --gray-700: #374151;
+  
+  /* Enhanced modal variables */
+  --modal-backdrop-blur: 12px;
+  --modal-backdrop-opacity: 0.7;
+  --modal-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  --modal-border-radius: 16px;
+  
+  /* Animation variables */
+  --transition-modal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Z-index scale */
+  --z-modal: 9999;
+  --z-modal-backdrop: 9998;
+  --z-modal-content: 10000;
+
+  /* Enhanced surface variations for better contrast */
+  --surface-hover: #F5F5F5;
+  --border-hover: #DCDCDC;
+  --primary-alpha: rgba(99, 102, 241, 0.1);
 }
 
 [data-theme="dark"] {
@@ -70,36 +95,63 @@
   --surface-secondary: #212121; /* Container secundário - minimalista */
   --surface-hover: #282828;
   --border: #2A2A2A;
+  --border-hover: #3A3A3A;
   
   /* Textos com gradação sutil para melhor legibilidade */
   --text-primary: #FCFCFC; /* Branco suave para não cansar os olhos */
   --text-secondary: #ADADAD; /* Cinza claro com leve saturação */
   --text-tertiary: #717171; /* Cinza médio elegante */
-    /* Cores primárias mais sofisticadas */
+  
+  /* Cores primárias mais sofisticadas */
   --primary: #8E5DFF; /* Roxo com maior saturação para UI clean */
   --primary-dark: #7B40FF;
-  --primary-light: #AD85FF;
-  --primary-rgb: 142, 93, 255; /* Valor RGB da cor primária para uso em transparências */
-  
-  /* Cores de ação - refinadas para visual mais clean */
-  --action-send: #3B82F6; /* Azul - Enviar dinheiro */
-  --action-topup: #8B5CF6; /* Roxo - Top-up */
-  --action-payment: #F97316; /* Laranja - Pagamento */
-  --action-withdraw: #10B981; /* Verde - Saque */
-  --action-packages: #F59E0B; /* Laranja - Pacotes */
-  
-  /* Sombras mais profundas para dark mode */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-    /* Outros elementos compatíveis com sistema existente */
-  --gray-100: #1A1A1A;
-  --gray-200: #242424;
-  --gray-300: #333333;
-  --gray-400: #666666;
-  --gray-600: #999999;
-  --gray-700: #CCCCCC;
+  --primary-light: #A378FF;
+  --primary-alpha: rgba(142, 93, 255, 0.15);
+
+  /* Enhanced modal variables for dark mode */
+  --modal-backdrop-blur: 16px;
+  --modal-backdrop-opacity: 0.8;
+  --modal-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+  --modal-border-radius: 20px;
+}
+
+/* Remove any conflicting prefers-color-scheme media queries */
+/* Ensure our design system takes precedence */
+:root[data-theme="dark"] {
+  /* Force our dark theme variables */
+  --background: #0A0A0A !important;
+  --foreground: #FFFFFF !important;
+  --surface: #181818 !important;
+  --surface-secondary: #212121 !important;
+  --surface-hover: #282828 !important;
+  --border: #2A2A2A !important;
+  --text-primary: #FCFCFC !important;
+  --text-secondary: #ADADAD !important;
+  --text-tertiary: #717171 !important;
+  --primary: #8E5DFF !important;
+  --primary-dark: #7B40FF !important;
+  --primary-light: #A378FF !important;
+  --primary-rgb: 142, 93, 255 !important;
+}
+
+/* Override any system dark mode preferences */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    /* Use our light theme by default, let user control theme */
+    --background: #F9FAFB;
+    --foreground: #111827;
+    --surface: #FFFFFF;
+    --surface-secondary: #F3F4F6;
+    --surface-hover: #E5E7EB;
+    --border: #E2E8F0;
+    --text-primary: #111827;
+    --text-secondary: #6B7280;
+    --text-tertiary: #9CA3AF;
+    --primary: #6366F1;
+    --primary-dark: #5046E5;
+    --primary-light: #818CF8;
+    --primary-rgb: 99, 102, 241;
+  }
 }
 
 * {
@@ -171,10 +223,68 @@ html {
   background-color: var(--surface);
   border-radius: 8px;
   width: 100%;
-  max-width: 480px;
+  
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border: 1px solid var(--border);
   position: relative;
+}
+
+/* Global modal styles */
+.modal-open {
+  overflow: hidden;
+}
+
+/* Enhanced backdrop filter support */
+@supports (backdrop-filter: blur(12px)) {
+  .modal-backdrop {
+    backdrop-filter: blur(var(--modal-backdrop-blur));
+    -webkit-backdrop-filter: blur(var(--modal-backdrop-blur));
+  }
+}
+
+@supports not (backdrop-filter: blur(12px)) {
+  .modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Smooth theme transitions */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Enhanced focus styles for accessibility */
+.focus-visible:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-terciary);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--surface-secondary);
 }

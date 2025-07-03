@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import styles from './admin.module.css';
 import Header from '../../app/components/Header/Header';
 import Sidebar from '../../app/components/Sidebar/Sidebar';
+import { ComponentProvider } from '@/contexts/ComponentContext';
 
 export default function AdminLayout({
   children,
@@ -55,14 +56,16 @@ export default function AdminLayout({
   };
 
   return (
-    <div className={`${styles.adminLayout} ${isSidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
-      <Header />
-      <div className={styles.adminContainer}>
-        <Sidebar isAdmin={true} onToggle={handleSidebarToggle} />
-        <main className={styles.content}>
-          {children}
-        </main>
+    <ComponentProvider>
+      <div className={`${styles.adminLayout} ${isSidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
+        <Header />
+        <div className={styles.adminContainer}>
+          <Sidebar isAdmin={true} onToggle={handleSidebarToggle} />
+          <main className={styles.content}>
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ComponentProvider>
   );
 }

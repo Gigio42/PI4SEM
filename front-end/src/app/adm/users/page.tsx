@@ -10,7 +10,7 @@ import adminStyles from "../admin.module.css";
 import { useToast } from "@/hooks/useToast";
 
 // Função para gerar iniciais a partir do nome
-const generateInitials = (name: string): string => {
+const generateInitials = (name: string | undefined): string => {
   if (!name) return '??';
   
   const nameParts = name.split(' ').filter(part => part.length > 0);
@@ -32,6 +32,13 @@ export default function ManageUsers() {
   const [usersPerPage] = useState(8);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserCard, setShowUserCard] = useState(false);
+  const [showUserDetailsModal, setShowUserDetailsModal] = useState(false);
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [editingUserData, setEditingUserData] = useState({
+    name: '',
+    email: '',
+    role: 'user' as 'user' | 'admin'
+  });
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [modalAction, setModalAction] = useState<'activate' | 'deactivate'>('deactivate');
@@ -53,7 +60,10 @@ export default function ManageUsers() {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
+        console.log('Iniciando carregamento de usuários...');
+        
         const data = await UsersService.getAllUsers();
+        console.log(`${data.length} usuários carregados:`, data);
         
         // Adicionar iniciais a cada usuário se não estiverem definidas
         const usersWithInitials = data.map(user => ({
@@ -64,11 +74,22 @@ export default function ManageUsers() {
         setUsers(usersWithInitials);
         
         // Buscar estatísticas de usuários
+        console.log('Carregando estatísticas de usuários...');
         const statsData = await UsersService.getUserStats();
+        console.log('Estatísticas carregadas:', statsData);
         setStats(statsData);
       } catch (error) {
         console.error('Erro ao carregar usuários:', error);
         showToast("Erro ao carregar usuários. Tente novamente mais tarde.", { type: "error" });
+        
+        // Em caso de erro, define dados vazios
+        setUsers([]);
+        setStats({
+          totalUsers: 0,
+          activeUsers: 0,
+          admins: 0,
+          newUsersThisMonth: 0
+        });
       } finally {
         setIsLoading(false);
         setLoaded(true);
@@ -100,7 +121,7 @@ export default function ManageUsers() {
     // Depois aplicar os filtros da barra de pesquisa
     result = result.filter(user => {
       const matchesSearch = searchTerm === '' || 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === '' || user.status === statusFilter;
@@ -146,6 +167,33 @@ export default function ManageUsers() {
   const currentUsers = processedUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(processedUsers.length / usersPerPage);
 
+  // Função para gerar números de páginas visíveis
+  const getVisiblePages = () => {
+    const delta = 2; // Número de páginas antes e depois da atual
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots;
+  };
+
   // Formatar data para padrão brasileiro
   const formatDate = (dateString: string): string => {
     if (!dateString) return '-';
@@ -156,7 +204,75 @@ export default function ManageUsers() {
   // Abrir o card de visualização rápida do usuário
   const handleViewUser = (user: User): void => {
     setSelectedUser(user);
-    setShowUserCard(true);
+    setEditingUserData({
+      name: user.name || '',
+      email: user.email,
+      role: user.role
+    });
+    setIsEditingUser(false);
+    setShowUserDetailsModal(true);
+  };
+
+  // Ativar modo de edição
+  const handleEditUser = (): void => {
+    setIsEditingUser(true);
+  };
+
+  // Cancelar edição
+  const handleCancelEdit = (): void => {
+    if (selectedUser) {
+      setEditingUserData({
+        name: selectedUser.name || '',
+        email: selectedUser.email,
+        role: selectedUser.role
+      });
+    }
+    setIsEditingUser(false);
+  };
+
+  // Salvar alterações do usuário
+  const handleSaveUserChanges = async (): Promise<void> => {
+    if (!selectedUser) return;
+    
+    try {
+      setIsProcessing(true);
+      
+      // Se o papel mudou, atualizar
+      if (editingUserData.role !== selectedUser.role) {
+        await UsersService.updateUserRole(selectedUser.id, editingUserData.role);
+      }
+      
+      // Aqui você pode adicionar mais campos para atualizar
+      // Por exemplo, nome, email, etc. quando houver endpoints para isso
+      
+      // Recarregar a lista de usuários para refletir as mudanças
+      const updatedUsers = await UsersService.getAllUsers();
+      const usersWithInitials = updatedUsers.map(user => ({
+        ...user,
+        initials: user.initials || generateInitials(user.name)
+      }));
+      setUsers(usersWithInitials);
+      
+      // Atualizar o usuário selecionado
+      const updatedSelectedUser = usersWithInitials.find(u => u.id === selectedUser.id);
+      if (updatedSelectedUser) {
+        setSelectedUser(updatedSelectedUser);
+        setEditingUserData({
+          name: updatedSelectedUser.name || '',
+          email: updatedSelectedUser.email,
+          role: updatedSelectedUser.role
+        });
+      }
+      
+      setIsEditingUser(false);
+      showToast("Usuário atualizado com sucesso!", { type: "success" });
+      
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      showToast("Erro ao atualizar usuário. Tente novamente.", { type: "error" });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Abrir modal para editar o papel do usuário
@@ -173,19 +289,20 @@ export default function ManageUsers() {
     
     try {
       setIsProcessing(true);
+      console.log(`Atualizando papel do usuário ${selectedUser.id} para ${newRole}`);
       
       const updatedUser = await UsersService.updateUserRole(selectedUser.id, newRole);
       
       // Atualizar o usuário na lista
       setUsers(prevUsers => 
         prevUsers.map(user => 
-          user.id === selectedUser.id 
-            ? { ...user, role: updatedUser.role }
-            : user
+          user.id === selectedUser.id ? updatedUser : user
         )
       );
       
-      setSuccessMessage(`Papel do usuário ${selectedUser.name} foi alterado para ${newRole === 'admin' ? 'Administrador' : 'Usuário'}`);
+      // Safely access name with fallback
+      const userName = selectedUser.name || 'Usuário';
+      setSuccessMessage(`Papel do usuário ${userName} foi alterado para ${newRole === 'admin' ? 'Administrador' : 'Usuário'}`);
       showToast(`Papel do usuário foi alterado com sucesso!`, { type: "success" });
       setShowRoleModal(false);
     } catch (error) {
@@ -210,6 +327,7 @@ export default function ManageUsers() {
     
     try {
       setIsProcessing(true);
+      console.log(`${modalAction === 'activate' ? 'Ativando' : 'Desativando'} usuário ${selectedUser.id}`);
       
       const newStatus = modalAction === 'activate' ? 'active' : 'inactive';
       const updatedUser = await UsersService.updateUserStatus(selectedUser.id, newStatus);
@@ -217,13 +335,13 @@ export default function ManageUsers() {
       // Atualizar o usuário na lista
       setUsers(prevUsers => 
         prevUsers.map(user => 
-          user.id === selectedUser.id 
-            ? { ...user, status: updatedUser.status }
-            : user
+          user.id === selectedUser.id ? updatedUser : user
         )
       );
       
-      setSuccessMessage(`Usuário ${selectedUser.name} foi ${modalAction === 'activate' ? 'ativado' : 'desativado'} com sucesso!`);
+      // Safely access name with fallback
+      const userName = selectedUser.name || 'Usuário';
+      setSuccessMessage(`Usuário ${userName} foi ${modalAction === 'activate' ? 'ativado' : 'desativado'} com sucesso!`);
       showToast(`Usuário foi ${modalAction === 'activate' ? 'ativado' : 'desativado'} com sucesso!`, { type: "success" });
       setShowConfirmModal(false);
     } catch (error) {
@@ -491,7 +609,7 @@ export default function ManageUsers() {
                             {user.initials || generateInitials(user.name)}
                           </div>
                           <div>
-                            <div className={styles.userName}>{user.name}</div>
+                            <div className={styles.userName}>{user.name || 'Usuário'}</div>
                             <div className={styles.idBadge}>ID: {user.id}</div>
                           </div>
                         </div>
@@ -544,453 +662,462 @@ export default function ManageUsers() {
                               onClick={(e) => handleStatusAction(user, 'activate', e)}
                               title="Ativar usuário"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-          
-          {/* Paginação */}
-          {totalPages > 1 && (
-            <div className={styles.pagination}>
-              <button 
-                className={styles.paginationButton}
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 19L8 12L15 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Anterior
-              </button>
-              <div className={styles.paginationNumbers}>
-                {totalPages <= 7 ? (
-                  // Se tiver 7 páginas ou menos, mostra todas
-                  [...Array(totalPages)].map((_, index) => (
-                    <button 
-                      key={index + 1}
-                      className={`${styles.paginationNumber} ${currentPage === index + 1 ? styles.active : ''}`}
-                      onClick={() => setCurrentPage(index + 1)}
-                      aria-label={`Página ${index + 1}`}
-                      aria-current={currentPage === index + 1 ? 'page' : undefined}
-                    >
-                      {index + 1}
-                    </button>
-                  ))
-                ) : (
-                  // Se tiver mais de 7 páginas, faz o tratamento especial
-                  <>
-                    {/* Primeira página sempre aparece */}
-                    <button 
-                      className={`${styles.paginationNumber} ${currentPage === 1 ? styles.active : ''}`}
-                      onClick={() => setCurrentPage(1)}
-                      aria-label="Página 1"
-                      aria-current={currentPage === 1 ? 'page' : undefined}
-                    >
-                      1
-                    </button>
-                    
-                    {/* Elipses antes de pág. atual (se estiver distante do início) */}
-                    {currentPage > 3 && <span className={styles.paginationEllipsis}>...</span>}
-                    
-                    {/* Páginas ao redor da página atual */}
-                    {[...Array(totalPages)].map((_, index) => {
-                      const pageNumber = index + 1;
-                      // Mostrar 2 páginas antes e 2 depois da atual, se possível
-                      if (
-                        (pageNumber > 1 && pageNumber < totalPages) && // não é a primeira nem a última
-                        (
-                          (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1) || // está próxima da atual
-                          (currentPage <= 3 && pageNumber <= 4) || // está no início
-                          (currentPage >= totalPages - 2 && pageNumber >= totalPages - 3) // está no fim
-                        )
-                      ) {
-                        return (
-                          <button 
-                            key={pageNumber}
-                            className={`${styles.paginationNumber} ${currentPage === pageNumber ? styles.active : ''}`}
-                            onClick={() => setCurrentPage(pageNumber)}
-                            aria-label={`Página ${pageNumber}`}
-                            aria-current={currentPage === pageNumber ? 'page' : undefined}
-                          >
-                            {pageNumber}
-                          </button>
-                        );
-                      }
-                      return null;
-                    })}
-                    
-                    {/* Elipses depois da pág. atual (se estiver distante do fim) */}
-                    {currentPage < totalPages - 2 && <span className={styles.paginationEllipsis}>...</span>}
-                    
-                    {/* Última página sempre aparece */}
-                    <button 
-                      className={`${styles.paginationNumber} ${currentPage === totalPages ? styles.active : ''}`}
-                      onClick={() => setCurrentPage(totalPages)}
-                      aria-label={`Página ${totalPages}`}
-                      aria-current={currentPage === totalPages ? 'page' : undefined}
-                    >
-                      {totalPages}
-                    </button>
-                  </>
-                )}
-              </div>
-              <button 
-                className={styles.paginationButton}
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                Próximo
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-          )}          {/* Modal para editar papel do usuário */}
-          {showRoleModal && selectedUser && (
-            <div className="modalOverlay" onClick={() => !isProcessing && setShowRoleModal(false)}>
-              <div className="modalContent" onClick={(e) => e.stopPropagation()}>
-                <h2 className={styles.modalTitle}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 'var(--spacing-xs)' }}>
-                    <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Alterar Função do Usuário
-                </h2>
-                <p className={styles.modalSubtitle}>
-                  Selecione a nova função para <strong>{selectedUser.name}</strong>
-                </p>
-                
-                <div className={styles.formGroup}>
-                  <label htmlFor="role-select" className={styles.formLabel}>Função</label>
-                  <div className={styles.roleSelectContainer}>
-                    <select 
-                      id="role-select"
-                      className={styles.formSelect}
-                      value={newRole}
-                      onChange={(e) => setNewRole(e.target.value as 'user' | 'admin')}
-                    >
-                      <option value="user">Usuário</option>
-                      <option value="admin">Administrador</option>
-                    </select>
-                  </div>
-                  
-                  <div className={styles.formDescription}>
-                    {newRole === 'admin' ? (
-                      <div className={styles.roleDescription}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 15.5H7.5C6.10444 15.5 5.40665 15.5 4.83886 15.6722C3.56045 16.06 2.56004 17.0605 2.17224 18.3389C2 18.9067 2 19.6044 2 21M19 21V15M16 18H22M14.5 7.5C14.5 9.98528 12.4853 12 10 12C7.51472 12 5.5 9.98528 5.5 7.5C5.5 5.01472 7.51472 3 10 3C12.4853 3 14.5 5.01472 14.5 7.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        <p>
-                          Administradores têm acesso a todas as funcionalidades de gerenciamento do sistema, incluindo:
-                          <ul>
-                            <li>Gerenciamento de componentes</li>
-                            <li>Gerenciamento de usuários</li>
-                            <li>Acesso a estatísticas</li>
-                            <li>Configurações avançadas</li>
-                          </ul>
-                        </p>
-                      </div>
-                    ) : (
-                      <div className={styles.roleDescription}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        <p>
-                          Usuários comuns têm acesso apenas às funcionalidades básicas, como:
-                          <ul>
-                            <li>Visualização de componentes</li>
-                            <li>Gerenciamento da própria conta</li>
-                            <li>Favoritos e coleções pessoais</li>
-                          </ul>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className={styles.modalActions}>
-                  <button 
-                    className={styles.cancelButton}
-                    onClick={() => setShowRoleModal(false)}
-                    disabled={isProcessing}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    className={styles.saveButton}
-                    onClick={handleUpdateRole}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <span className={styles.loadingSpinner}></span>
-                        Processando...
-                      </>
-                    ) : (
-                      <>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M5 12L10 17L20 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        Salvar Alterações
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}          {/* Modal para confirmar ativação/desativação */}
-          {showConfirmModal && selectedUser && (
-            <div className="modalOverlay" onClick={() => !isProcessing && setShowConfirmModal(false)}>
-              <div className="modalContent" onClick={(e) => e.stopPropagation()}>
-                <h2 className={styles.modalTitle}>
-                  {modalAction === 'activate' ? (
-                    <>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 'var(--spacing-xs)', color: '#10B981' }}>
-                        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Ativar usuário
-                    </>
-                  ) : (
-                    <>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 'var(--spacing-xs)', color: 'var(--google-red)' }}>
-                        <path d="M15 9L9 15M9 9L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Desativar usuário
-                    </>
-                  )}
-                </h2>
-                
-                <div className={styles.confirmationContent}>
-                  <div className={styles.userConfirmationCard}>
-                    <div className={styles.userAvatar} style={{
-                      backgroundColor: selectedUser.status === 'active'
-                        ? 'var(--primary)'
-                        : 'var(--text-tertiary)'
-                    }}>
-                      {selectedUser.initials}
-                    </div>
-                    <div>
-                      <div className={styles.userName}>{selectedUser.name}</div>
-                      <div className={styles.userEmail}>{selectedUser.email}</div>
-                    </div>
-                  </div>
-                  
-                  <p className={styles.confirmationMessage}>
-                    Você deseja realmente {modalAction === 'activate' ? 'ativar' : 'desativar'} este usuário?
-                  </p>
-                  
-                  {modalAction === 'deactivate' && (
-                    <div className={styles.warningBox}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0378 2.66667 10.2679 4L3.33975 16C2.56998 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <p>
-                        Um usuário desativado não poderá acessar o sistema até que seja ativado novamente.
-                        Todas as suas permissões serão temporariamente suspensas.
-                      </p>
-                    </div>
-                  )}
-                </div>
-                
-                <div className={styles.modalActions}>
-                  <button 
-                    className={styles.cancelButton}
-                    onClick={() => setShowConfirmModal(false)}
-                    disabled={isProcessing}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    className={modalAction === 'activate' ? styles.confirmButton : styles.confirmDeleteButton}
-                    onClick={handleConfirmAction}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <span className={styles.loadingSpinner}></span>
-                        Processando...
-                      </>
-                    ) : (
-                      <>
-                        {modalAction === 'activate' ? (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 12L10 17L20 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        ) : (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                        {modalAction === 'activate' ? 'Sim, Ativar' : 'Sim, Desativar'}
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}          {/* Card de visualização rápida do usuário */}
-          {showUserCard && selectedUser && (
-            <div className="modalOverlay" onClick={() => setShowUserCard(false)}>
-              <div className="modalContent" onClick={(e) => e.stopPropagation()}>
-                <div className={styles.userCardContainer}>
-                  <div className={styles.userCardHeader}>
-                    <div className={styles.userCardAvatar} style={{
-                      backgroundColor: selectedUser.status === 'active'
-                        ? 'var(--primary)'
-                        : 'var(--text-tertiary)'
-                    }}>
-                      {selectedUser.initials}
-                    </div>
-                    <div className={styles.userCardInfo}>
-                      <h3 className={styles.userCardName}>{selectedUser.name}</h3>
-                      <div className={styles.userCardEmail}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M3 8L10.8906 13.2604C11.5624 13.7083 12.4376 13.7083 13.1094 13.2604L21 8M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        {selectedUser.email}
-                      </div>
-                      <div className={styles.badgeContainer}>
-                        <span className={selectedUser.role === 'admin' ? styles.roleAdmin : styles.roleUser}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            {selectedUser.role === 'admin' ? (
-                              <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H6C4.93913 15 3.92172 15.4214 3.17157 16.1716C2.42143 16.9217 2 17.9391 2 19V21M21 12L15 18L12 15M14 7C14 9.20914 12.2091 11 10 11C7.79086 11 5.5 9.20914 5.5 7.5C5.5 5.01472 7.51472 3 10 3C12.4853 3 14.5 5.01472 14.5 7.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            ) : (
-                              <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            )}
-                          </svg>
-                          {selectedUser.role === 'admin' ? 'Administrador' : 'Usuário'}
-                        </span>
-                        <span className={selectedUser.status === 'active' ? styles.statusActive : styles.statusInactive}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            {selectedUser.status === 'active' ? (
-                              <path d="M5 12L10 17L20 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            ) : (
-                              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            )}
-                          </svg>
-                          {selectedUser.status === 'active' ? 'Ativo' : 'Inativo'}
-                        </span>
-                        {selectedUser.subscription && (
-                          <span className={styles.subscriptionBadge}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M16 18V20M12 18V22M8 18V20M2 8H22M5.5 3H18.5C19.8807 3 21 4.11929 21 5.5V18.5C21 19.8807 19.8807 21 18.5 21H5.5C4.11929 21 3 19.8807 3 18.5V5.5C3 4.11929 4.11929 3 5.5 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            {selectedUser.subscription}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className={styles.userCardDivider}></div>
-                  
-                  <div className={styles.userCardData}>
-                    <div className={styles.userCardItem}>
-                      <span className={styles.userCardLabel}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1046 21 21 20.1046 21 19V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        Data de Cadastro
-                      </span>
-                      <span className={styles.userCardValue}>{formatDate(selectedUser.signupDate)}</span>
-                    </div>
-                    <div className={styles.userCardItem}>
-                      <span className={styles.userCardLabel}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 8V12L15 15M3 12C3 13.1819 3.23279 14.3522 3.68508 15.4442C4.13738 16.5361 4.80031 17.5282 5.63604 18.364C6.47177 19.1997 7.46392 19.8626 8.55585 20.3149C9.64778 20.7672 10.8181 21 12 21C13.1819 21 14.3522 20.7672 15.4442 20.3149C16.5361 19.8626 17.5282 19.1997 18.364 18.364C19.1997 17.5282 19.8626 16.5361 20.3149 15.4442C20.7672 14.3522 21 13.1819 21 12C21 9.61305 20.0518 7.32387 18.364 5.63604C16.6761 3.94821 14.3869 3 12 3C9.61305 3 7.32387 3.94821 5.63604 5.63604C3.94821 7.32387 3 9.61305 3 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        Último Acesso
-                      </span>
-                      <span className={styles.userCardValue}>
-                        {selectedUser.lastLogin ? formatDate(selectedUser.lastLogin) : (
-                          <span className={styles.neverAccessed}>Nunca acessou</span>
-                        )}
-                      </span>
-                    </div>
-                    <div className={styles.userCardItem}>
-                      <span className={styles.userCardLabel}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M15 7C16.1046 7 17 6.10457 17 5C17 3.89543 16.1046 3 15 3C13.8954 3 13 3.89543 13 5C13 6.10457 13.8954 7 15 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M12.6343 8.46448L9.5 12.7071L4.92893 17.2782L3.10052 15.4498C2.91913 15.2684 2.91913 14.9806 3.10052 14.7992L7.67159 10.2281C7.85298 10.0467 8.14081 10.0467 8.3222 10.2281L10.5 12.4059L13.2348 8.53546C13.4193 8.30371 13.7359 8.26229 13.9676 8.44684L15.4676 9.69684C15.6993 9.88138 15.7407 10.198 15.5562 10.4297L12.0685 15.0684C11.884 15.3002 11.5674 15.3416 11.3356 15.1571L8.3222 12.7071" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M15 15L21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        ID do Usuário
-                      </span>
-                      <span className={styles.userCardValue}>
-                        <code className={styles.idCode}>{selectedUser.id}</code>
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className={styles.userCardActions}>
-                    <button 
-                      className={styles.cancelButton}
-                      onClick={() => setShowUserCard(false)}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Fechar
-                    </button>
-                    
-                    <div className={styles.actionButtonsGroup}>
-                      <button 
-                        className={styles.editButton}
-                        onClick={(e) => {
-                          setShowUserCard(false);
-                          handleEditRole(selectedUser, e as any);
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        Editar Função
-                      </button>
-                      
-                      {selectedUser.status === 'active' ? (
-                        <button 
-                          className={styles.deleteButton}
-                          onClick={(e) => {
-                            setShowUserCard(false);
-                            handleStatusAction(selectedUser, 'deactivate', e as any);
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                                                 Desativar Usuário
-                        </button>
-                      ) : (
-                        <button 
-                          className={styles.activateButton}
-                          onClick={(e) => {
-                            setShowUserCard(false);
-                            handleStatusAction(selectedUser, 'activate', e as any);
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          Ativar Usuário
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
-  );
-}
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                              <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            </svg>
+                                                          </button>
+                                                        )}
+                                                      </div>
+                                                    </td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                            </table>
+                                          )}
+                                        </div>
+                              
+                                        {/* Paginação */}
+                                        {processedUsers.length > 0 && totalPages > 1 && (
+                                          <div className={styles.pagination}>
+                                            <div className={styles.paginationInfo}>
+                                              Mostrando {indexOfFirstUser + 1}-{Math.min(indexOfLastUser, processedUsers.length)} de {processedUsers.length} usuários
+                                            </div>
+                                            <div className={styles.paginationControls}>
+                                              {/* Botão Primeira Página */}
+                                              <button 
+                                                className={`${styles.paginationButton} ${styles.paginationNavButton}`}
+                                                onClick={() => setCurrentPage(1)}
+                                                disabled={currentPage === 1}
+                                                title="Primeira página"
+                                              >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                  <path d="M11 17L6 12L11 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                  <path d="M18 17L13 12L18 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                              </button>
+                                              
+                                              {/* Botão Anterior */}
+                                              <button 
+                                                className={`${styles.paginationButton} ${styles.paginationNavButton}`}
+                                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                                disabled={currentPage === 1}
+                                                title="Página anterior"
+                                              >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                  <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                                Anterior
+                                              </button>
+                                              
+                                              {/* Números das páginas */}
+                                              <div className={styles.paginationNumbers}>
+                                                {getVisiblePages().map((page, index) => (
+                                                  page === '...' ? (
+                                                    <span key={`dots-${index}`} className={styles.paginationDots}>
+                                                      ...
+                                                    </span>
+                                                  ) : (
+                                                    <button
+                                                      key={page}
+                                                      className={`${styles.paginationButton} ${styles.paginationNumber} ${currentPage === page ? styles.active : ''}`}
+                                                      onClick={() => setCurrentPage(page as number)}
+                                                      disabled={currentPage === page}
+                                                    >
+                                                      {page}
+                                                    </button>
+                                                  )
+                                                ))}
+                                              </div>
+                                              
+                                              {/* Botão Próxima */}
+                                              <button 
+                                                className={`${styles.paginationButton} ${styles.paginationNavButton}`}
+                                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                                disabled={currentPage === totalPages}
+                                                title="Próxima página"
+                                              >
+                                                Próxima
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                  <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                              </button>
+                                              
+                                              {/* Botão Última Página */}
+                                              <button 
+                                                className={`${styles.paginationButton} ${styles.paginationNavButton}`}
+                                                onClick={() => setCurrentPage(totalPages)}
+                                                disabled={currentPage === totalPages}
+                                                title="Última página"
+                                              >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                  <path d="M13 17L18 12L13 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                  <path d="M6 17L11 12L6 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
+                              
+                                        {/* Modal de detalhes do usuário */}
+                                        {showUserDetailsModal && selectedUser && (
+                                          <div className={styles.modalOverlay} onClick={() => setShowUserDetailsModal(false)}>
+                                            <div className={styles.userDetailsModal} onClick={(e) => e.stopPropagation()}>
+                                              <div className={styles.modalHeader}>
+                                                <div className={styles.modalHeaderContent}>
+                                                  <div className={styles.userModalAvatar}>
+                                                    {selectedUser.initials || generateInitials(selectedUser.name)}
+                                                  </div>
+                                                  <div className={styles.userModalInfo}>
+                                                    <h2 className={styles.modalTitle}>
+                                                      {isEditingUser ? 'Editar Usuário' : 'Detalhes do Usuário'}
+                                                    </h2>
+                                                    <p className={styles.modalSubtitle}>
+                                                      ID: {selectedUser.id}
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                                <div className={styles.modalHeaderActions}>
+                                                  {!isEditingUser && (
+                                                    <button 
+                                                      className={styles.editIconButton}
+                                                      onClick={handleEditUser}
+                                                      title="Editar usuário"
+                                                    >
+                                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M11 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        <path d="M9 15H12L20.5 6.5C21.3284 5.67157 21.3284 4.32843 20.5 3.5C19.6716 2.67157 18.3284 2.67157 17.5 3.5L9 12V15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        <path d="M16 5L19 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                      </svg>
+                                                    </button>
+                                                  )}
+                                                  <button 
+                                                    className={styles.closeButton}
+                                                    onClick={() => setShowUserDetailsModal(false)}
+                                                  >
+                                                    ×
+                                                  </button>
+                                                </div>
+                                              </div>
+                                              
+                                              <div className={styles.modalBody}>
+                                                <div className={styles.userDetailsGrid}>
+                                                  {/* Nome */}
+                                                  <div className={styles.fieldGroup}>
+                                                    <label className={styles.fieldLabel}>Nome</label>
+                                                    {isEditingUser ? (
+                                                      <input
+                                                        type="text"
+                                                        className={styles.fieldInput}
+                                                        value={editingUserData.name}
+                                                        onChange={(e) => setEditingUserData({
+                                                          ...editingUserData,
+                                                          name: e.target.value
+                                                        })}
+                                                        placeholder="Nome do usuário"
+                                                      />
+                                                    ) : (
+                                                      <div className={styles.fieldValue}>
+                                                        {selectedUser.name || 'Não informado'}
+                                                      </div>
+                                                    )}
+                                                  </div>
+
+                                                  {/* Email */}
+                                                  <div className={styles.fieldGroup}>
+                                                    <label className={styles.fieldLabel}>Email</label>
+                                                    {isEditingUser ? (
+                                                      <input
+                                                        type="email"
+                                                        className={styles.fieldInput}
+                                                        value={editingUserData.email}
+                                                        onChange={(e) => setEditingUserData({
+                                                          ...editingUserData,
+                                                          email: e.target.value
+                                                        })}
+                                                        placeholder="email@exemplo.com"
+                                                      />
+                                                    ) : (
+                                                      <div className={styles.fieldValue}>
+                                                        {selectedUser.email}
+                                                      </div>
+                                                    )}
+                                                  </div>
+
+                                                  {/* Função */}
+                                                  <div className={styles.fieldGroup}>
+                                                    <label className={styles.fieldLabel}>Função</label>
+                                                    {isEditingUser ? (
+                                                      <select
+                                                        className={styles.fieldSelect}
+                                                        value={editingUserData.role}
+                                                        onChange={(e) => setEditingUserData({
+                                                          ...editingUserData,
+                                                          role: e.target.value as 'user' | 'admin'
+                                                        })}
+                                                      >
+                                                        <option value="user">Usuário</option>
+                                                        <option value="admin">Administrador</option>
+                                                      </select>
+                                                    ) : (
+                                                      <div className={styles.fieldValue}>
+                                                        <span className={selectedUser.role === 'admin' ? styles.roleAdmin : styles.roleUser}>
+                                                          {selectedUser.role === 'admin' ? 'Administrador' : 'Usuário'}
+                                                        </span>
+                                                      </div>
+                                                    )}
+                                                  </div>
+
+                                                  {/* Status */}
+                                                  <div className={styles.fieldGroup}>
+                                                    <label className={styles.fieldLabel}>Status</label>
+                                                    <div className={styles.fieldValue}>
+                                                      <span className={selectedUser.status === 'active' ? styles.statusActive : styles.statusInactive}>
+                                                        {selectedUser.status === 'active' ? 'Ativo' : 'Inativo'}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+
+                                                  {/* Data de Cadastro */}
+                                                  <div className={styles.fieldGroup}>
+                                                    <label className={styles.fieldLabel}>Data de Cadastro</label>
+                                                    <div className={styles.fieldValue}>
+                                                      {formatDate(selectedUser.signupDate)}
+                                                    </div>
+                                                  </div>
+
+                                                  {/* Último Login */}
+                                                  {selectedUser.lastLogin && (
+                                                    <div className={styles.fieldGroup}>
+                                                      <label className={styles.fieldLabel}>Último Login</label>
+                                                      <div className={styles.fieldValue}>
+                                                        {formatDate(selectedUser.lastLogin)}
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                </div>
+
+                                                {/* Ações de Status */}
+                                                {!isEditingUser && (
+                                                  <div className={styles.statusActions}>
+                                                    <h3 className={styles.sectionTitle}>Ações</h3>
+                                                    <div className={styles.actionButtonsGrid}>
+                                                      {selectedUser.status === 'active' ? (
+                                                        <button
+                                                          className={styles.deactivateUserButton}
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setShowUserDetailsModal(false);
+                                                            handleStatusAction(selectedUser, 'deactivate', e);
+                                                          }}
+                                                        >
+                                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                          </svg>
+                                                          Desativar Usuário
+                                                        </button>
+                                                      ) : (
+                                                        <button
+                                                          className={styles.activateUserButton}
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setShowUserDetailsModal(false);
+                                                            handleStatusAction(selectedUser, 'activate', e);
+                                                          }}
+                                                        >
+                                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                          </svg>
+                                                          Ativar Usuário
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                )}
+                                              </div>
+                                              
+                                              <div className={styles.modalFooter}>
+                                                {isEditingUser ? (
+                                                  <>
+                                                    <button 
+                                                      className={styles.cancelButton}
+                                                      onClick={handleCancelEdit}
+                                                      disabled={isProcessing}
+                                                    >
+                                                      Cancelar
+                                                    </button>
+                                                    <button 
+                                                      className={styles.saveButton}
+                                                      onClick={handleSaveUserChanges}
+                                                      disabled={isProcessing}
+                                                    >
+                                                      {isProcessing ? 'Salvando...' : 'Salvar Alterações'}
+                                                    </button>
+                                                  </>
+                                                ) : (
+                                                  <button 
+                                                    className={styles.primaryButton}
+                                                    onClick={handleEditUser}
+                                                  >
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                      <path d="M11 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                      <path d="M9 15H12L20.5 6.5C21.3284 5.67157 21.3284 4.32843 20.5 3.5C19.6716 2.67157 18.3284 2.67157 17.5 3.5L9 12V15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                      <path d="M16 5L19 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
+                                                    Editar Usuário
+                                                  </button>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Modal de visualização rápida do usuário - manter para compatibilidade */}
+                                        {showUserCard && selectedUser && (
+                                          <div className={styles.modalOverlay} onClick={() => setShowUserCard(false)}>
+                                            <div className={styles.userCard} onClick={(e) => e.stopPropagation()}>
+                                              <div className={styles.cardHeader}>
+                                                <div className={styles.userCardAvatar}>
+                                                  {selectedUser.initials || generateInitials(selectedUser.name)}
+                                                </div>
+                                                <div className={styles.userCardInfo}>
+                                                  <h3 className={styles.userCardName}>{selectedUser.name || 'Usuário'}</h3>
+                                                  <p className={styles.userCardEmail}>{selectedUser.email}</p>
+                                                </div>
+                                                <button 
+                                                  className={styles.closeButton}
+                                                  onClick={() => setShowUserCard(false)}
+                                                >
+                                                  ×
+                                                </button>
+                                              </div>
+                                              <div className={styles.cardBody}>
+                                                <div className={styles.cardField}>
+                                                  <label>Função:</label>
+                                                  <span className={selectedUser.role === 'admin' ? styles.roleAdmin : styles.roleUser}>
+                                                    {selectedUser.role === 'admin' ? 'Administrador' : 'Usuário'}
+                                                  </span>
+                                                </div>
+                                                <div className={styles.cardField}>
+                                                  <label>Status:</label>
+                                                  <span className={selectedUser.status === 'active' ? styles.statusActive : styles.statusInactive}>
+                                                    {selectedUser.status === 'active' ? 'Ativo' : 'Inativo'}
+                                                  </span>
+                                                </div>
+                                                <div className={styles.cardField}>
+                                                  <label>Data de Cadastro:</label>
+                                                  <span>{formatDate(selectedUser.signupDate)}</span>
+                                                </div>
+                                                {selectedUser.lastLogin && (
+                                                  <div className={styles.cardField}>
+                                                    <label>Último Login:</label>
+                                                    <span>{formatDate(selectedUser.lastLogin)}</span>
+                                                  </div>
+                                                )}
+                                                {selectedUser.subscription && (
+                                                  <div className={styles.cardField}>
+                                                    <label>Plano:</label>
+                                                    <span>{selectedUser.subscription}</span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                              
+                                        {/* Modal de edição de função */}
+                                        {showRoleModal && selectedUser && (
+                                          <div className={styles.modalOverlay} onClick={() => setShowRoleModal(false)}>
+                                            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                                              <div className={styles.modalHeader}>
+                                                <h3>Editar Função</h3>
+                                                <button 
+                                                  className={styles.closeButton}
+                                                  onClick={() => setShowRoleModal(false)}
+                                                >
+                                                  ×
+                                                </button>
+                                              </div>
+                                              <div className={styles.modalBody}>
+                                                <p>Alterar a função do usuário <strong>{selectedUser.name || 'Usuário'}</strong>:</p>
+                                                <div className={styles.roleOptions}>
+                                                  <label className={styles.radioOption}>
+                                                    <input 
+                                                      type="radio" 
+                                                      value="user" 
+                                                      checked={newRole === 'user'}
+                                                      onChange={(e) => setNewRole(e.target.value as 'user' | 'admin')}
+                                                    />
+                                                    <span>Usuário</span>
+                                                  </label>
+                                                  <label className={styles.radioOption}>
+                                                    <input 
+                                                      type="radio" 
+                                                      value="admin" 
+                                                      checked={newRole === 'admin'}
+                                                      onChange={(e) => setNewRole(e.target.value as 'user' | 'admin')}
+                                                    />
+                                                    <span>Administrador</span>
+                                                  </label>
+                                                </div>
+                                              </div>
+                                              <div className={styles.modalFooter}>
+                                                <button 
+                                                  className={styles.cancelButton}
+                                                  onClick={() => setShowRoleModal(false)}
+                                                >
+                                                  Cancelar
+                                                </button>
+                                                <button 
+                                                  className={styles.confirmButton}
+                                                  onClick={handleUpdateRole}
+                                                  disabled={isProcessing}
+                                                >
+                                                  {isProcessing ? 'Processando...' : 'Salvar'}
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                              
+                                        {/* Modal de confirmação */}
+                                        {showConfirmModal && selectedUser && (
+                                          <div className={styles.modalOverlay} onClick={() => setShowConfirmModal(false)}>
+                                            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                                              <div className={styles.modalHeader}>
+                                                <h3>{modalAction === 'activate' ? 'Ativar' : 'Desativar'} Usuário</h3>
+                                                <button 
+                                                  className={styles.closeButton}
+                                                  onClick={() => setShowConfirmModal(false)}
+                                                >
+                                                  ×
+                                                </button>
+                                              </div>
+                                              <div className={styles.modalBody}>
+                                                <p>
+                                                  Tem certeza que deseja {modalAction === 'activate' ? 'ativar' : 'desativar'} o usuário <strong>{selectedUser.name || 'Usuário'}</strong>?
+                                                </p>
+                                              </div>
+                                              <div className={styles.modalFooter}>
+                                                <button 
+                                                  className={styles.cancelButton}
+                                                  onClick={() => setShowConfirmModal(false)}
+                                                >
+                                                  Cancelar
+                                                </button>
+                                                <button 
+                                                  className={`${styles.confirmButton} ${modalAction === 'deactivate' ? styles.danger : ''}`}
+                                                  onClick={handleConfirmAction}
+                                                  disabled={isProcessing}
+                                                >
+                                                  {isProcessing ? 'Processando...' : (modalAction === 'activate' ? 'Ativar' : 'Desativar')}
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </main>
+                                    </div>
+                                  </div>
+                                );
+                              }

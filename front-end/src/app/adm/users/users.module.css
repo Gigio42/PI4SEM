@@ -323,7 +323,7 @@
 }
 
 .idBadge {
-  color: var(--text-tertiary);
+  color: var(--text-terciary);
   font-size: 0.75rem;
   font-weight: 400;
 }
@@ -431,7 +431,7 @@
 }
 
 .emptyState svg {
-  color: var(--text-tertiary);
+  color: var(--text-terciary);
   width: 48px;
   height: 48px;
   margin-bottom: var(--spacing-md);
@@ -457,7 +457,7 @@
   justify-content: center;
   gap: 0.75rem;
   padding: 2rem;
-  color: var(--text-tertiary);
+  color: var(--text-terciary);
 }
 
 .loadingSpinner {
@@ -473,355 +473,1053 @@
   to { transform: rotate(360deg); }
 }
 
-/* Paginação */
+/* Paginação melhorada - seguindo padrão do site */
 .pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: var(--spacing-lg) 0;
+  margin-top: var(--spacing-lg);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.paginationInfo {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  min-width: 220px;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
 }
 
 .paginationButton {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 6px;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  min-height: 36px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background-color: var(--background-primary);
+  background-color: var(--surface);
   color: var(--text-secondary);
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .paginationButton:hover:not(:disabled) {
-  background-color: var(--background-secondary);
-  border-color: var(--text-tertiary);
+  background-color: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.paginationButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .paginationButton:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.paginationNavButton {
+  min-width: 90px;
+  font-weight: 600;
+  padding: var(--spacing-xs) var(--spacing-md);
+}
+
+.paginationNavButton svg {
+  transition: transform 0.2s ease;
+  width: 14px;
+  height: 14px;
+}
+
+.paginationNavButton:hover:not(:disabled) svg {
+  transform: scale(1.1);
 }
 
 .paginationNumbers {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 2px;
+  margin: 0 var(--spacing-sm);
+  background-color: var(--surface-secondary);
+  border-radius: var(--radius-sm);
+  padding: 2px;
 }
 
 .paginationNumber {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  border: 1px solid transparent;
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  border: none;
   background-color: transparent;
   color: var(--text-secondary);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.paginationNumber:hover:not(.active) {
-  background-color: var(--background-secondary);
-  border-color: var(--border);
+.paginationNumber:hover:not(:disabled):not(.active) {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  border-color: transparent;
+  transform: none;
+  box-shadow: none;
 }
 
 .paginationNumber.active {
   background-color: var(--primary);
+  border-color: var(--primary);
   color: white;
+  box-shadow: 0 1px 3px rgba(var(--primary-rgb), 0.4);
+  transform: none;
 }
 
-/* Modais */
-.modalTitle {
+.paginationNumber.active:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: none;
+}
+
+.paginationDots {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
-  font-size: 18px;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  color: var(--text-terciary);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  user-select: none;
+  background-color: transparent;
+}
+
+/* Melhor agrupamento visual */
+.paginationButton:first-child {
+  border-top-right-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.paginationButton:last-child {
+  border-top-left-radius: var(--radius-sm);
+  border-bottom-left-radius: var(--radius-sm);
+}
+
+/* Estados especiais */
+.paginationButton.loading {
+  pointer-events: none;
+  opacity: 0.7;
+  position: relative;
+}
+
+.paginationButton.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border: 2px solid var(--surface-secondary);
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Responsividade aprimorada */
+@media (max-width: 768px) {
+  .pagination {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    text-align: center;
+  }
+  
+  .paginationInfo {
+    order: 2;
+    min-width: auto;
+    font-size: 0.75rem;
+  }
+  
+  .paginationControls {
+    order: 1;
+    justify-content: center;
+  }
+  
+  .paginationNavButton {
+    min-width: 70px;
+    font-size: 0.75rem;
+    padding: var(--spacing-xs);
+  }
+  
+  .paginationNumbers {
+    margin: 0 var(--spacing-xs);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    max-width: 180px;
+  }
+  
+  .paginationNumbers::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .paginationNumber {
+    min-width: 28px;
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .paginationControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .paginationNavButton {
+    flex: 0 0 auto;
+    min-width: 60px;
+  }
+  
+  .paginationNumbers {
+    flex: 1;
+    justify-content: center;
+    margin: 0 var(--spacing-xs);
+    max-width: 140px;
+  }
+}
+
+/* Animações suaves */
+@keyframes pageChangeSlide {
+  0% { 
+    opacity: 0.6; 
+    transform: translateX(8px); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+.usersTable tbody {
+  animation: pageChangeSlide 0.25s ease-out;
+}
+
+/* Estados de foco para acessibilidade */
+.paginationButton:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+}
+
+.paginationNumber:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Efeito hover mais sutil para os números */
+.paginationNumber:hover:not(.active):not(:disabled) {
+  background-color: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary);
+}
+
+
+.userRow:last-child {
+  border-bottom: none;
+}
+
+.userRow:hover {
+  background-color: var(--surface-hover);
+}
+
+.tableCell {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+/* Informações do usuário */
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 500;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.userName {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  margin-bottom: 0.125rem;
+}
+
+.userEmail {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.idBadge {
+  color: var(--text-terciary);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+/* Status e papéis */
+.roleAdmin, .roleUser, .statusActive, .statusInactive, .subscriptionBadge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.roleAdmin {
+  background-color: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+}
+
+.roleUser {
+  background-color: rgba(71, 85, 105, 0.1);
+  color: var(--text-secondary);
+}
+
+.statusActive {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+.statusInactive {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+}
+
+.subscriptionBadge {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+
+/* Botões de ação */
+.actionButtons {
+  display: flex;
+  gap: 0.375rem;
+  justify-content: flex-end;
+}
+
+.editButton, .deleteButton, .activateButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: none;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.editButton {
+  background-color: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary);
+}
+
+.editButton:hover {
+  background-color: rgba(var(--primary-rgb), 0.15);
+}
+
+.deleteButton {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #EF4444;
+}
+
+.deleteButton:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+.activateButton {
+  background-color: rgba(16, 185, 129, 0.08);
+  color: #10B981;
+}
+
+.activateButton:hover {
+  background-color: rgba(16, 185, 129, 0.15);
+}
+
+.editButton:disabled, .deleteButton:disabled, .activateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Estado vazio e carregamento */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px var(--spacing-lg);
+  text-align: center;
+  color: var(--text-secondary);
+  background-color: var(--surface);
+}
+
+.emptyState svg {
+  color: var(--text-terciary);
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--spacing-md);
+  opacity: 0.7;
+}
+
+.emptyState h3 {
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.emptyState p {
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.loadingIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: var(--text-terciary);
+}
+
+.loadingSpinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(var(--primary-rgb), 0.2);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Paginação melhorada - seguindo padrão do site */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg) 0;
+  margin-top: var(--spacing-lg);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.paginationInfo {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  min-width: 220px;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.paginationButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  min-height: 36px;
+  padding: 0 var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.paginationButton:hover:not(:disabled) {
+  background-color: var(--surface-hover);
+  border-color: var(--primary-light);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.paginationButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.paginationButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.paginationNavButton {
+  min-width: 100px;
+  font-weight: 600;
+}
+
+.paginationNavButton svg {
+  transition: transform 0.2s ease;
+}
+
+.paginationNavButton:hover:not(:disabled) svg {
+  transform: scale(1.1);
+}
+
+.paginationNumbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 var(--spacing-sm);
+}
+
+.paginationNumber {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.paginationNumber.active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.3);
+  transform: none;
+}
+
+.paginationNumber.active:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: none;
+}
+
+.paginationDots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  color: var(--text-terciary);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  user-select: none;
+}
+
+/* Estados especiais para primeira e última página */
+.paginationButton:first-of-type {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+.paginationButton:first-of-type + .paginationButton {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* Animação de loading para mudança de página */
+.paginationButton.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.paginationButton.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid transparent;
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Responsividade da paginação */
+@media (max-width: 768px) {
+  .pagination {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: stretch;
+  }
+  
+  .paginationInfo {
+    text-align: center;
+    min-width: auto;
+  }
+  
+  .paginationControls {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .paginationNavButton {
+    min-width: 80px;
+    font-size: 0.75rem;
+  }
+  
+  .paginationNumbers {
+    margin: 0 var(--spacing-xs);
+  }
+  
+  .paginationNumber {
+    min-width: 32px;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .paginationNumbers {
+    max-width: 200px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .paginationNumbers::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .paginationNavButton {
+    flex: 1;
+    min-width: auto;
+  }
+}
+
+/* Estados de hover melhorados */
+.paginationButton:hover:not(:disabled):not(.active) {
+  background: linear-gradient(135deg, var(--surface-hover) 0%, rgba(var(--primary-rgb), 0.05) 100%);
+}
+
+.paginationNumber:hover:not(:disabled):not(.active) {
+  background: linear-gradient(135deg, var(--surface-hover) 0%, rgba(var(--primary-rgb), 0.1) 100%);
+  border-color: var(--primary-light);
+}
+
+/* Animação para mudança de página */
+@keyframes pageChange {
+  0% { opacity: 0.7; transform: translateY(2px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.usersTable tbody {
+  animation: pageChange 0.3s ease-in-out;
+}
+
+/* Modal de detalhes do usuário */
+.userDetailsModal {
+  background-color: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  width: 90vw;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-md);
+  backdrop-filter: blur(4px);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-secondary);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.modalHeaderContent {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
+}
+
+.userModalAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background-color: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.userModalInfo {
+  flex: 1;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
 }
 
 .modalSubtitle {
-  margin-bottom: 24px;
   color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0;
 }
 
-.modalActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-/* Botões dos modais */
-.cancelButton, .saveButton, .confirmButton, .confirmDeleteButton, .actionButton {
+.modalHeaderActions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 14px;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: none;
+  gap: var(--spacing-sm);
 }
 
-.cancelButton {
-  background-color: var(--background-secondary);
-  color: var(--text-secondary);
+.editIconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.cancelButton:hover:not(:disabled) {
-  background-color: var(--background-tertiary);
-}
-
-.saveButton, .confirmButton {
+.editIconButton:hover {
   background-color: var(--primary);
   color: white;
-}
-
-.saveButton:hover:not(:disabled), .confirmButton:hover:not(:disabled) {
-  background-color: var(--primary-dark);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.2);
 }
 
-.confirmDeleteButton {
-  background-color: #EF4444;
-  color: white;
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: all 0.2s ease;
 }
 
-.confirmDeleteButton:hover:not(:disabled) {
-  background-color: #DC2626;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+.closeButton:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
 }
 
-.cancelButton:disabled, .saveButton:disabled, .confirmButton:disabled, .confirmDeleteButton:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.modalBody {
+  padding: var(--spacing-lg);
 }
 
-.cancelButton:active, .saveButton:active, .confirmButton:active, .confirmDeleteButton:active {
-  transform: translateY(0);
-  box-shadow: none;
+.userDetailsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
 }
 
-/* Formulários nos modais */
-.formGroup {
-  margin-bottom: 20px;
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
 }
 
-.formLabel {
-  display: block;
-  margin-bottom: 8px;
+.fieldLabel {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fieldValue {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
   font-weight: 500;
-  color: var(--text-primary);
+  padding: var(--spacing-sm) 0;
 }
 
-.formSelect {
+.fieldInput, .fieldSelect {
   width: 100%;
-  padding: 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 14px;
-  background-color: var(--background-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  background-color: var(--surface);
   color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
+  transition: var(--transition);
 }
 
-.formSelect:focus {
+.fieldInput:focus, .fieldSelect:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
   outline: none;
 }
 
-.roleDescription {
-  display: flex;
-  gap: 12px;
-  padding: 16px;
-  background-color: var(--background-secondary);
-  border-radius: 6px;
-  margin-top: 16px;
+.fieldSelect {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
 }
 
-.roleDescription svg {
-  margin-top: 4px;
-  flex-shrink: 0;
-  color: var(--text-secondary);
+.statusActions {
+  border-top: 1px solid var(--border);
+  padding-top: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
 }
 
-.roleDescription p {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.roleDescription ul {
-  margin: 8px 0 0 0;
-  padding-left: 16px;
-}
-
-.roleDescription li {
-  margin-bottom: 4px;
-}
-
-/* Confirmação de ação */
-.confirmationContent {
-  padding: 16px;
-  background-color: var(--background-secondary);
-  border-radius: 8px;
-  margin-bottom: 16px;
-}
-
-.userConfirmationCard {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
-}
-
-.confirmationMessage {
-  font-weight: 500;
-  text-align: center;
+.sectionTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 16px;
+  margin: 0 0 var(--spacing-md) 0;
 }
 
-.warningBox {
+.actionButtonsGrid {
   display: flex;
-  gap: 12px;
-  padding: 12px;
-  background-color: rgba(239, 68, 68, 0.05);
-  border-left: 3px solid #EF4444;
-  border-radius: 4px;
+  gap: var(--spacing-sm);
 }
 
-.warningBox svg {
-  color: #EF4444;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.warningBox p {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* Card de visualização do usuário */
-.userCardContainer {
-  width: 100%;
-  max-width: 500px;
-  padding: 24px;
-}
-
-.userCardHeader {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.userCardAvatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
+.activateUserButton, .deactivateUserButton {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  border: none;
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.activateUserButton {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.activateUserButton:hover {
+  background-color: #10B981;
   color: white;
-  font-weight: 600;
-  font-size: 24px;
-  flex-shrink: 0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
-.userCardInfo {
-  flex: 1;
+.deactivateUserButton {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
-.userCardName {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--text-primary);
+.deactivateUserButton:hover {
+  background-color: #EF4444;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
 }
 
-.userCardEmail {
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border);
+  background-color: var(--surface-secondary);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.primaryButton, .saveButton {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover, .saveButton:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.2);
+}
+
+.cancelButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: transparent;
   color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.badgeContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.userCardDivider {
-  height: 1px;
-  background-color: var(--border);
-  margin: 24px 0;
-}
-
-.userCardData {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.userCardItem {
-  margin-bottom: 16px;
-}
-
-.userCardLabel {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: var(--text-tertiary);
-}
-
-.userCardValue {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-weight: 500;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: var(--surface-hover);
   color: var(--text-primary);
 }
 
-.neverAccessed, .noSubscription {
-  color: var(--text-tertiary);
-  font-style: italic;
+.primaryButton:disabled, .saveButton:disabled, .cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-.subscriptionHighlight {
-  color: #F59E0B;
-  font-weight: 600;
+/* Responsividade do modal */
+@media (max-width: 768px) {
+  .userDetailsModal {
+    width: 95vw;
+    max-height: 90vh;
+  }
+  
+  .userDetailsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .modalHeader {
+    padding: var(--spacing-md);
+  }
+  
+  .modalBody {
+    padding: var(--spacing-md);
+  }
+  
+  .modalFooter {
+    padding: var(--spacing-md);
+    flex-direction: column-reverse;
+  }
+  
+  .actionButtonsGrid {
+    flex-direction: column;
+  }
 }
 
-.idCode {
-  display: inline-block;
-  padding: 4px 8px;
-  background-color: var(--background-secondary);
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 12px;
+@media (max-width: 480px) {
+  .modalHeaderContent {
+    gap: var(--spacing-sm);
+  }
+  
+  .userModalAvatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .modalTitle {
+    font-size: 1.125rem;
+  }
 }
+
 
 .userCardActions {
   display: flex;

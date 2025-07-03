@@ -1,0 +1,278 @@
+.componentPreview {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.componentPreview:hover {
+  box-shadow: var(--shadow);
+}
+
+.previewControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--surface-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.previewTabs {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.previewTab {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-sm) / 2);
+  padding: calc(var(--spacing-sm) / 2) var(--spacing-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: var(--font-size-sm);
+}
+
+.previewTab:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.previewTab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.previewActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.modeToggle,
+.deviceToggle {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.modeButton,
+.deviceButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.modeButton:hover,
+.deviceButton:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.modeButton.active,
+.deviceButton.active {
+  background: var(--primary);
+  color: white;
+}
+
+.previewContent {
+  min-height: 300px;
+}
+
+.previewFrame {
+  padding: var(--spacing-lg);
+  min-height: 300px;
+  transition: all 0.3s ease;
+}
+
+.previewFrame.mode-light {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.previewFrame.mode-dark {
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+.previewFrame.device-desktop {
+  width: 100%;
+}
+
+.previewFrame.device-tablet {
+  max-width: 768px;
+  margin: 0 auto;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.previewFrame.device-mobile {
+  max-width: 375px;
+  margin: 0 auto;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.previewContainer {
+  width: 100%;
+  height: 100%;
+}
+
+.noPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: var(--spacing-lg);
+}
+
+.noPreview svg {
+  margin-bottom: var(--spacing-sm);
+  opacity: 0.5;
+  color: var(--text-tertiary);
+  transition: var(--transition);
+}
+
+.noPreview:hover svg {
+  opacity: 0.7;
+  transform: scale(1.05);
+}
+
+.noPreview p {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
+
+.noPreview small {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+}
+
+.codeView {
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.codeBlock {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.codeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--surface-secondary);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-sm) / 2);
+  padding: calc(var(--spacing-xs)) var(--spacing-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: var(--font-size-sm);
+}
+
+.copyButton:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--primary-light);
+}
+
+.copyButton:active {
+  transform: scale(0.98);
+}
+
+.codeContent {
+  margin: 0;
+  padding: var(--spacing-md);
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font-family: 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .previewControls {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+  }
+  
+  .previewActions {
+    justify-content: space-between;
+  }
+  
+  .modeToggle, .deviceToggle {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .codeView {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .previewFrame, .noPreview svg, .copyButton, .modeButton, .deviceButton, .previewTab {
+    transition: none;
+  }
+  
+  .noPreview:hover svg {
+    transform: none;
+  }
+  
+  .copyButton:active {
+    transform: none;
+  }
+}
+
+.copyButton:focus-visible,
+.previewTab:focus-visible,
+.modeButton:focus-visible,
+.deviceButton:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
