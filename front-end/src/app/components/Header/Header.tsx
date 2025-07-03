@@ -206,14 +206,6 @@ export default function Header() {
         <div className={styles.logoContainer}>
           <Link href="/home" aria-label="Ir para página inicial">
             <div className={styles.logoWrapper}>
-              <Image 
-                src="/ux-components-logo.svg" 
-                alt="UXperiment Labs Logo"
-                width={150}
-                height={36}
-                priority
-                style={{ height: 'auto', width: 'auto' }}
-              />
               <SiteTitle className={styles.siteTitle} />
             </div>
           </Link>

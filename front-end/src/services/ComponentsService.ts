@@ -51,27 +51,58 @@ class ComponentsServiceClass {  private api = axios.create({
   }
   /**
    * Obtém todos os componentes disponíveis
+   * @param userId ID opcional do usuário para verificar assinatura
    * @returns Lista de componentes
    */
-  async getAllComponents(): Promise<Component[]> {
+  async getAllComponents(userId?: number): Promise<Component[]> {
     try {
-      console.log('🔍 ComponentsService: Fetching all components...');      // Try endpoints in order of preference (most likely to work first)
+      console.log('🔍 ComponentsService: Fetching all components...', { userId });
+      
+      // Verificar se há uma flag para forçar recarregamento
+      const forceRefresh = typeof window !== 'undefined' && localStorage.getItem('forceRefreshComponents') === 'true';
+      
+      // Try endpoints in order of preference (most likely to work first)
       const possibleEndpoints = getEndpointFallbacks('components');
       
       let response;
       let lastError;
-      
       for (const endpoint of possibleEndpoints) {
         try {
           console.log(`🔍 Trying endpoint: ${endpoint}`);
           
+          // Prepare headers for authentication if userId is provided
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
+          
+          // Add authorization if we have a token
+          const token = localStorage.getItem('token');
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          
+          // Adicionar userId como parâmetro de consulta se fornecido
+          let url = endpoint;
+          if (userId) {
+            // Adicionar userId como parâmetro de query para garantir que o backend saiba qual usuário está requisitando
+            const separator = url.includes('?') ? '&' : '?';
+            url = `${url}${separator}userId=${userId}`;
+            console.log(`🔒 Adding userId ${userId} to request`);
+            
+            // Se forceRefresh estiver habilitado, adicionar um parâmetro para evitar cache no CDN ou no servidor
+            if (forceRefresh) {
+              url = `${url}&_t=${Date.now()}`;
+              console.log(`🔄 Adding timestamp to avoid caching`);
+            }
+          }
+          
           // Use fetch for direct backend URLs, axios for proxied
-          if (endpoint.startsWith('http://')) {
-            const fetchResponse = await fetch(endpoint, {
+          if (url.startsWith('http://')) {
+            const fetchResponse = await fetch(url, {
               method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers,
+              // Desabilitar cache se forçando refresh
+              cache: forceRefresh ? 'no-store' : 'default'
             });
             
             if (!fetchResponse.ok) {
@@ -81,7 +112,10 @@ class ComponentsServiceClass {  private api = axios.create({
             const responseData = await fetchResponse.json();
             response = { data: responseData };
           } else {
-            response = await this.api.get(endpoint, { timeout: 30000 });
+            response = await this.api.get(endpoint, { 
+              timeout: 30000,
+              headers
+            });
           }
           
           console.log(`✅ Success with endpoint: ${endpoint}`);
@@ -99,6 +133,8 @@ class ComponentsServiceClass {  private api = axios.create({
       
       console.log('✅ ComponentsService: Components fetched successfully', {
         count: response.data?.length || 0,
+        requiresSubscriptionCount: response.data.filter((comp: Component) => comp.requiresSubscription === true).length,
+        firstComponent: response.data[0],
         data: response.data
       });
       
@@ -140,25 +176,56 @@ class ComponentsServiceClass {  private api = axios.create({
   /**
    * Obtém um componente específico pelo ID
    * @param id ID do componente
-   * @returns Detalhes do componente
-   */  async getComponentById(id: number): Promise<Component | null> {
+   * @param userId ID opcional do usuário para verificar assinatura
+   * @returns O componente 
+   */
+  async getComponentById(id: number, userId?: number): Promise<Component | null> {
     try {
-      console.log(`🔍 ComponentsService: Fetching component ${id}...`);
+      console.log(`🔍 ComponentsService: Fetching component with ID ${id}`);
       
-      const possibleEndpoints = [
-        `/api/components/${id}`,
-        `/components/${id}`,
-        `/api/v1/components/${id}`
-      ];
+      // Prepare headers for authentication if userId is provided
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add authorization if we have a token
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const possibleEndpoints = getEndpointFallbacks(`components/${id}`);
       
       let response;
       let lastError;
       
       for (const endpoint of possibleEndpoints) {
         try {
-          response = await this.api.get(endpoint, { timeout: 20000 });
+          console.log(`🔍 Trying endpoint: ${endpoint}`);
+          
+          if (endpoint.startsWith('http://')) {
+            const fetchResponse = await fetch(endpoint, {
+              method: 'GET',
+              headers,
+            });
+            
+            if (!fetchResponse.ok) {
+              throw new Error(`HTTP ${fetchResponse.status}`);
+            }
+            
+            const responseData = await fetchResponse.json();
+            response = { data: responseData };
+          } else {
+            response = await this.api.get(endpoint, { 
+              timeout: 10000,
+              headers 
+            });
+          }
+          
+          console.log(`✅ Success with endpoint: ${endpoint}`);
           break;
         } catch (error: any) {
+          console.log(`❌ Failed with endpoint ${endpoint}:`, error.response?.status || error.message || 'Network Error');
           lastError = error;
           continue;
         }
@@ -168,20 +235,10 @@ class ComponentsServiceClass {  private api = axios.create({
         throw lastError;
       }
       
-      console.log('✅ ComponentsService: Component fetched successfully', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ ComponentsService: Error fetching component:', error);
-      
-      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        throw new Error('Timeout: O servidor está demorando para responder.');
-      }
-      
-      if (error.response?.status === 404) {
-        return null;
-      }
-      
-      throw new Error(error.response?.data?.message || 'Erro ao carregar componente');
+    } catch (error) {
+      console.error(`❌ Error fetching component with ID ${id}:`, error);
+      return null;
     }
   }
 

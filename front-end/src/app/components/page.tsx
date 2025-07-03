@@ -3,13 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { Component } from "@/types/component";
 import { ComponentsService } from "@/services/ComponentsService";
+import { SubscriptionService } from '@/services/SubscriptionService';
 import Header from "@/app/components/Header/Header";
-import  Sidebar  from "@/app/components/Sidebar/Sidebar";
+import Sidebar from "@/app/components/Sidebar/Sidebar";
 import ComponentCard from "@/app/components/ComponentCard/ComponentCard";
 import ComponentPreview from "@/app/components/ComponentPreview/ComponentPreview";
 import ComponentPreviewModal from "@/app/components/ComponentPreviewModal/ComponentPreviewModal";
 import styles from "./ComponentsPage.module.css";
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 export default function ComponentsPage() {
   const [loaded, setLoaded] = useState(false);
@@ -21,45 +23,87 @@ export default function ComponentsPage() {
   const [filterCategory, setFilterCategory] = useState("");  const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const componentsPerPage = 12;
   const { user } = useAuth();
-
+  // Efeito para inicializar e carregar dados
   useEffect(() => {
-    setLoaded(true);
-    fetchComponents();
-  }, []);
-
-  const fetchComponents = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('🔄 Fetching components...');
-      
-      const data = await ComponentsService.getAllComponents();
-      console.log('✅ Components received:', data);
-      
-      setComponents(data);
-      setError(null);
-    } catch (err: any) {
-      console.error("❌ Erro ao buscar componentes:", err);
-      
-      let errorMessage = "Falha ao carregar componentes. Tente novamente mais tarde.";
-      
-      if (err.message?.includes('Timeout')) {
-        errorMessage = "Timeout na conexão. O servidor está demorando para responder.";
-      } else if (err.message?.includes('Erro de conexão')) {
-        errorMessage = "Erro de conexão. Verifique se o servidor está rodando.";
-      } else if (err.message?.includes('interno do servidor')) {
-        errorMessage = "Erro interno do servidor. Tente novamente em alguns minutos.";
+    const init = async () => {
+      // Verificar o login e assinatura
+      if (user?.id) {
+        // Primeiro verificar se precisamos forçar o recarregamento do status de assinatura
+        const forceRefresh = typeof window !== 'undefined' && 
+          (localStorage.getItem('forceRefreshSubscription') === 'true' || 
+           localStorage.getItem('forceRefreshComponents') === 'true');
+        
+        try {
+          // Forçar recarregamento do status de assinatura se necessário
+          if (forceRefresh) {
+            console.log('Forcing subscription status refresh');
+            // Remover a flag de forceRefreshSubscription
+            localStorage.removeItem('forceRefreshSubscription');
+          }
+            
+          // Verificar assinatura
+          const hasActive = await SubscriptionService.checkUserHasActiveSubscription(user.id);
+          console.log('User subscription status:', hasActive);
+          setHasSubscription(hasActive);
+        } catch (error) {
+          console.error('Error checking subscription status:', error);
+        }
       }
       
-      setError(errorMessage);
+      // Carregar componentes em todos os casos
+      fetchComponents();
+    };
+
+    init();
+  }, [user]); // Dependências que disparam a reexecução
+  const fetchComponents = async () => {
+    if (!ComponentsService) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Verificar se precisamos forçar o recarregamento dos componentes
+      const forceRefresh = typeof window !== 'undefined' && localStorage.getItem('forceRefreshComponents') === 'true';
+      if (forceRefresh) {
+        // Limpar a flag após usar
+        localStorage.removeItem('forceRefreshComponents');
+        console.log('Forçando atualização dos componentes após mudança na assinatura');
+      }
+      
+      // Re-checar o status de assinatura se tiver forcado refresh
+      if (forceRefresh && user?.id) {
+        const hasActive = await SubscriptionService.checkUserHasActiveSubscription(user.id);
+        console.log('Re-verificado status de assinatura:', hasActive);
+        setHasSubscription(hasActive);
+      }
+      
+      // Passar userId para API verificar assinatura no backend
+      const components = await ComponentsService.getAllComponents(user?.id);
+      
+      console.log(`Buscou ${components.length} componentes`);
+      setComponents(components);
+      setLoaded(true);
+    } catch (error) {
+      console.error('Erro ao buscar componentes:', error);
+      setError('Não foi possível carregar os componentes. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }
-  };
-  const handleComponentPreview = (component: Component) => {
+  };  const handleComponentPreview = (component: Component) => {
+    // Verificando explicitamente se o componente requer assinatura
+    console.log("Trying to open preview, component:", component);
+    
+    // Evitar a abertura do preview para componentes que exigem assinatura
+    if (component.requiresSubscription === true) {
+      console.log("Blocked preview - subscription required");
+      return;
+    }
+    
     setSelectedComponent(component);
     setIsModalOpen(true);
   };
@@ -132,7 +176,21 @@ export default function ComponentsPage() {
                 <option key={category} value={category}>{category}</option>
               ))}
             </select>
-          </div>
+          </div>          {!hasSubscription && (
+            <div className={styles.subscriptionBanner}>
+              <div>
+                <h3 className={styles.subscriptionBannerTitle}>
+                  🔐 Acesso restrito
+                </h3>
+                <p className={styles.subscriptionMessage}>
+                  Assine um plano para ter acesso completo ao código dos componentes e poder visualizá-los!
+                </p>
+              </div>
+              <Link href="/subscription" className={styles.subscriptionButton}>
+                Ver planos
+              </Link>
+            </div>
+          )}
 
           {loading ? (
             <div className={styles.loadingContainer}>
@@ -194,10 +252,8 @@ export default function ComponentsPage() {
                   </button>
                 </div>
               )}
-            </>          )}
-
-          {/* Preview Modal */}
-          {selectedComponent && (
+            </>          )}          {/* Preview Modal - só exibir se o componente não requer assinatura */}
+          {selectedComponent && !selectedComponent.requiresSubscription && (
             <ComponentPreviewModal
               component={selectedComponent}
               isOpen={isModalOpen}
@@ -205,6 +261,18 @@ export default function ComponentsPage() {
               userId={user?.id}
               onFavoriteChange={() => handleFavoriteChange(selectedComponent.id, !selectedComponent.isFavorited)}
             />
+          )}
+
+          {/* Subscription Notice */}
+          {!hasSubscription && (
+            <div className={styles.subscriptionNotice}>
+              <p className={styles.subscriptionText}>
+                Para acessar todos os componentes, assine nosso plano premium.
+              </p>
+              <Link href="/pricing" className={styles.subscribeButton}>
+                Assinar Agora
+              </Link>
+            </div>
           )}
         </main>
       </div>

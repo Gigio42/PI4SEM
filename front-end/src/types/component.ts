@@ -14,6 +14,7 @@ export interface Component {
   createdAt?: Date;
   updatedAt?: Date;
   userId?: number;
+  requiresSubscription?: boolean;
   user?: {
     id: number;
     name: string;

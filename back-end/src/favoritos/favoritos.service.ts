@@ -134,21 +134,28 @@ export class FavoritosService {
       }
     });
   }
-
   /**
    * Verifica se um componente é favorito de um usuário
    */
   async checkIsFavorite(userId: number, componentId: number) {
-    const favorito = await this.prisma.favorito.findFirst({
-      where: {
-        userId,
-        componentId
-      }
-    });
+    try {
+      this.logger.log(`Iniciando verificação de favorito: usuário ${userId}, componente ${componentId}`);
+      
+      const favorito = await this.prisma.favorito.findFirst({
+        where: {
+          userId,
+          componentId
+        }
+      });
 
-    const isFavorite = !!favorito;
-    this.logger.log(`Verificação de favorito: usuário ${userId}, componente ${componentId}, resultado: ${isFavorite}`);
-    return isFavorite;
+      const isFavorite = !!favorito;
+      this.logger.log(`Verificação de favorito: usuário ${userId}, componente ${componentId}, resultado: ${isFavorite}`);
+      return isFavorite;
+    } catch (error) {
+      this.logger.error(`Erro ao verificar favorito para usuário ${userId}, componente ${componentId}: ${error.message}`);
+      // Return false instead of throwing to avoid breaking the frontend
+      return false;
+    }
   }
 
   /**

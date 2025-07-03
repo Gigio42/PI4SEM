@@ -11,15 +11,14 @@ const getAuthHeader = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export class SubscriptionService {
-  static async getPlans(): Promise<Plan[]> {
+export class SubscriptionService {  static async getPlans(): Promise<Plan[]> {
     try {
       console.log('SubscriptionService: Fetching plans...');
       
       // Include auth headers in the request
       const response = await api.get('/subscriptions/plans?onlyActive=true', {
         headers: getAuthHeader(),
-        timeout: 10000 // 10 second timeout
+        timeout: 15000 // Aumentando o timeout para 15 segundos
       });
       
       console.log('SubscriptionService: Plans response received:', response.status, response.data);
@@ -39,6 +38,12 @@ export class SubscriptionService {
         } else {
           return [];
         }
+      }
+      
+      // Validação adicional para garantir que temos dados válidos
+      if (!plansData || plansData.length === 0) {
+        console.warn('SubscriptionService: No plans data found');
+        return [];
       }
       
       // Ensure each plan has the features property as an array
@@ -146,13 +151,14 @@ export class SubscriptionService {
       return null;
     }
   }
-
   static async createSubscription(subscriptionData: {
     userId: number;
     planId: number;
     paymentMethod: string;
   }): Promise<Subscription> {
     try {
+      console.log('SubscriptionService: Creating subscription...', subscriptionData);
+      
       // Calculate dates
       const startDate = new Date();
       const plan = await this.getPlanById(subscriptionData.planId);
@@ -169,6 +175,33 @@ export class SubscriptionService {
       }, {
         headers: getAuthHeader()
       });
+      
+      console.log('SubscriptionService: Subscription created successfully:', response.data);
+      
+      // Atualizar cache local para refletir que o usuário tem uma assinatura ativa
+      if (typeof window !== 'undefined') {
+        // Definir flags para forçar recarregamento dos dados
+        localStorage.setItem('forceRefreshSubscription', 'true');
+        localStorage.setItem('forceRefreshComponents', 'true');
+        
+        // Atualizar status de assinatura imediatamente no cache local
+        localStorage.setItem('userHasActiveSubscription', 'true');
+        localStorage.setItem('subscriptionStatusTime', Date.now().toString());
+        
+        // Atualizar também os dados da assinatura para uso futuro
+        try {
+          localStorage.setItem('userSubscription', JSON.stringify({
+            id: response.data.id,
+            planId: response.data.planId,
+            userId: response.data.userId,
+            startDate: response.data.startDate,
+            endDate: response.data.endDate,
+            status: 'ACTIVE'
+          }));
+        } catch (cacheError) {
+          console.error('Error saving subscription to cache:', cacheError);
+        }
+      }
       
       return response.data;
     } catch (error: unknown) {
@@ -201,6 +234,82 @@ export class SubscriptionService {
     } catch (error: unknown) {
       console.error('Error renewing subscription:', error);
       throw error;
+    }
+  }  static async checkUserHasActiveSubscription(userId: number): Promise<boolean> {
+    try {
+      console.log('SubscriptionService: Checking subscription status for user:', userId);
+      
+      if (!userId) {
+        console.log('SubscriptionService: No userId provided, returning false');
+        return false;
+      }
+      
+      // Verificar se há uma flag para forçar o recarregamento do status de assinatura
+      const forceRefresh = localStorage.getItem('forceRefreshSubscription') === 'true';
+      if (forceRefresh) {
+        // Limpar a flag após usar
+        localStorage.removeItem('forceRefreshSubscription');
+        console.log('SubscriptionService: Force refresh subscription status detected');
+      }
+      
+      // Primeiro, verificar cache no localStorage
+      if (typeof window !== 'undefined' && !forceRefresh) {
+        const cachedStatus = localStorage.getItem('userHasActiveSubscription');
+        const cacheTime = localStorage.getItem('subscriptionStatusTime');
+        
+        // Se temos um cache recente (menos de 2 minutos), retornamos o valor cacheado
+        if (cachedStatus && cacheTime) {
+          const cacheAge = Date.now() - parseInt(cacheTime);
+          if (cacheAge < 2 * 60 * 1000) { // 2 minutos em milissegundos
+            console.log('SubscriptionService: Using cached status:', cachedStatus === 'true');
+            return cachedStatus === 'true';
+          }
+        }
+      }
+      
+      // Se não temos cache ou está desatualizado, fazemos a chamada API
+      const response = await api.get(`/subscriptions/user/${userId}/has-active`, {
+        headers: getAuthHeader(),
+        timeout: 10000 // Aumentando o timeout para garantir resposta em redes lentas
+      });
+      
+      console.log('SubscriptionService: Subscription check response:', response.data);
+      const hasSubscription = response.data?.hasActiveSubscription === true;
+      
+      // Salvar o resultado em cache
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userHasActiveSubscription', hasSubscription ? 'true' : 'false');
+        localStorage.setItem('subscriptionStatusTime', Date.now().toString());
+      }
+      
+      return hasSubscription;
+    } catch (error: any) { // Usando any para obter acesso aos campos específicos do Axios
+      console.error('SubscriptionService: Error checking subscription status:', error);
+      
+      // Adicionando detalhes sobre o erro para debug
+      if (error.response) {
+        console.error('SubscriptionService: Error response details:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      } else if (error.request) {
+        console.error('SubscriptionService: No response received, request details:', {
+          url: error.request.url,
+          method: error.request.method
+        });
+      }
+      
+      // Em caso de erro, verificar se temos um valor cacheado e retornar
+      if (typeof window !== 'undefined') {
+        const cachedStatus = localStorage.getItem('userHasActiveSubscription');
+        if (cachedStatus) {
+          console.log('SubscriptionService: Using cached status due to API error:', cachedStatus === 'true');
+          return cachedStatus === 'true';
+        }
+      }
+      
+      return false;
     }
   }
 }

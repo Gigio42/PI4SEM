@@ -6,6 +6,7 @@ import { Component } from '@/types/component';
 import ComponentPreview from '@/app/components/ComponentPreview/ComponentPreview';
 import FavoriteButton from '@/app/components/FavoriteButton';
 import { useToast } from '@/hooks/useToast';
+import { useRouter } from 'next/navigation';
 import styles from './ComponentCard.module.css';
 
 interface ComponentCardProps {
@@ -36,6 +37,7 @@ export default function ComponentCard({
   const [isFavorited, setIsFavorited] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { showToast } = useToast();
+  const router = useRouter();
 
   // Check favorite status
   useEffect(() => {
@@ -79,9 +81,17 @@ export default function ComponentCard({
     } finally {
       setIsProcessing(false);
     }
-  };
-
+  };  const hasSubscriptionRestriction = component.requiresSubscription === true;
+  
   const handleCardClick = () => {
+    console.log("Card clicked, requiresSubscription:", component.requiresSubscription);
+    
+    // Se o componente requer assinatura, não permite a abertura do preview
+    if (hasSubscriptionRestriction) {
+      showToast('Este componente requer um plano de assinatura para visualização', { type: 'warning' });
+      return;
+    }
+    
     if (onPreview) {
       onPreview(component);
     }
@@ -89,6 +99,14 @@ export default function ComponentCard({
 
   const handlePreviewClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log("Preview clicked, requiresSubscription:", component.requiresSubscription);
+    
+    // Se o componente requer assinatura, não permite a abertura do preview
+    if (hasSubscriptionRestriction) {
+      showToast('Este componente requer um plano de assinatura para visualização', { type: 'warning' });
+      return;
+    }
+    
     if (onPreview) {
       onPreview(component);
     }
@@ -99,11 +117,16 @@ export default function ComponentCard({
     // Link navigation will be handled by Next.js
   };
 
+  const navigateToSubscription = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push('/subscription');
+  };
+
   return (
     <div 
-      className={`${styles.componentCard} ${styles[variant]}`}
+      className={`${styles.componentCard} ${styles[variant]} ${hasSubscriptionRestriction ? styles.lockedComponent : ''}`}
       onClick={!showAdminActions ? handleCardClick : undefined}
-      style={{ cursor: !showAdminActions ? 'pointer' : 'default' }}
+      style={{ cursor: !showAdminActions ? (hasSubscriptionRestriction ? 'not-allowed' : 'pointer') : 'default' }}
     >
       {/* Header with name and favorite button */}
       <div className={styles.cardHeader}>
@@ -130,6 +153,11 @@ export default function ComponentCard({
       {/* Preview area */}
       <div className={styles.cardPreview}>
         <div className={styles.previewContainer}>
+          {hasSubscriptionRestriction && (
+            <div className={styles.requiresSubscriptionBadge}>
+              🔒 Premium
+            </div>
+          )}
           <ComponentPreview
             htmlContent={component.htmlContent || ''}
             cssContent={component.cssContent}
@@ -138,10 +166,19 @@ export default function ComponentCard({
             showCode={false}
             showControls={false}
           />
-          
-          <div className={styles.previewOverlay}>
-            <span>Clique para visualizar</span>
-          </div>
+          {hasSubscriptionRestriction ? (
+            <div className={styles.previewOverlayLocked}>
+              <span>🔒</span>
+              <span>Conteúdo exclusivo para assinantes</span>
+              <Link href="/subscription" className={styles.subscriptionLink}>
+                Ver planos
+              </Link>
+            </div>
+          ) : (
+            <div className={styles.previewOverlay}>
+              <span>Clique para visualizar</span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -514,5 +514,64 @@ export class SubscriptionService {
       console.error(`Erro ao buscar pagamentos da assinatura ${subscriptionId}:`, error);
       return []; // Retorna array vazio em caso de erro ou se não houver pagamentos
     }
+  }  async getUserHasActiveSubscription(userId: number): Promise<boolean> {
+    try {
+      console.log(`Verificando assinatura para usuário com ID ${userId}`);
+      
+      if (!userId || isNaN(Number(userId))) {
+        console.log(`ID de usuário inválido: ${userId}`);
+        return false;
+      }
+      
+      // Buscar todas as assinaturas do usuário para diagnóstico
+      const allSubscriptions = await this.prisma.subscription.findMany({
+        where: {
+          userId: Number(userId)
+        },
+        select: {
+          id: true,
+          status: true,
+          startDate: true,
+          endDate: true,
+          createdAt: true
+        }
+      });
+      
+      console.log(`Todas as assinaturas do usuário ${userId}:`, 
+        allSubscriptions.length > 0 ? allSubscriptions : 'Nenhuma assinatura encontrada');
+      
+      // Verificar a assinatura ativa mais recente
+      const now = new Date();
+      console.log(`Data atual para comparação: ${now.toISOString()}`);
+      
+      const subscription = await this.prisma.subscription.findFirst({
+        where: {
+          userId: Number(userId),
+          status: 'ACTIVE',
+          endDate: { gte: now } // Verifica se a assinatura ainda é válida
+        },
+        orderBy: {
+          createdAt: 'desc' // Pegar a assinatura ativa mais recente
+        }
+      });
+      
+      const hasActiveSubscription = !!subscription;
+      console.log(`Usuário ${userId} ${hasActiveSubscription ? 'tem' : 'não tem'} assinatura ativa`);
+      
+      if (hasActiveSubscription) {
+        console.log(`Detalhes da assinatura ativa:`, {
+          id: subscription.id,
+          status: subscription.status,
+          dataInicio: subscription.startDate,
+          dataFim: subscription.endDate,
+          criado: subscription.createdAt
+        });
+      }
+      
+      return hasActiveSubscription;
+    } catch (error) {
+      console.error(`Erro ao verificar assinatura do usuário ${userId}:`, error);
+      return false;
+    }
   }
 }

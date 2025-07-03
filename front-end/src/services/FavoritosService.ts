@@ -60,21 +60,56 @@ export class FavoritesService {
   }
 
   /**
-   * Check if a component is favorited by user
+   * Check if a component is favorited by user (improved with retry logic)
    */
   static async checkIfFavorited(userId: number, componentId: number): Promise<boolean> {
     try {
       console.log(`Checking if component ${componentId} is favorited by user ${userId}`);
 
-      const response = await api.get(`/favoritos/check/${componentId}/${userId}`, {
-        headers: this.getAuthHeaders(),
-        timeout: 3000
-      });
-
-      console.log('API response for checkIfFavorited:', response.data);
-      return response.data?.isFavorite || false;
+      // Add retry logic with exponential backoff
+      let retries = 0;
+      const maxRetries = 2;
+      
+      while (retries <= maxRetries) {
+        try {
+          const timeout = 5000 * Math.pow(2, retries); // 5s, 10s, 20s
+          console.log(`Attempt ${retries + 1} with timeout ${timeout}ms`);
+          
+          const response = await api.get(`/favoritos/check/${componentId}/${userId}`, {
+            headers: this.getAuthHeaders(),
+            timeout: timeout
+          });
+          
+          console.log('API response for checkIfFavorited:', response.data);
+          return response.data?.isFavorite || false;
+        } catch (attemptError: any) {
+          retries++;
+          if (retries > maxRetries || attemptError.response) {
+            // If we got a response status (like 404, 500), no need to retry
+            throw attemptError;
+          }
+          console.warn(`Retry ${retries}/${maxRetries} after error:`, attemptError.message);
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      throw new Error("Max retries exceeded");
     } catch (error: any) {
       console.error('Error checking favorite status:', error);
+      // Provide detail logging for debugging
+      if (error.response) {
+        console.error('Response error:', {
+          status: error.response.status,
+          data: error.response.data
+        });
+      } else if (error.request) {
+        console.error('Request error (no response received):', {
+          url: error.config?.url,
+          method: error.config?.method,
+          timeout: error.config?.timeout
+        });
+      }
       return false;
     }
   }
@@ -145,42 +180,17 @@ export class FavoritesService {
     return this.checkIfFavorited(userId, componentId);
   }
 
-  static async addFavorito(componentId: number, userId: number): Promise<Favorito | null> {
-    try {
-      return await this.addFavorite(userId, componentId);
-    } catch (error) {
-      console.error('Error adding favorite:', error);
-      return null;
-    }
+  /**
+   * Alias for addFavorite (to maintain compatibility with existing code)
+   */
+  static async addFavorito(componentId: number, userId: number): Promise<Favorito> {
+    return this.addFavorite(userId, componentId);
   }
-
-  static async removeFavorito(componentId: number, userId: number): Promise<boolean> {
-    try {
-      await this.removeFavorite(userId, componentId);
-      return true;
-    } catch (error) {
-      console.error('Error removing favorite:', error);
-      return false;
-    }
-  }
-
-  static async getUserFavoritos(userId: number): Promise<Favorito[]> {
-    return this.getUserFavorites(userId);
-  }
-
-  static async getFavoritosByUser(userId: number): Promise<Favorito[]> {
-    return this.getUserFavoritos(userId);
-  }
-
-  static async toggleFavorito(componentId: number, userId?: number): Promise<boolean> {
-    if (!userId) return false;
-    return this.toggleFavorite(userId, componentId);
-  }
-
-  static async removeFavoritoByUserAndComponent(userId: number, componentId: number): Promise<boolean> {
-    return this.removeFavorito(componentId, userId);
+  
+  /**
+   * Alias for removeFavorite (to maintain compatibility with existing code)
+   */
+  static async removeFavorito(componentId: number, userId: number): Promise<void> {
+    return this.removeFavorite(userId, componentId);
   }
 }
-
-// Export both names for compatibility
-export { FavoritesService as FavoritosService };

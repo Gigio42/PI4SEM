@@ -5,8 +5,11 @@ import { createPortal } from 'react-dom';
 import FavoriteButton from '../FavoriteButton';
 import { Component } from '@/types/component';
 import { FavoritesService } from '@/services/FavoritesService';
+import { SubscriptionService } from '@/services/SubscriptionService';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 import styles from './ComponentPreviewModal.module.css';
+import Link from 'next/link';
 
 interface ComponentPreviewModalProps {
   component: Component;
@@ -33,12 +36,15 @@ export default function ComponentPreviewModal({
   const [scale, setScale] = useState(1);
   const [mounted, setMounted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [checkingSubscription, setCheckingSubscription] = useState(false);
   
   const previewRef = useRef<HTMLIFrameElement>(null);
   const htmlCodeRef = useRef<HTMLPreElement>(null);
   const cssCodeRef = useRef<HTMLPreElement>(null);
   
   const { showToast } = useToast();
+  const router = useRouter();
 
   // Ensure component is mounted (client-side only)
   useEffect(() => {
@@ -69,7 +75,42 @@ export default function ComponentPreviewModal({
       setIsFullscreen(false);
     }
   }, [isOpen, userId, component?.id]);
-
+  // Check if user has active subscription
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (userId && isOpen) {
+        try {
+          setCheckingSubscription(true);
+          const hasSubscription = await SubscriptionService.checkUserHasActiveSubscription(userId);
+          console.log("Modal - subscription check result:", hasSubscription);
+          setHasActiveSubscription(hasSubscription);
+          
+          // Se o usuário não tem assinatura, fechar o modal
+          if (!hasSubscription) {
+            console.log("User has no subscription, closing modal");
+            onClose();
+            showToast('Um plano de assinatura é necessário para visualizar componentes', { type: 'warning' });
+          }
+        } catch (error) {
+          console.error('Error checking subscription:', error);
+          setHasActiveSubscription(false);
+          onClose(); // Fechar o modal em caso de erro também
+        } finally {
+          setCheckingSubscription(false);
+        }
+      } else {
+        // If no userId, assume no subscription
+        console.log("No userId or modal not open, assuming no subscription");
+        setHasActiveSubscription(false);
+        if (isOpen) {
+          onClose();
+        }
+      }
+    };
+    
+    checkSubscription();
+  }, [userId, isOpen, onClose]);
+  
   // Close modal on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -238,6 +279,12 @@ ${component.htmlContent || ''}
   // Don't render anything on server-side or if modal is closed
   if (!mounted || !isOpen) return null;
   
+  // Impedir renderização se o componente requer assinatura
+  if (component.requiresSubscription === true) {
+    console.log("Attempted to render ComponentPreviewModal for a restricted component");
+    return null;
+  }
+
   // Render fullscreen component preview
   if (isFullscreen) {
     return createPortal(
@@ -263,12 +310,45 @@ ${component.htmlContent || ''}
     );
   }
 
+  // Function to handle navigation to subscription page
+  const handleNavigateToSubscription = () => {
+    onClose();
+    router.push('/subscription');
+  };
+  
+  // Render subscription lock overlay if content requires subscription
+  const renderSubscriptionLock = () => {
+    if (!component || hasActiveSubscription || !component.requiresSubscription) {
+      return null;
+    }
+    
+    return (
+      <div className={styles.subscriptionLockOverlay}>
+        <div className={styles.subscriptionLockIcon}>🔒</div>
+        <h2 className={styles.subscriptionLockMessage}>
+          Conteúdo exclusivo para assinantes
+        </h2>
+        <p className={styles.subscriptionLockDescription}>
+          Assine um de nossos planos para acessar este componente e todos os outros recursos exclusivos da plataforma.
+        </p>
+        <button 
+          className={styles.subscriptionButton}
+          onClick={handleNavigateToSubscription}
+        >
+          Ver planos de assinatura
+        </button>
+      </div>
+    );
+  };
+
   return createPortal(
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div 
+    <div className={styles.modalOverlay} onClick={onClose}>      <div 
         className={styles.modalContainer}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Subscription Lock Overlay */}
+        {renderSubscriptionLock()}
+        
         {/* Header */}
         <div className={styles.modalHeader}>
           <div className={styles.headerLeft}>
@@ -516,6 +596,9 @@ ${component.htmlContent || ''}
             </div>
           </div>
         </div>
+
+        {/* Render subscription lock overlay if content requires subscription */}
+        {renderSubscriptionLock()}
       </div>
     </div>,
     document.body

@@ -26,9 +26,10 @@ export class PlansService {
       throw new BadRequestException('Erro ao criar plano: ' + error.message);
     }
   }
-
   async getAllPlans(onlyActive: boolean = false) {
     try {
+      console.log('PlansService: Getting all plans, onlyActive:', onlyActive);
+      
       // Convert boolean filter to appropriate Prisma where condition
       const where: any = {};
       if (onlyActive) {
@@ -42,11 +43,36 @@ export class PlansService {
         },
       });
       
-      // Parse features JSON string back to array
-      return plans.map(plan => ({
-        ...plan,
-        features: plan.features ? JSON.parse(plan.features as string) : [],
-      }));
+      console.log('PlansService: Found', plans.length, 'plans');
+      
+      // Parse features JSON string back to array for each plan
+      const processedPlans = plans.map(plan => {
+        try {
+          let features = [];
+          
+          if (plan.features) {
+            try {
+              features = JSON.parse(plan.features as string);
+            } catch (parseError) {
+              console.error('Error parsing features for plan', plan.id, ':', parseError);
+              features = [];
+            }
+          }
+          
+          return {
+            ...plan,
+            features: features
+          };
+        } catch (planError) {
+          console.error('Error processing plan', plan.id, ':', planError);
+          return {
+            ...plan,
+            features: []
+          };
+        }
+      });
+      
+      return processedPlans;
     } catch (error) {
       console.error('Error fetching plans:', error);
       // Se não houver planos, retorna array vazio ao invés de erro
